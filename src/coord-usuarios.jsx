@@ -2,7 +2,7 @@
 // El coordinador da de alta a profesores: crea su cuenta de acceso y su rol.
 
 function UsuariosScreen({ ctx }) {
-  const { toast } = ctx;
+  const { toast, saveProf } = ctx;
   const PRACS = window.PRACTICES || ['I','II','III','IV','PI','PII'];
   const isFB = window.CLOUD && window.CLOUD.isFirebase;
 
@@ -62,7 +62,7 @@ function UsuariosScreen({ ctx }) {
           <h1>Usuarios y accesos</h1>
           <div className="subtitle">{usuarios.length} cuenta{usuarios.length!==1?'s':''} · {coords.length} coordinación · {profes.length} profesores</div>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Nuevo profesor</button>
+        <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Nuevo usuario</button>
       </div>
 
       {!isFB && (
@@ -84,20 +84,21 @@ function UsuariosScreen({ ctx }) {
           <div className="nav-section-label" style={{ margin:'4px 0 8px', color:'var(--ink-500)' }}>PROFESORES</div>
           <div className="card" style={{ padding:0, overflow:'hidden' }}>
             {profes.length ? profes.map(u => <Row key={u.uid} u={u} />)
-              : <div style={{ padding:24, textAlign:'center', color:'var(--ink-400)', fontSize:13 }}>Aún no hay profesores. Usa <strong>+ Nuevo profesor</strong> para crear el primer acceso.</div>}
+              : <div style={{ padding:24, textAlign:'center', color:'var(--ink-400)', fontSize:13 }}>Aún no hay profesores. Usa <strong>+ Nuevo usuario</strong> para crear el primer acceso.</div>}
           </div>
         </>
       )}
 
-      {showAdd && <NuevoUsuarioModal PRACS={PRACS} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); reload(); }} toast={toast} />}
+      {showAdd && <NuevoUsuarioModal PRACS={PRACS} saveProf={saveProf} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); reload(); }} toast={toast} />}
     </div>
   );
 }
 
-function NuevoUsuarioModal({ PRACS, onClose, onCreated, toast }) {
+function NuevoUsuarioModal({ PRACS, saveProf, onClose, onCreated, toast }) {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
+  const [rol, setRol] = useState('profesor');
   const [pracs, setPracs] = useState([]);
   const [busy, setBusy] = useState(false);
 
@@ -110,12 +111,18 @@ function NuevoUsuarioModal({ PRACS, onClose, onCreated, toast }) {
   const submit = () => {
     if (!nombre.trim() || !email.trim() || pw.length < 6) { toast('Completa nombre, correo y una contraseña de 6+ caracteres.', 'error'); return; }
     setBusy(true);
+    const nombreFinal = rol === 'profesor'
+      ? (nombre.trim().startsWith('Prof.') ? nombre.trim() : 'Prof. ' + nombre.trim())
+      : nombre.trim();
     window.CLOUD.createUser({
       email: email.trim().toLowerCase(), password: pw,
-      nombre: nombre.trim().startsWith('Prof.') ? nombre.trim() : 'Prof. ' + nombre.trim(),
-      rol: 'profesor', practicasAsignadas: pracs,
+      nombre: nombreFinal,
+      rol, practicasAsignadas: rol === 'profesor' ? pracs : [],
     }).then(() => {
-      toast(`Profesor ${nombre} creado. Comparte la contraseña: ${pw}`);
+      if (rol === 'profesor') {
+        saveProf({ nombre: nombreFinal, email: email.trim().toLowerCase(), rol: 'profesor', practicasAsignadas: pracs, horasAsignadas: 0, disponibilidad: [] });
+      }
+      toast(`${rol === 'coordinador' ? 'Coordinador/a' : 'Profesor/a'} ${nombre} creado/a. Contraseña: ${pw}`);
       onCreated();
     }).catch(err => {
       const m = /email-already-in-use/.test(err.code || err.message) ? 'Ya existe una cuenta con ese correo.'
@@ -127,36 +134,52 @@ function NuevoUsuarioModal({ PRACS, onClose, onCreated, toast }) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-box" style={{ maxWidth:480 }} onClick={e=>e.stopPropagation()}>
-        <div className="modal-head"><h2>Nuevo profesor</h2><button className="btn btn-ghost btn-sm" onClick={onClose}>✕</button></div>
-        <div className="modal-body">
-          <div className="form-field"><label>Nombre completo</label>
-            <input value={nombre} onChange={e=>setNombre(e.target.value)} placeholder="Ej: Andrés Tapia Vergara" autoFocus/>
+    <div className=”modal-overlay” onClick={onClose}>
+      <div className=”modal-box” style={{ maxWidth:480 }} onClick={e=>e.stopPropagation()}>
+        <div className=”modal-head”><h2>Nuevo usuario</h2><button className=”btn btn-ghost btn-sm” onClick={onClose}>✕</button></div>
+        <div className=”modal-body”>
+          <div className=”form-field”>
+            <label>Rol</label>
+            <div style={{ display:'flex', gap:8, marginTop:4 }}>
+              <button type=”button” className={`toggle-btn ${rol==='profesor'?'on':''}`}
+                      style={{ flex:1, padding:'8px 12px' }} onClick={() => setRol('profesor')}>
+                Profesor/a
+              </button>
+              <button type=”button” className={`toggle-btn ${rol==='coordinador'?'on':''}`}
+                      style={{ flex:1, padding:'8px 12px' }} onClick={() => setRol('coordinador')}>
+                Coordinador/a
+              </button>
+            </div>
           </div>
-          <div className="form-field"><label>Correo institucional</label>
-            <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="nombre@usach.cl"/>
+          <div className=”form-field”><label>Nombre completo</label>
+            <input value={nombre} onChange={e=>setNombre(e.target.value)}
+                   placeholder={rol === 'profesor' ? 'Ej: Andrés Tapia Vergara' : 'Ej: Natalia Osorio Rojas'} autoFocus/>
           </div>
-          <div className="form-field"><label>Contraseña inicial</label>
+          <div className=”form-field”><label>Correo institucional</label>
+            <input type=”email” value={email} onChange={e=>setEmail(e.target.value)} placeholder=”nombre@usach.cl”/>
+          </div>
+          <div className=”form-field”><label>Contraseña inicial</label>
             <div style={{ display:'flex', gap:8 }}>
-              <input value={pw} onChange={e=>setPw(e.target.value)} placeholder="Mínimo 6 caracteres" style={{ flex:1 }}/>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={genPw}>Generar</button>
+              <input value={pw} onChange={e=>setPw(e.target.value)} placeholder=”Mínimo 6 caracteres” style={{ flex:1 }}/>
+              <button type=”button” className=”btn btn-ghost btn-sm” onClick={genPw}>Generar</button>
             </div>
-            <div className="muted" style={{ fontSize:11.5, marginTop:4 }}>El profesor podrá cambiarla luego con “¿Olvidaste tu contraseña?”.</div>
+            <div className=”muted” style={{ fontSize:11.5, marginTop:4 }}>El usuario podrá cambiarla luego con “¿Olvidaste tu contraseña?”.</div>
           </div>
-          <div className="form-field"><label>Prácticas que imparte</label>
-            <div className="toggle-grid">
-              {PRACS.map(p => (
-                <button key={p} type="button" className={`toggle-btn ${pracs.includes(p)?'on':''}`} onClick={() => togglePrac(p)}>
-                  Práctica {p}
-                </button>
-              ))}
+          {rol === 'profesor' && (
+            <div className=”form-field”><label>Prácticas que imparte</label>
+              <div className=”toggle-grid”>
+                {PRACS.map(p => (
+                  <button key={p} type=”button” className={`toggle-btn ${pracs.includes(p)?'on':''}`} onClick={() => togglePrac(p)}>
+                    Práctica {p}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
-        <div className="modal-foot">
-          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primary" disabled={busy} onClick={submit}>{busy ? 'Creando…' : 'Crear acceso'}</button>
+        <div className=”modal-foot”>
+          <button className=”btn btn-ghost” onClick={onClose}>Cancelar</button>
+          <button className=”btn btn-primary” disabled={busy} onClick={submit}>{busy ? 'Creando…' : 'Crear acceso'}</button>
         </div>
       </div>
     </div>

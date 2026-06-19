@@ -67,9 +67,6 @@ function AsignacionesScreen({ ctx }) {
           <h1>Profesores y asignaciones</h1>
           <div className="subtitle">{profs.length} profesores registrados · asigna o retira prácticas con un clic</div>
         </div>
-        <div className="actions">
-          <button className="btn btn-secondary" onClick={() => { setEditProf(null); setShowAdd(true); }}>+ Agregar profesor</button>
-        </div>
       </div>
 
       <div className="detail-panel">

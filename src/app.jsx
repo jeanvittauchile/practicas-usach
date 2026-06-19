@@ -410,15 +410,40 @@ function initialState(kind) {
 
 // ─── Persistencia por práctica (localStorage, compartido entre cuentas) ────
 function stateKey(practica, kind) { return `usach_state_v1_${practica}_${kind || 'demo'}`; }
+
+// Lee estudiantes del coordinador (coord_students) filtrados por práctica y profesor.
+// Por rba Cloud.ready ya corrió pullAll(), coord_students está sincronizado desde Firestore.
+function getCoordStudents(practica) {
+  const au = window.__authUser;
+  if (!au) return [];
+  try {
+    const all = JSON.parse(localStorage.getItem('coord_students') || '[]') || [];
+    const byPrac = all.filter(function(s) { return s.practica === practica; });
+    if (au.rol === 'coordinador') return byPrac;
+    const profs = JSON.parse(localStorage.getItem('coord_profs') || '[]') || [];
+    const prof = profs.find(function(p) { return p.email && p.email.toLowerCase() === (au.email || '').toLowerCase(); });
+    if (!prof) return [];
+    return byPrac.filter(function(s) { return s.profesorId === prof.id; });
+  } catch (e) { return []; }
+}
+
 function loadState(practica, kind) {
+  const coordStudents = getCoordStudents(practica);
   try {
     const raw = localStorage.getItem(stateKey(practica, kind));
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.evaluaciones)) return parsed;
+      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.evaluaciones)) {
+        if (!coordStudents.length) return parsed;
+        // Coordinator students are authoritative; keep professor-added extras (id starts with 'e_')
+        const coordIds = new Set(coordStudents.map(function(s) { return s.id; }));
+        const extras = (parsed.estudiantes || []).filter(function(s) { return s.id && s.id.startsWith('e_'); });
+        return Object.assign({}, parsed, { estudiantes: coordStudents.concat(extras) });
+      }
     }
   } catch (e) {}
-  return initialState(kind);
+  const base = initialState(kind);
+  return coordStudents.length ? Object.assign({}, base, { estudiantes: coordStudents }) : base;
 }
 
 // ─── Color helpers ────────────────────────────────────────────

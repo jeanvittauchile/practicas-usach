@@ -566,7 +566,6 @@ function NotasScreen({ ctx, onOpen }) {
 // ═════════════════════════════════════════════════════════════
 
 function EstudiantesScreen({ ctx, onOpen }) {
-  const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
   const [reportFor, setReportFor] = useState(null);
@@ -581,8 +580,6 @@ function EstudiantesScreen({ ctx, onOpen }) {
           <div className="subtitle">{(ctx.state.estudiantes || D.ESTUDIANTES).length} estudiantes inscritos · se auto-inscriben en todas las evaluaciones</div>
         </div>
         <div className="actions">
-          <button className="btn btn-secondary"><I.upload /> Importar CSV</button>
-          <button className="btn btn-primary" onClick={() => setShowAdd(true)}><I.plus /> Agregar estudiante</button>
         </div>
       </div>
 
@@ -642,7 +639,6 @@ function EstudiantesScreen({ ctx, onOpen }) {
         </table>
       </div>
 
-      {showAdd && <AddStudentModal onClose={() => setShowAdd(false)} ctx={ctx} />}
       {editing && <EditStudentModal student={editing} ctx={ctx} onClose={() => setEditing(null)} />}
       {deleting && <DeleteStudentConfirm student={deleting} ctx={ctx} onClose={() => setDeleting(null)} />}
       {reportFor && <StudentReportModal est={reportFor} ctx={ctx} onClose={() => setReportFor(null)} />}

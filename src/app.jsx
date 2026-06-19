@@ -15,7 +15,14 @@ function App() {
 
   // ─── Estado persistente. activatePractica conserva la identidad de
   //     window.USACH_DATA, por lo que las pantallas siempre ven los datos vivos.
-  const [practica, setPractica] = useState(() => { window.activatePractica(t.practica || 'I'); return t.practica || 'I'; });
+  const [practica, setPractica] = useState(() => {
+    const _au = window.__authUser;
+    const _asig = (_au && _au.rol !== 'coordinador' && _au.practicasAsignadas?.length) ? _au.practicasAsignadas : null;
+    const preferida = t.practica || 'I';
+    const inicial = (_asig && !_asig.includes(preferida)) ? _asig[0] : preferida;
+    window.activatePractica(inicial);
+    return inicial;
+  });
   const [state, setState] = useState(() => loadState(window.USACH_DATA.activeCodigo, t.dataState || 'demo'));
 
   // PDF / Reports modal state
@@ -34,10 +41,13 @@ function App() {
 
   useEffect(() => { if (t.practica && t.practica !== practica) cambiarPractica(t.practica); }, [t.practica]);
 
-  // Si el coordinador entra con ?practica=CÓDIGO, abrir esa práctica
+  // Si el coordinador entra con ?practica=CÓDIGO, abrir esa práctica (solo si está asignada)
   useEffect(() => {
     const pr = new URLSearchParams(window.location.search).get('practica');
-    if (pr && ['I','II','III','IV','PI','PII'].includes(pr)) cambiarPractica(pr);
+    if (!pr || !['I','II','III','IV','PI','PII'].includes(pr)) return;
+    const _au = window.__authUser;
+    const _asig = (_au && _au.rol !== 'coordinador' && _au.practicasAsignadas?.length) ? _au.practicasAsignadas : null;
+    if (!_asig || _asig.includes(pr)) cambiarPractica(pr);
   }, []);
 
   // Re-init when dataState tweak changes (carga lo guardado si existe)

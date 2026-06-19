@@ -25,11 +25,19 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
     ]},
   ];
 
-  const practicas = (window.PRACTICAS_INDEX || []).map(p => ({
-    codigo: p.codigo, nombre: p.nombre,
-    activo: p.codigo === practicaActiva,
-    disponible: p.disponible,
-  }));
+  const _authUser = window.__authUser;
+  const _asignadas = (_authUser && _authUser.rol !== 'coordinador' && _authUser.practicasAsignadas?.length)
+    ? _authUser.practicasAsignadas : null;
+
+  const practicas = (window.PRACTICAS_INDEX || []).map(p => {
+    const asignada = !_asignadas || _asignadas.includes(p.codigo);
+    return {
+      codigo: p.codigo, nombre: p.nombre,
+      activo: p.codigo === practicaActiva,
+      disponible: p.disponible && asignada,
+      bloqueada: p.disponible && !asignada,
+    };
+  });
 
   return (
     <aside className="sidebar" data-screen-label="Sidebar">
@@ -47,12 +55,13 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
         </div>
         {practicas.map(p => (
           <div key={p.codigo} className={`practica-row ${p.activo ? 'active' : p.disponible ? '' : 'disabled'}`}
-               title={p.disponible ? (p.activo ? 'Práctica activa' : 'Cambiar a esta práctica') : 'Próximamente'}
+               title={p.disponible ? (p.activo ? 'Práctica activa' : 'Cambiar a esta práctica') : p.bloqueada ? 'No asignada por el coordinador' : 'Próximamente'}
                style={{ cursor: p.disponible && !p.activo ? 'pointer' : p.activo ? 'default' : 'not-allowed' }}
                onClick={() => { if (p.disponible && !p.activo) onSelectPractica(p.codigo); }}>
             <span className="pill">{p.codigo}</span>
             <span style={{ fontSize: 12.5 }}>{p.nombre}</span>
-            {!p.disponible && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--orange-300)', fontWeight: 600 }}>Pronto</span>}
+            {p.bloqueada && <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--ink-400)' }}>🔒</span>}
+            {!p.disponible && !p.bloqueada && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--orange-300)', fontWeight: 600 }}>Pronto</span>}
           </div>
         ))}
       </div>

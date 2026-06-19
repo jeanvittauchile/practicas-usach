@@ -60,7 +60,7 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
                onClick={() => { if (p.disponible && !p.activo) onSelectPractica(p.codigo); }}>
             <span className="pill">{p.codigo}</span>
             <span style={{ fontSize: 12.5 }}>{p.nombre}</span>
-            {p.bloqueada && <span style={{ marginLeft: 'auto', fontSize: 13, color: 'var(--ink-400)' }}>🔒</span>}
+            {p.bloqueada && <span style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: 'var(--ink-400)', letterSpacing: '.02em' }}>Bloq.</span>}
             {!p.disponible && !p.bloqueada && <span style={{ marginLeft: 'auto', fontSize: 10, color: 'var(--orange-300)', fontWeight: 600 }}>Pronto</span>}
           </div>
         ))}

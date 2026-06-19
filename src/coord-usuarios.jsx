@@ -1,4 +1,4 @@
-// coord-usuarios.jsx — Gestión de cuentas (Auth + Firestore /usuarios)
+// coord-usuarios.jsx — Gestion de cuentas (Auth + Firestore /usuarios)
 // El coordinador da de alta a profesores: crea su cuenta de acceso y su rol.
 
 function UsuariosScreen({ ctx }) {
@@ -19,12 +19,12 @@ function UsuariosScreen({ ctx }) {
   useEffect(reload, []);
 
   const onDelete = (u) => {
-    if (!confirm(`¿Quitar el acceso de ${u.nombre || u.email}?\n\nNota: esto elimina su ROL. La cuenta de inicio de sesión se borra desde la consola de Firebase Authentication.`)) return;
+    if (!confirm('Quitar el acceso de ' + (u.nombre || u.email) + '?\n\nNota: esto elimina su ROL. La cuenta de inicio de sesion se borra desde la consola de Firebase Authentication.')) return;
     window.CLOUD.deleteUsuarioDoc(u.uid).then(() => { toast('Acceso eliminado'); reload(); })
       .catch(err => toast('Error: ' + err.message, 'error'));
   };
   const onReset = (u) => {
-    window.CLOUD.sendReset(u.email).then(() => toast(`Correo de restablecimiento enviado a ${u.email}`))
+    window.CLOUD.sendReset(u.email).then(() => toast('Correo de restablecimiento enviado a ' + u.email))
       .catch(err => toast('Error: ' + err.message, 'error'));
   };
 
@@ -37,7 +37,7 @@ function UsuariosScreen({ ctx }) {
       <div style={{ display:'flex', alignItems:'center', gap:12, minWidth:0 }}>
         <div className="avatar-sm" style={{ width:34, height:34, fontSize:12, flexShrink:0 }}>{avatar(u.nombre)}</div>
         <div style={{ minWidth:0 }}>
-          <div style={{ fontWeight:600, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{u.nombre || '—'}</div>
+          <div style={{ fontWeight:600, fontSize:14, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{u.nombre || '-'}</div>
           <div className="muted" style={{ fontSize:12.5 }}>{u.email}</div>
         </div>
       </div>
@@ -45,8 +45,8 @@ function UsuariosScreen({ ctx }) {
         {u.rol === 'coordinador'
           ? <span className="practice-chip chip-IV" style={{ fontSize:10.5 }}>Coordinador/a</span>
           : (u.practicasAsignadas && u.practicasAsignadas.length
-              ? u.practicasAsignadas.map(p => <span key={p} className={`practice-chip chip-${p}`} style={{ fontSize:10 }}>{p}</span>)
-              : <span className="muted" style={{ fontSize:11.5 }}>Sin prácticas</span>)}
+              ? u.practicasAsignadas.map(p => <span key={p} className={'practice-chip chip-' + p} style={{ fontSize:10 }}>{p}</span>)
+              : <span className="muted" style={{ fontSize:11.5 }}>Sin practicas</span>)}
       </div>
       <div style={{ display:'flex', gap:6 }}>
         {isFB && <button className="btn btn-ghost btn-sm" title="Enviar correo de restablecimiento" onClick={() => onReset(u)}>Reset clave</button>}
@@ -60,22 +60,22 @@ function UsuariosScreen({ ctx }) {
       <div className="section-head">
         <div>
           <h1>Usuarios y accesos</h1>
-          <div className="subtitle">{usuarios.length} cuenta{usuarios.length!==1?'s':''} · {coords.length} coordinación · {profes.length} profesores</div>
+          <div className="subtitle">{usuarios.length} cuenta{usuarios.length!==1?'s':''} &middot; {coords.length} coordinacion &middot; {profes.length} profesores</div>
         </div>
         <button className="btn btn-primary" onClick={() => setShowAdd(true)}>+ Nuevo usuario</button>
       </div>
 
       {!isFB && (
         <div style={{ padding:'12px 16px', background:'rgba(255,152,0,.12)', border:'1px solid #ffcc80', borderRadius:10, marginBottom:18, fontSize:13, color:'#a15c00', lineHeight:1.45 }}>
-          <strong>⬡ Modo demo.</strong> Los usuarios creados aquí se guardan solo en este navegador. Conecta Firebase (ver <em>README</em>) para crear cuentas reales de inicio de sesión.
+          <strong>Modo demo.</strong> Los usuarios creados aqui se guardan solo en este navegador. Conecta Firebase (ver README) para crear cuentas reales de inicio de sesion.
         </div>
       )}
 
       {loading ? (
-        <div className="card" style={{ padding:40, textAlign:'center', color:'var(--ink-400)' }}>Cargando usuarios…</div>
+        <div className="card" style={{ padding:40, textAlign:'center', color:'var(--ink-400)' }}>Cargando usuarios...</div>
       ) : (
-        <>
-          <div className="nav-section-label" style={{ margin:'4px 0 8px', color:'var(--ink-500)' }}>COORDINACIÓN</div>
+        <div>
+          <div className="nav-section-label" style={{ margin:'4px 0 8px', color:'var(--ink-500)' }}>COORDINACION</div>
           <div className="card" style={{ padding:0, overflow:'hidden', marginBottom:20 }}>
             {coords.length ? coords.map(u => <Row key={u.uid} u={u} />)
               : <div style={{ padding:24, textAlign:'center', color:'var(--ink-400)', fontSize:13 }}>Sin coordinadores registrados. Crea el primero desde la consola de Firebase (ver README).</div>}
@@ -84,9 +84,9 @@ function UsuariosScreen({ ctx }) {
           <div className="nav-section-label" style={{ margin:'4px 0 8px', color:'var(--ink-500)' }}>PROFESORES</div>
           <div className="card" style={{ padding:0, overflow:'hidden' }}>
             {profes.length ? profes.map(u => <Row key={u.uid} u={u} />)
-              : <div style={{ padding:24, textAlign:'center', color:'var(--ink-400)', fontSize:13 }}>Aún no hay profesores. Usa <strong>+ Nuevo usuario</strong> para crear el primer acceso.</div>}
+              : <div style={{ padding:24, textAlign:'center', color:'var(--ink-400)', fontSize:13 }}>Aun no hay profesores. Usa <strong>+ Nuevo usuario</strong> para crear el primer acceso.</div>}
           </div>
-        </>
+        </div>
       )}
 
       {showAdd && <NuevoUsuarioModal PRACS={PRACS} saveProf={saveProf} onClose={() => setShowAdd(false)} onCreated={() => { setShowAdd(false); reload(); }} toast={toast} />}
@@ -102,84 +102,104 @@ function NuevoUsuarioModal({ PRACS, saveProf, onClose, onCreated, toast }) {
   const [pracs, setPracs] = useState([]);
   const [busy, setBusy] = useState(false);
 
-  const genPw = () => {
-    const s = 'usach-' + Math.random().toString(36).slice(2, 8);
-    setPw(s);
-  };
+  const genPw = () => { setPw('usach-' + Math.random().toString(36).slice(2, 8)); };
   const togglePrac = (p) => setPracs(prev => prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]);
 
   const submit = () => {
-    if (!nombre.trim() || !email.trim() || pw.length < 6) { toast('Completa nombre, correo y una contraseña de 6+ caracteres.', 'error'); return; }
+    if (!nombre.trim() || !email.trim() || pw.length < 6) {
+      toast('Completa nombre, correo y una contrasena de 6+ caracteres.', 'error');
+      return;
+    }
     setBusy(true);
     const nombreFinal = rol === 'profesor'
       ? (nombre.trim().startsWith('Prof.') ? nombre.trim() : 'Prof. ' + nombre.trim())
       : nombre.trim();
     window.CLOUD.createUser({
-      email: email.trim().toLowerCase(), password: pw,
+      email: email.trim().toLowerCase(),
+      password: pw,
       nombre: nombreFinal,
-      rol, practicasAsignadas: rol === 'profesor' ? pracs : [],
-    }).then(() => {
+      rol: rol,
+      practicasAsignadas: rol === 'profesor' ? pracs : [],
+    }).then(function() {
       if (rol === 'profesor') {
-        saveProf({ nombre: nombreFinal, email: email.trim().toLowerCase(), rol: 'profesor', practicasAsignadas: pracs, horasAsignadas: 0, disponibilidad: [] });
+        saveProf({
+          nombre: nombreFinal,
+          email: email.trim().toLowerCase(),
+          rol: 'profesor',
+          practicasAsignadas: pracs,
+          horasAsignadas: 0,
+          disponibilidad: [],
+        });
       }
-      toast(`${rol === 'coordinador' ? 'Coordinador/a' : 'Profesor/a'} ${nombre} creado/a. Contraseña: ${pw}`);
+      var tipo = rol === 'coordinador' ? 'Coordinador/a' : 'Profesor/a';
+      toast(tipo + ' ' + nombre + ' creado/a. Contrasena: ' + pw);
       onCreated();
-    }).catch(err => {
-      const m = /email-already-in-use/.test(err.code || err.message) ? 'Ya existe una cuenta con ese correo.'
-        : /invalid-email/.test(err.code || err.message) ? 'El correo no es válido.'
-        : err.message;
+    }).catch(function(err) {
+      var code = err.code || err.message || '';
+      var m = /email-already-in-use/.test(code) ? 'Ya existe una cuenta con ese correo.'
+            : /invalid-email/.test(code) ? 'El correo no es valido.'
+            : err.message;
       toast('Error: ' + m, 'error');
       setBusy(false);
     });
   };
 
   return (
-    <div className=”modal-overlay” onClick={onClose}>
-      <div className=”modal-box” style={{ maxWidth:480 }} onClick={e=>e.stopPropagation()}>
-        <div className=”modal-head”><h2>Nuevo usuario</h2><button className=”btn btn-ghost btn-sm” onClick={onClose}>✕</button></div>
-        <div className=”modal-body”>
-          <div className=”form-field”>
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" style={{ maxWidth:480 }} onClick={function(e){ e.stopPropagation(); }}>
+        <div className="modal-head">
+          <h2>Nuevo usuario</h2>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>X</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-field">
             <label>Rol</label>
             <div style={{ display:'flex', gap:8, marginTop:4 }}>
-              <button type=”button” className={`toggle-btn ${rol==='profesor'?'on':''}`}
-                      style={{ flex:1, padding:'8px 12px' }} onClick={() => setRol('profesor')}>
+              <button type="button" className={'toggle-btn ' + (rol==='profesor' ? 'on' : '')}
+                      style={{ flex:1, padding:'8px 12px' }} onClick={function(){ setRol('profesor'); }}>
                 Profesor/a
               </button>
-              <button type=”button” className={`toggle-btn ${rol==='coordinador'?'on':''}`}
-                      style={{ flex:1, padding:'8px 12px' }} onClick={() => setRol('coordinador')}>
+              <button type="button" className={'toggle-btn ' + (rol==='coordinador' ? 'on' : '')}
+                      style={{ flex:1, padding:'8px 12px' }} onClick={function(){ setRol('coordinador'); }}>
                 Coordinador/a
               </button>
             </div>
           </div>
-          <div className=”form-field”><label>Nombre completo</label>
-            <input value={nombre} onChange={e=>setNombre(e.target.value)}
-                   placeholder={rol === 'profesor' ? 'Ej: Andrés Tapia Vergara' : 'Ej: Natalia Osorio Rojas'} autoFocus/>
+          <div className="form-field">
+            <label>Nombre completo</label>
+            <input value={nombre} onChange={function(e){ setNombre(e.target.value); }}
+                   placeholder={rol === 'profesor' ? 'Ej: Andres Tapia Vergara' : 'Ej: Natalia Osorio Rojas'} autoFocus />
           </div>
-          <div className=”form-field”><label>Correo institucional</label>
-            <input type=”email” value={email} onChange={e=>setEmail(e.target.value)} placeholder=”nombre@usach.cl”/>
+          <div className="form-field">
+            <label>Correo institucional</label>
+            <input type="email" value={email} onChange={function(e){ setEmail(e.target.value); }} placeholder="nombre@usach.cl" />
           </div>
-          <div className=”form-field”><label>Contraseña inicial</label>
+          <div className="form-field">
+            <label>Contrasena inicial</label>
             <div style={{ display:'flex', gap:8 }}>
-              <input value={pw} onChange={e=>setPw(e.target.value)} placeholder=”Mínimo 6 caracteres” style={{ flex:1 }}/>
-              <button type=”button” className=”btn btn-ghost btn-sm” onClick={genPw}>Generar</button>
+              <input value={pw} onChange={function(e){ setPw(e.target.value); }} placeholder="Minimo 6 caracteres" style={{ flex:1 }} />
+              <button type="button" className="btn btn-ghost btn-sm" onClick={genPw}>Generar</button>
             </div>
-            <div className=”muted” style={{ fontSize:11.5, marginTop:4 }}>El usuario podrá cambiarla luego con “¿Olvidaste tu contraseña?”.</div>
+            <div className="muted" style={{ fontSize:11.5, marginTop:4 }}>El usuario podra cambiarla luego con la opcion de restablecer contrasena.</div>
           </div>
           {rol === 'profesor' && (
-            <div className=”form-field”><label>Prácticas que imparte</label>
-              <div className=”toggle-grid”>
-                {PRACS.map(p => (
-                  <button key={p} type=”button” className={`toggle-btn ${pracs.includes(p)?'on':''}`} onClick={() => togglePrac(p)}>
-                    Práctica {p}
-                  </button>
-                ))}
+            <div className="form-field">
+              <label>Practicas que imparte</label>
+              <div className="toggle-grid">
+                {PRACS.map(function(p) {
+                  return (
+                    <button key={p} type="button" className={'toggle-btn ' + (pracs.includes(p) ? 'on' : '')} onClick={function(){ togglePrac(p); }}>
+                      Practica {p}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
         </div>
-        <div className=”modal-foot”>
-          <button className=”btn btn-ghost” onClick={onClose}>Cancelar</button>
-          <button className=”btn btn-primary” disabled={busy} onClick={submit}>{busy ? 'Creando…' : 'Crear acceso'}</button>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" disabled={busy} onClick={submit}>{busy ? 'Creando...' : 'Crear acceso'}</button>
         </div>
       </div>
     </div>

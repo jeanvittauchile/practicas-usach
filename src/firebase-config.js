@@ -13,12 +13,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const FIREBASE_CONFIG = {
-  apiKey:            'PEGA_TU_API_KEY_AQUI',
-  authDomain:        'tu-proyecto.firebaseapp.com',
-  projectId:         'tu-proyecto',
-  storageBucket:     'tu-proyecto.appspot.com',
-  messagingSenderId: '000000000000',
-  appId:             '1:000000000000:web:0000000000000000',
+  apiKey:            'AIzaSyDDlu7KPcCVGmN0qxQZvf_DipwyhJEThYo',
+  authDomain:        'practicas-usach.firebaseapp.com',
+  projectId:         'practicas-usach',
+  storageBucket:     'practicas-usach.firebasestorage.app',
+  messagingSenderId: '536298256142',
+  appId:             '1:536298256142:web:e443afba40e56695be895f',
 };
 
 // ─── Modo DEMO ─────────────────────────────────────────────────────────────

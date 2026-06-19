@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    function isCoord() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'coordinador';
+    }
+
+    function authorizedCoordEmail() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/config/acceso)
+        && request.auth.token.email.lower() in get(/databases/$(database)/documents/config/acceso).data.coordinadores;
+    }
+
+    // ── Datos de la aplicación (espejo clave-valor) ──
+    // Profesores y coordinación comparten estos documentos (estudiantes,
+    // cartas, centros, disponibilidad horaria, notas por práctica…).
+    match /kv/{key} {
+      allow read, write: if signedIn();
+    }
+
+    // ── Perfiles y roles ──
+    match /usuarios/{uid} {
+      allow read: if signedIn();
+      // El coordinador gestiona todas las cuentas.
+      allow create, update, delete: if isCoord();
+      // Auto-alta del coordinador autorizado en su primer ingreso.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.rol == 'coordinador'
+        && authorizedCoordEmail();
+    }
+
+    // ── Lista de coordinadores autorizados ──
+    match /config/{doc} {
+      allow read: if signedIn();
+      allow write: if isCoord();
+    }
+  }
+}

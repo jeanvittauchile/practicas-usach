@@ -1,0 +1,9 @@
+{
+  "name": "practicas-usach",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de gestión de prácticas — Carrera Entrenador Deportivo, USACH",
+  "scripts": {
+    "dev": "npx --yes serve ."
+  }
+}

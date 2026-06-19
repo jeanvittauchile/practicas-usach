@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Prácticas USACH — Ingreso</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="src/firebase-config.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --teal: #009688; --teal-d: #00796B; --teal-l: #e0f2f1;
+      --ink: #1a2332; --ink-mid: #4b5563; --ink-lt: #9ca3af;
+      --bg: #fff; --border: #e5e7eb; --err: #dc2626;
+      --r: 12px; --shadow: 0 4px 24px rgba(0,0,0,.12);
+    }
+    body {
+      font-family: 'Source Sans 3', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .wrap { width: 100%; max-width: 420px; }
+
+    /* Card */
+    .card {
+      background: var(--bg); border-radius: var(--r); box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-head {
+      background: linear-gradient(105deg, #00695C, var(--teal));
+      padding: 28px 32px; display: flex; align-items: center; gap: 16px;
+    }
+    .card-head img { width: 52px; height: 52px; border-radius: 8px; background: rgba(255,255,255,.18); object-fit: contain; }
+    .card-head-text h1 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+    .card-head-text p { font-size: 12.5px; color: rgba(255,255,255,.82); }
+    .card-body { padding: 28px 32px; }
+
+    /* Fields */
+    .field { margin-bottom: 18px; }
+    .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-mid); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .04em; }
+    .field input {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px;
+      font-family: inherit; font-size: 15px; color: var(--ink); background: var(--bg);
+      transition: border-color .15s;
+    }
+    .field input:focus { outline: none; border-color: var(--teal); }
+    .field input.has-error { border-color: var(--err); }
+
+    /* Submit */
+    .btn-submit {
+      width: 100%; padding: 12px; background: var(--teal); color: #fff;
+      border: none; border-radius: 8px; font-family: inherit; font-size: 15px;
+      font-weight: 600; cursor: pointer; transition: background .15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      margin-top: 4px;
+    }
+    .btn-submit:hover:not(:disabled) { background: var(--teal-d); }
+    .btn-submit:disabled { opacity: .6; cursor: default; }
+    .spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,.4); border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    .error { color: var(--err); font-size: 13px; margin-top: 12px; padding: 10px 14px; background: #fef2f2; border-radius: 8px; display: none; }
+    .error.show { display: block; }
+
+    /* Demo box */
+    .demo-box {
+      margin-top: 20px; padding: 14px 16px;
+      background: var(--teal-l); border-radius: 8px; border: 1px solid #b2dfdb;
+    }
+    .demo-box strong { display: block; font-size: 12px; font-weight: 700; color: #00695C; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+    .demo-creds { display: grid; gap: 6px; }
+    .demo-row { display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
+    .demo-role { font-weight: 700; color: var(--ink); min-width: 90px; }
+    .demo-email { color: var(--ink-mid); font-size: 12.5px; }
+    .demo-pill { font-size: 10.5px; padding: 1px 7px; border-radius: 12px; font-weight: 600; }
+    .pill-coord { background: #FFF3E0; color: #E65100; }
+    .pill-prof  { background: #E3F2FD; color: #1565C0; }
+    .btn-fill { background: none; border: none; cursor: pointer; color: var(--teal); font-size: 11.5px; text-decoration: underline; padding: 0; font-family: inherit; }
+
+    /* Footer note */
+    .footer-note { text-align: center; margin-top: 20px; font-size: 12px; color: rgba(255,255,255,.45); }
+    .firebase-badge { margin-top: 12px; text-align: center; font-size: 11px; color: rgba(255,255,255,.3); }
+    .badge-ok   { color: #4ade80; font-weight: 700; }
+    .badge-demo { color: #fbbf24; font-weight: 700; }
+
+    @media (max-width: 480px) { .card-body { padding: 22px 20px; } .card-head { padding: 22px 20px; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="card-head">
+      <img src="src/usach-logo.png" alt="USACH" onerror="this.style.display='none'"/>
+      <div class="card-head-text">
+        <h1>Prácticas USACH</h1>
+        <p>Entrenador Deportivo &middot; Sistema de Gestión</p>
+      </div>
+    </div>
+    <div class="card-body">
+      <form id="login-form">
+        <div class="field">
+          <label>Correo institucional</label>
+          <input type="email" id="email" placeholder="nombre@usach.cl" autocomplete="username" required/>
+        </div>
+        <div class="field">
+          <label>Contraseña</label>
+          <input type="password" id="password" placeholder="Contraseña" autocomplete="current-password" required/>
+        </div>
+        <div class="error" id="error-msg"></div>
+        <button type="submit" class="btn-submit" id="btn-submit">
+          <span id="btn-label">Ingresar al sistema</span>
+        </button>
+      </form>
+
+      <div id="reset-row" style="text-align:center; margin-top:14px; display:none;">
+        <button class="btn-fill" id="reset-btn">¿Olvidaste tu contraseña?</button>
+      </div>
+
+      <div class="demo-box" id="demo-box">
+        <strong>✦ Modo demo — credenciales de prueba</strong>
+        <div class="demo-creds">
+          <div class="demo-row">
+            <span class="demo-role">Coordinador <span class="demo-pill pill-coord">COORD</span></span>
+            <span class="demo-email">coordinador@usach.cl / usach2025</span>
+            <button class="btn-fill" onclick="fillDemo('coordinador@usach.cl','usach2025')">Usar</button>
+          </div>
+          <div class="demo-row">
+            <span class="demo-role">Profesor <span class="demo-pill pill-prof">PROF</span></span>
+            <span class="demo-email">andres.tapia@usach.cl / usach2025</span>
+            <button class="btn-fill" onclick="fillDemo('andres.tapia@usach.cl','usach2025')">Usar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="firebase-badge" id="mode-badge"></div>
+  <div class="footer-note">Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas</div>
+</div>
+
+<script>
+// Show mode badge
+document.getElementById('mode-badge').innerHTML = DEMO_MODE
+  ? '<span class="badge-demo">⬡ MODO DEMO</span> — sin Firebase · datos en localStorage'
+  : '<span class="badge-ok">⬡ Firebase conectado</span>';
+document.getElementById('demo-box').style.display = DEMO_MODE ? 'block' : 'none';
+document.getElementById('reset-row').style.display = DEMO_MODE ? 'none' : 'block';
+
+// Restablecer contraseña (solo Firebase)
+document.getElementById('reset-btn').addEventListener('click', async () => {
+  const email = (document.getElementById('email').value || '').trim().toLowerCase();
+  if (!email) { showError('Escribe tu correo arriba y vuelve a pulsar “¿Olvidaste tu contraseña?”.'); return; }
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    await firebase.auth().sendPasswordResetEmail(email);
+    hideError();
+    const el = document.getElementById('error-msg');
+    el.style.background = '#ecfdf5'; el.style.color = '#047857';
+    el.textContent = 'Te enviamos un correo para restablecer tu contraseña.';
+    el.classList.add('show');
+  } catch (err) { showError(err.message); }
+});
+
+function fillDemo(email, pw) {
+  document.getElementById('email').value = email;
+  document.getElementById('password').value = pw;
+  document.getElementById('email').focus();
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideError() { document.getElementById('error-msg').classList.remove('show'); }
+function setLoading(on) {
+  const btn = document.getElementById('btn-submit');
+  const lbl = document.getElementById('btn-label');
+  btn.disabled = on;
+  btn.innerHTML = on
+    ? '<div class="spinner"></div><span>Verificando...</span>'
+    : '<span id="btn-label">Ingresar al sistema</span>';
+}
+
+async function doLogin(email, password) {
+  if (DEMO_MODE) {
+    const u = DEMO_USERS[email];
+    if (!u || u.password !== password) throw new Error('Correo o contraseña incorrectos.');
+    return { uid: email, email, nombre: u.nombre, rol: u.rol };
+  }
+  // Firebase mode
+  if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+  await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
+  const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
+  const uid = cred.user.uid;
+  const db = firebase.firestore();
+  const snap = await db.collection('usuarios').doc(uid).get();
+  if (snap.exists) return { uid, email, ...snap.data() };
+
+  // Sin doc de rol: ¿está en la lista de coordinadores autorizados?
+  let coordinadores = [];
+  try {
+    const acc = await db.collection('config').doc('acceso').get();
+    if (acc.exists) coordinadores = (acc.data().coordinadores || []).map(e => String(e).toLowerCase());
+  } catch (e) { /* reglas pueden bloquear; se ignora */ }
+
+  if (coordinadores.includes(email.toLowerCase())) {
+    // Auto-alta del coordinador la primera vez que ingresa
+    const perfil = { email, nombre: cred.user.displayName || email.split('@')[0], rol: 'coordinador', creadoEn: Date.now() };
+    try { await db.collection('usuarios').doc(uid).set(perfil); } catch (e) { /* si las reglas lo impiden, igual entra */ }
+    return { uid, ...perfil };
+  }
+  throw new Error('Usuario no registrado en el sistema. Contacta al coordinador.');
+}
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideError();
+  const email = document.getElementById('email').value.trim().toLowerCase();
+  const password = document.getElementById('password').value;
+  if (!email || !password) { showError('Completa todos los campos.'); return; }
+  setLoading(true);
+  try {
+    const user = await doLogin(email, password);
+    setAuthUser(user);
+    window.location.href = user.rol === 'coordinador' ? 'Coordinador.html' : 'App Prácticas USACH.html';
+  } catch (err) {
+    showError(err.message || 'Error al ingresar. Intenta nuevamente.');
+    setLoading(false);
+  }
+});
+
+// Auto-redirect if already logged in
+const existing = getAuthUser();
+if (existing) {
+  window.location.replace(existing.rol === 'coordinador' ? 'Coordinador.html' : 'App Prácticas USACH.html');
+}
+</script>
+</body>
+</html>

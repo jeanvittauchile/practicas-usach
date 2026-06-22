@@ -129,6 +129,9 @@ function NuevoUsuarioModal({ PRACS, saveProf, onClose, onCreated, toast }) {
           practicasAsignadas: pracs,
           horasAsignadas: 0,
           disponibilidad: [],
+          titulo: 'Profesor Supervisor',
+          telefono: '',
+          bio: '',
         });
       }
       var tipo = rol === 'coordinador' ? 'Coordinador/a' : 'Profesor/a';

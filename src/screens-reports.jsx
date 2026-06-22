@@ -193,6 +193,7 @@ function NotasReportModal({ ctx, onClose }) {
   const meta = D.meta || {};
   const cols = D.NOTAS_COLUMNS || [];
   const estudiantes = ctx.state.estudiantes || D.ESTUDIANTES;
+  const prof = window.readProfProfile ? window.readProfProfile() : {};
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -241,7 +242,9 @@ function NotasReportModal({ ctx, onClose }) {
               Exigencia 60% · Aprobación con nota 4,0 · Las notas en rojo indican reprobación.
             </div>
             <div style={{ marginTop: 32, paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--ink-500)' }}>
-              Firma profesor evaluador: ________________________________
+              {prof.nombre
+                ? <span>Firma: <strong>{prof.nombre}</strong>{prof.titulo ? ' · ' + prof.titulo : ''} ________________________________</span>
+                : <span>Firma profesor evaluador: ________________________________</span>}
               <span style={{ marginLeft: 48 }}>Fecha: ________________</span>
             </div>
           </div>
@@ -269,6 +272,7 @@ function StudentReportModal({ est, ctx, onClose }) {
   const supResolver = (D.RESOLVERS || {}).SUP ? D.RESOLVERS.SUP(est.id, ctx.state) : null;
   const autoResolver = (D.RESOLVERS || {}).AUTO ? D.RESOLVERS.AUTO(est.id, ctx.state) : null;
   const supComment = supervisorComments?.[est.id] || '';
+  const prof = window.readProfProfile ? window.readProfProfile() : {};
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -324,6 +328,18 @@ function StudentReportModal({ est, ctx, onClose }) {
                 </div>
               </div>
             </div>
+
+            {(prof.nombre || prof.titulo) && (
+              <div style={{ marginTop: 20, padding: '12px 16px', background: 'var(--surface-1)', borderRadius: 8, display: 'flex', gap: 24, alignItems: 'flex-start', fontSize: 11.5 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-500)', fontWeight: 700, marginBottom: 4 }}>Profesor Supervisor</div>
+                  <div style={{ fontWeight: 700, color: 'var(--ink-900)' }}>{prof.nombre}</div>
+                  {prof.titulo && <div style={{ color: 'var(--ink-600)', marginTop: 1 }}>{prof.titulo}</div>}
+                </div>
+                {prof.email && <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-500)', fontWeight: 700, marginBottom: 4 }}>Email</div><div style={{ color: 'var(--ink-700)' }}>{prof.email}</div></div>}
+                {prof.telefono && <div style={{ minWidth: 0 }}><div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--ink-500)', fontWeight: 700, marginBottom: 4 }}>Telefono</div><div style={{ color: 'var(--ink-700)' }}>{prof.telefono}</div></div>}
+              </div>
+            )}
 
             <div style={{ marginTop: 32 }}>
               <h4 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-500)', marginBottom: 8 }}>Resumen por componente</h4>

@@ -4,12 +4,57 @@
 const { useState: useStateS } = React;
 
 // ═══ PROFILE ═════════════════════════════════════════════════
+function readProfProfile() {
+  const auth = window.__authUser || {};
+  try {
+    const profs = JSON.parse(localStorage.getItem('coord_profs') || '[]') || [];
+    const match = profs.find(function(p) { return (p.email || '').toLowerCase() === (auth.email || '').toLowerCase(); });
+    return {
+      nombre: auth.nombre || (match && match.nombre) || '',
+      email: auth.email || (match && match.email) || '',
+      titulo: (match && match.titulo) || 'Profesor Supervisor',
+      telefono: (match && match.telefono) || '',
+      bio: (match && match.bio) || '',
+      _idx: match ? profs.indexOf(match) : -1,
+      _id: match && match.id,
+    };
+  } catch (e) {
+    return { nombre: auth.nombre || '', email: auth.email || '', titulo: 'Profesor Supervisor', telefono: '', bio: '' };
+  }
+}
+
 function ProfileModal({ ctx, onClose }) {
-  const [name, setName] = useStateS('Andrés Tapia Vergara');
-  const [email, setEmail] = useStateS('andres.tapia@usach.cl');
-  const [phone, setPhone] = useStateS('+56 9 8412 3344');
-  const [title, setTitle] = useStateS('Profesor Supervisor');
-  const [bio, setBio] = useStateS('Magíster en Ciencias de la Actividad Física. 12 años acompañando prácticas de pregrado.');
+  const auth = window.__authUser || {};
+  const initial = readProfProfile();
+
+  const [name, setName] = useStateS(initial.nombre);
+  const [phone, setPhone] = useStateS(initial.telefono);
+  const [title, setTitle] = useStateS(initial.titulo);
+  const [bio, setBio] = useStateS(initial.bio);
+
+  const email = initial.email;
+
+  const save = () => {
+    try {
+      const profs = JSON.parse(localStorage.getItem('coord_profs') || '[]') || [];
+      const idx = profs.findIndex(function(p) { return (p.email || '').toLowerCase() === email.toLowerCase(); });
+      const updated = Object.assign({}, idx >= 0 ? profs[idx] : {}, {
+        nombre: name,
+        email: email,
+        titulo: title,
+        telefono: phone,
+        bio: bio,
+      });
+      if (!updated.id) updated.id = 'p_' + Date.now();
+      if (!updated.rol) updated.rol = 'profesor';
+      if (!updated.practicasAsignadas) updated.practicasAsignadas = auth.practicasAsignadas || [];
+      if (idx >= 0) profs[idx] = updated;
+      else profs.push(updated);
+      localStorage.setItem('coord_profs', JSON.stringify(profs));
+    } catch (e) {}
+    ctx.toast('Perfil actualizado');
+    onClose();
+  };
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -22,31 +67,33 @@ function ProfileModal({ ctx, onClose }) {
         <div className="modal-body" style={{ background: 'var(--bg)', padding: 22 }}>
           <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 22, padding: 14, background: 'var(--surface-1)', borderRadius: 10 }}>
             <div className="avatar" style={{ width: 64, height: 64, fontSize: 22, background: 'linear-gradient(135deg, var(--teal-400), var(--orange-500))' }}>
-              {name.split(' ').slice(0,2).map(n => n[0]).join('')}
+              {name.split(' ').slice(0,2).map(function(n) { return n[0]; }).join('')}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: 15 }}>{name}</div>
               <div className="muted" style={{ fontSize: 12.5 }}>{title} · {email}</div>
             </div>
-            <button className="btn btn-secondary btn-sm"><I.upload size={14} /> Cambiar foto</button>
           </div>
           <div className="col" style={{ gap: 14 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Field label="Nombre completo"><input className="input" value={name} onChange={e => setName(e.target.value)} /></Field>
-              <Field label="Cargo"><input className="input" value={title} onChange={e => setTitle(e.target.value)} /></Field>
+              <Field label="Nombre completo"><input className="input" value={name} onChange={function(e) { setName(e.target.value); }} /></Field>
+              <Field label="Cargo / Título"><input className="input" value={title} onChange={function(e) { setTitle(e.target.value); }} /></Field>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              <Field label="Email institucional"><input className="input" value={email} onChange={e => setEmail(e.target.value)} /></Field>
-              <Field label="Teléfono"><input className="input" value={phone} onChange={e => setPhone(e.target.value)} /></Field>
+              <Field label="Email institucional"><input className="input" value={email} readOnly style={{ opacity: 0.7 }} /></Field>
+              <Field label="Teléfono"><input className="input" value={phone} onChange={function(e) { setPhone(e.target.value); }} placeholder="+56 9 XXXX XXXX" /></Field>
             </div>
             <Field label="Biografía breve">
-              <textarea className="input" style={{ minHeight: 80, resize: 'vertical', fontFamily: 'inherit', padding: 10 }} value={bio} onChange={e => setBio(e.target.value)} />
+              <textarea className="input" style={{ minHeight: 80, resize: 'vertical', fontFamily: 'inherit', padding: 10 }} value={bio} onChange={function(e) { setBio(e.target.value); }} placeholder="Breve descripción de tu experiencia y formación académica." />
             </Field>
+          </div>
+          <div style={{ marginTop: 14, padding: 10, background: 'var(--teal-50)', borderRadius: 8, fontSize: 12, color: 'var(--teal-800)' }}>
+            Estos datos se usan en los informes PDF generados para los estudiantes.
           </div>
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primary" onClick={() => { ctx.toast('Perfil actualizado'); onClose(); }}>Guardar cambios</button>
+          <button className="btn btn-primary" onClick={save}>Guardar cambios</button>
         </div>
       </div>
     </div>
@@ -568,5 +615,5 @@ function ToggleRow({ checked, onChange, title, desc }) {
 Object.assign(window, {
   ProfileModal, CoursePrefsModal, NotificationsSettingsModal,
   IntegrationsModal, DriveConfigModal, ExportModal, HelpModal, LogoutModal,
-  DisponibilidadModal, ToggleRow,
+  DisponibilidadModal, ToggleRow, readProfProfile,
 });

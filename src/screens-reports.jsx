@@ -167,6 +167,8 @@ function ReportTargetPicker({ pick, ctx, onBack, onClose }) {
 }
 
 function GeneralReportModal({ ctx, onClose }) {
+  const bodyRef = React.useRef(null);
+  const title = 'Informe general — ' + ((window.USACH_DATA.meta || {}).breadcrumb || 'Practica');
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -175,13 +177,13 @@ function GeneralReportModal({ ctx, onClose }) {
           <h3 className="h3" style={{ margin: 0 }}>Informe general del curso — {(window.USACH_DATA.meta || {}).breadcrumb || 'Práctica'}</h3>
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
         </div>
-        <div className="modal-body">
+        <div className="modal-body" ref={bodyRef}>
           <window.PdfGeneral />
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-          <button className="btn btn-secondary"><I.print /> Imprimir</button>
-          <button className="btn btn-primary"><I.download /> Descargar PDF</button>
+          <button className="btn btn-secondary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, title, false); }}><I.print /> Imprimir</button>
+          <button className="btn btn-primary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, title, true); }}><I.download /> Descargar PDF</button>
         </div>
       </div>
     </div>
@@ -194,6 +196,8 @@ function NotasReportModal({ ctx, onClose }) {
   const cols = D.NOTAS_COLUMNS || [];
   const estudiantes = ctx.state.estudiantes || D.ESTUDIANTES;
   const prof = window.readProfProfile ? window.readProfProfile() : {};
+  const bodyRef = React.useRef(null);
+  const title = 'Tabla de notas — ' + (meta.breadcrumb || 'Practica');
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -202,7 +206,7 @@ function NotasReportModal({ ctx, onClose }) {
           <h3 className="h3" style={{ margin: 0 }}>Tabla de notas — {meta.breadcrumb || 'Práctica'}</h3>
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
         </div>
-        <div className="modal-body">
+        <div className="modal-body" ref={bodyRef}>
           <div className="pdf-page" style={{ padding: '40px 48px' }}>
             <div className="pdf-head">
               <div>
@@ -251,9 +255,8 @@ function NotasReportModal({ ctx, onClose }) {
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-          <button className="btn btn-secondary"><I.print /> Imprimir</button>
-          <button className="btn btn-secondary"><I.download /> Excel</button>
-          <button className="btn btn-primary"><I.download /> PDF</button>
+          <button className="btn btn-secondary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, title, false); }}><I.print /> Imprimir</button>
+          <button className="btn btn-primary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, title, true); }}><I.download /> PDF</button>
         </div>
       </div>
     </div>
@@ -276,6 +279,8 @@ function StudentReportModal({ est, ctx, onClose }) {
   const feedbacks = (evaluaciones || []).map(function(ev) {
     return { ev, text: evalFeedback?.[ev.id]?.[est.id] || '' };
   }).filter(function(f) { return f.text; });
+  const bodyRef = React.useRef(null);
+  const title = 'Informe individual — ' + est.nombre;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -286,7 +291,7 @@ function StudentReportModal({ est, ctx, onClose }) {
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
         </div>
 
-        <div className="modal-body">
+        <div className="modal-body" ref={bodyRef}>
           {/* PORTADA */}
           <div className="pdf-page" style={{ padding: '64px 64px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 50 }}>
@@ -582,8 +587,8 @@ function StudentReportModal({ est, ctx, onClose }) {
           <button className="btn btn-secondary" onClick={() => ctx.toast('Informe enviado al email del estudiante')}>
             <I.send /> Enviar por email
           </button>
-          <button className="btn btn-secondary"><I.print /> Imprimir</button>
-          <button className="btn btn-primary"><I.download /> Descargar PDF</button>
+          <button className="btn btn-secondary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, title, false); }}><I.print /> Imprimir</button>
+          <button className="btn btn-primary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, title, true); }}><I.download /> Descargar PDF</button>
         </div>
       </div>
     </div>

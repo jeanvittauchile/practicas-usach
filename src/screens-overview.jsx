@@ -4,6 +4,18 @@
 const D = window.USACH_DATA;
 const C = window.USACH_CALC;
 
+function openPrintWindow(contentEl, title, autoClose) {
+  const w = window.open('', '_blank', 'width=960,height=760');
+  if (!w) return;
+  const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+    .map(function(el) { return el.outerHTML; }).join('\n');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + title + '</title>' + styles + '<style>body{background:#fff;margin:0;padding:0;}</style></head><body>' + contentEl.innerHTML + '</body></html>');
+  w.document.close();
+  w.focus();
+  if (autoClose) w.onafterprint = function() { w.close(); };
+  setTimeout(function() { w.print(); }, 600);
+}
+
 // ═════════════════════════════════════════════════════════════
 // DASHBOARD
 // ═════════════════════════════════════════════════════════════
@@ -918,6 +930,18 @@ function UploadAnexoModal({ evalId, ctx, onClose }) {
 function PdfPreviewModal({ kind, ev, est, ctx, onClose }) {
   const state = ctx.state;
   const isStudent = kind === 'student' && est && ev;
+  const bodyRef = React.useRef(null);
+
+  const title = kind === 'general'
+    ? 'Reporte general'
+    : isStudent ? 'Rubrica — ' + est.nombre : 'PDF';
+
+  function handlePrint() {
+    if (bodyRef.current) openPrintWindow(bodyRef.current, title, false);
+  }
+  function handleDownload() {
+    if (bodyRef.current) openPrintWindow(bodyRef.current, title, true);
+  }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -930,14 +954,14 @@ function PdfPreviewModal({ kind, ev, est, ctx, onClose }) {
           </h3>
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
         </div>
-        <div className="modal-body">
+        <div className="modal-body" ref={bodyRef}>
           {kind === 'general' && <PdfGeneral />}
           {isStudent && <PdfRubrica ev={ev} est={est} state={state} />}
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-          <button className="btn btn-secondary"><I.print /> Imprimir</button>
-          <button className="btn btn-primary"><I.download /> Descargar PDF</button>
+          <button className="btn btn-secondary" onClick={handlePrint}><I.print /> Imprimir</button>
+          <button className="btn btn-primary" onClick={handleDownload}><I.download /> Descargar PDF</button>
         </div>
       </div>
     </div>
@@ -1050,5 +1074,5 @@ function PdfRubrica({ ev, est, state }) {
 Object.assign(window, {
   Dashboard, EvaluacionesScreen, EvalCard, NotasScreen, notaColumna,
   EstudiantesScreen, AnexosScreen, EvalAnexosModal, UploadAnexoModal,
-  PdfPreviewModal, PdfGeneral, PdfRubrica, Field,
+  PdfPreviewModal, PdfGeneral, PdfRubrica, Field, openPrintWindow,
 });

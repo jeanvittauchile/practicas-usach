@@ -267,12 +267,15 @@ function NotasReportModal({ ctx, onClose }) {
 function StudentReportModal({ est, ctx, onClose }) {
   const D = window.USACH_DATA;
   const meta = D.meta || {};
-  const { evaluaciones, niveles, atrasos, supervisor, autoeval, supervisorComments } = ctx.state;
+  const { evaluaciones, niveles, atrasos, supervisor, autoeval, supervisorComments, evalFeedback } = ctx.state;
   const finalR = Cr.calcNotaFinal(est.id, ctx.state);
   const supResolver = (D.RESOLVERS || {}).SUP ? D.RESOLVERS.SUP(est.id, ctx.state) : null;
   const autoResolver = (D.RESOLVERS || {}).AUTO ? D.RESOLVERS.AUTO(est.id, ctx.state) : null;
   const supComment = supervisorComments?.[est.id] || '';
   const prof = window.readProfProfile ? window.readProfProfile() : {};
+  const feedbacks = (evaluaciones || []).map(function(ev) {
+    return { ev, text: evalFeedback?.[ev.id]?.[est.id] || '' };
+  }).filter(function(f) { return f.text; });
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -523,6 +526,21 @@ function StudentReportModal({ est, ctx, onClose }) {
                     ))}
                   </tbody>
                 </table>
+              </SectionPdf>
+            )}
+
+            {feedbacks.length > 0 && (
+              <SectionPdf title="Feedback por evaluación" accent="teal">
+                <div className="col" style={{ gap: 10 }}>
+                  {feedbacks.map(function(f) {
+                    return (
+                      <div key={f.ev.id} style={{ padding: 12, border: '1px solid var(--border)', borderRadius: 6, background: 'var(--bg)' }}>
+                        <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-500)', fontWeight: 700, marginBottom: 4 }}>{f.ev.titulo}</div>
+                        <div style={{ fontSize: 12, lineHeight: 1.55 }}>{f.text}</div>
+                      </div>
+                    );
+                  })}
+                </div>
               </SectionPdf>
             )}
 

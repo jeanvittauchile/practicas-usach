@@ -452,7 +452,7 @@
         evaluaciones: EVALUACIONES.map(e => ({ ...e })),
         estudiantes: [],
         niveles: {}, atrasos: {}, terreno: {}, tutor: {},
-        supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalAnexos: {},
+        supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
       }),
     };
   }

@@ -277,6 +277,13 @@ function App() {
       ...s,
       [key]: { ...(s[key] || {}), [estId]: text },
     })),
+    setEvalFeedback: (evId, estId, text) => setState(s => ({
+      ...s,
+      evalFeedback: {
+        ...(s.evalFeedback || {}),
+        [evId]: { ...((s.evalFeedback || {})[evId] || {}), [estId]: text },
+      },
+    })),
     openReports: () => setReportsOpen(true),
     setDriveUrl: (url) => setTweak('driveUrl', url),
     addEvalAnexo: (evId, anexo) => setState(s => ({
@@ -405,7 +412,7 @@ function App() {
 function initialState(kind) {
   const D = window.USACH_DATA;
   if (D.initialState) return D.initialState(kind);
-  return { evaluaciones: [], estudiantes: [], niveles: {}, atrasos: {}, supervisor: {}, autoeval: {}, supervisorComments: {}, autoevalComments: {} };
+  return { evaluaciones: [], estudiantes: [], niveles: {}, atrasos: {}, supervisor: {}, autoeval: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {} };
 }
 
 // ─── Persistencia por práctica (localStorage, compartido entre cuentas) ────

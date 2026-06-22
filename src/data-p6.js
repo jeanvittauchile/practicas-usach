@@ -802,7 +802,7 @@
           evaluaciones: EVALUACIONES.map(e => ({ ...e })),
           estudiantes: ESTUDIANTES.map(e => ({ ...e })),
           niveles: {}, atrasos: {}, terreno: {}, tutor: {}, autoeval: {}, semestral: {},
-          supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalAnexos: {},
+          supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
         };
         if (estado === 'vacio') return { ...base, estudiantes: [] };
         return {

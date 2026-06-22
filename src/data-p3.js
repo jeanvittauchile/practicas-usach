@@ -568,7 +568,7 @@
             evaluaciones: EVALUACIONES.map(e => ({ ...e, estado: 'pendiente' })),
             estudiantes: ESTUDIANTES.map(e => ({ ...e })),
             niveles: {}, atrasos: {}, terreno: {}, tutor: {}, autoeval: {}, semestral: {},
-            supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalAnexos: {},
+            supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
           };
         }
         return {

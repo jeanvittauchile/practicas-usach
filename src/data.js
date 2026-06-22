@@ -690,7 +690,7 @@ function buildPracticaI() {
           estudiantes: ESTUDIANTES_P1.map(e => ({ ...e })),
           niveles: {}, atrasos: {}, supervisor: {}, autoeval: {},
           supervisorDims: JSON.parse(JSON.stringify(SUPERVISOR_DIMENSIONES_P1)),
-          supervisorComments: {}, autoevalComments: {}, evalAnexos: {},
+          supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
         };
       }
       return {

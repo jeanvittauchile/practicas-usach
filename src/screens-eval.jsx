@@ -496,8 +496,9 @@ function RubricaBatch({ evalId, ctx, onBack }) {
                     {r && r.ajuste > 0 && <div style={{ fontSize: 9.5, color: 'var(--warn)', marginTop: 1 }}>−{r.ajuste.toFixed(1)}</div>}
                   </td>
                   <td className="nota-cell">
-                    <button className="btn btn-ghost btn-sm" onClick={() => setShowFeedback(est)} title="Agregar feedback">
+                    <button className="btn btn-ghost btn-sm" style={{ position: 'relative' }} onClick={() => setShowFeedback(est)} title={ctx.state.evalFeedback?.[ev.id]?.[est.id] ? 'Editar feedback' : 'Agregar feedback'}>
                       <I.edit size={14} />
+                      {ctx.state.evalFeedback?.[ev.id]?.[est.id] && <span style={{ position: 'absolute', top: 2, right: 2, width: 6, height: 6, borderRadius: 3, background: 'var(--teal-500)' }} />}
                     </button>
                   </td>
                 </tr>
@@ -546,7 +547,8 @@ function RubricaBatch({ evalId, ctx, onBack }) {
 }
 
 function FeedbackModal({ est, ev, onClose, ctx }) {
-  const [text, setText] = useState('Buen desarrollo del análisis. Considera reforzar las conclusiones y revisar la ortografía en el cierre.');
+  const initial = ctx.state.evalFeedback?.[ev.id]?.[est.id] || '';
+  const [text, setText] = useState(initial);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
@@ -556,14 +558,16 @@ function FeedbackModal({ est, ev, onClose, ctx }) {
         </div>
         <div className="modal-body" style={{ background: 'var(--bg)', padding: 22 }}>
           <div className="muted" style={{ fontSize: 12.5, marginBottom: 8 }}>
-            {ev.titulo} · Aparecerá en el PDF individual.
+            {ev.titulo} · Aparecerá en el informe individual del estudiante.
           </div>
           <textarea className="input" style={{ width: '100%', minHeight: 160, resize: 'vertical', fontFamily: 'inherit', padding: 12 }}
-                    value={text} onChange={e => setText(e.target.value)} />
+                    placeholder="Observaciones sobre el desempeño en esta evaluación…"
+                    value={text} onChange={function(e) { setText(e.target.value); }} autoFocus />
+          <div className="muted" style={{ fontSize: 11, marginTop: 6 }}>{text.length} caracteres</div>
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primary" onClick={() => { ctx.toast('Feedback guardado'); onClose(); }}>Guardar</button>
+          <button className="btn btn-primary" onClick={function() { ctx.setEvalFeedback(ev.id, est.id, text); ctx.toast('Feedback guardado'); onClose(); }}>Guardar</button>
         </div>
       </div>
     </div>

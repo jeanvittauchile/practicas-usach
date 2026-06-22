@@ -987,6 +987,8 @@ function PdfRubrica({ ev, est, state }) {
   const nivelesSet = C.nivelesSetForEval(ev);
   const grupo = window.grupoDef(ev.grupo);
   const r = C.calcNotaEvaluacion(ev, state.niveles[ev.id]?.[est.id], state.atrasos[ev.id]?.[est.id]);
+  const prof = window.readProfProfile ? window.readProfProfile() : {};
+  const feedback = state.evalFeedback?.[ev.id]?.[est.id] || '';
   return (
     <div className="pdf-page">
       <div className="pdf-head">
@@ -998,7 +1000,7 @@ function PdfRubrica({ ev, est, state }) {
       </div>
       <div className="pdf-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, fontSize: 11.5 }}>
         <div><strong>Estudiante:</strong> {est.nombre}<br /><strong>RUT:</strong> {est.rut}</div>
-        <div><strong>Fecha entrega:</strong> {fechaFmt(ev.fecha)}<br /><strong>Profesor:</strong> Andrés Tapia Vergara</div>
+        <div><strong>Fecha entrega:</strong> {fechaFmt(ev.fecha)}<br /><strong>Profesor:</strong> {prof.nombre || '—'}{prof.titulo ? ' · ' + prof.titulo : ''}</div>
       </div>
       <div className="pdf-section">
         <h3>Rúbrica</h3>
@@ -1037,8 +1039,8 @@ function PdfRubrica({ ev, est, state }) {
       </div>
       <div className="pdf-section">
         <h3>Feedback del docente</h3>
-        <div style={{ fontSize: 11.5, lineHeight: 1.6, padding: 10, border: '1px dashed #ccc', borderRadius: 4, minHeight: 60 }}>
-          Buen trabajo en el desarrollo del análisis comparado. Considera reforzar las conclusiones con bibliografía revisada en clases y mejorar la coherencia gramatical en el cierre.
+        <div style={{ fontSize: 11.5, lineHeight: 1.6, padding: 10, border: '1px dashed #ccc', borderRadius: 4, minHeight: 60, fontStyle: feedback ? 'normal' : 'italic', color: feedback ? 'inherit' : '#999' }}>
+          {feedback || 'Sin feedback registrado para esta evaluación.'}
         </div>
       </div>
     </div>

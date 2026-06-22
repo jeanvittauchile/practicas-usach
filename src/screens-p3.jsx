@@ -71,7 +71,7 @@ function SupervisorPIScreen({ ctx }) {
   const est = estudiantes.find(e => e.id === sel) || estudiantes[0];
   const area = D.areaDef(est.area);
   const visitas = (ctx.state.terreno && ctx.state.terreno[est.id]) || [];
-  const supRes = D.notaSupervisorP3(est.id, ctx.state);
+  const supRes = D.notaSupervisorPI(est.id, ctx.state);
   const tutorRes = window.USACH_CALC.calcInstrumento(ctx.state.tutor?.[est.id], D.TUTOR_DIMENSIONES, D.NIVELES.NIVELES_FREC, D.ESCALAS.ESCALA_TUTOR);
   const portRes = window.USACH_CALC.calcNotaEvaluacion(D.EVALUACIONES.find(e => e.id === 'PORT'), ctx.state.niveles['PORT']?.[est.id], ctx.state.atrasos['PORT']?.[est.id]);
 
@@ -116,7 +116,7 @@ function SupervisorPIScreen({ ctx }) {
                 </div>
               )}
               {group.items.map(e => {
-                const r = D.notaSupervisorP3(e.id, ctx.state);
+                const r = D.notaSupervisorPI(e.id, ctx.state);
                 const nVis = ((ctx.state.terreno && ctx.state.terreno[e.id]) || []).length;
                 const active = e.id === sel;
                 const ar = D.areaDef(e.area);

@@ -86,11 +86,20 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
       </nav>
 
       <div className="sidebar-footer">
-        <div className="avatar">{(window.__authUser?.nombre||'AT').split(' ').slice(0,2).map(w=>w[0]).join('')}</div>
-        <div className="user-meta">
-          <div className="uname">{window.__authUser?.nombre?.split(' ').slice(1,3).join(' ') || 'Andrés Tapia'}</div>
-          <div className="urole">Prof. Supervisor</div>
-        </div>
+        {(function() {
+          const p = (window.readProfProfile && window.readProfProfile()) || {};
+          const n = p.nombre || window.__authUser?.nombre || '';
+          const ini = n.split(' ').slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase() || '?';
+          return (
+            <>
+              <div className="avatar">{ini}</div>
+              <div className="user-meta">
+                <div className="uname">{n || '—'}</div>
+                <div className="urole">{p.titulo || 'Profesor Supervisor'}</div>
+              </div>
+            </>
+          );
+        })()}
         <button title="Cerrar sesión" onClick={() => { localStorage.removeItem('usach_auth_v2'); window.location.replace('Login.html'); }}
                 style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.45)', fontSize:16, padding:'4px 6px', borderRadius:6, lineHeight:1 }}>⏻</button>
       </div>
@@ -178,16 +187,22 @@ function NotificationsPanel({ onClose }) {
 
 // ─── Settings menu ──────────────────────────────────────────────
 function SettingsMenu({ onClose, onPick }) {
+  const prof = (window.readProfProfile && window.readProfProfile()) || {};
+  const nombre = prof.nombre || window.__authUser?.nombre || '';
+  const email  = prof.email  || window.__authUser?.email  || '';
+  const titulo = prof.titulo || 'Profesor Supervisor';
+  const initials = nombre.split(' ').slice(0, 2).map(function(w) { return w[0] || ''; }).join('').toUpperCase() || '?';
+
   const items = [
-    { id: 'profile',      icon: 'user',      label: 'Perfil',              desc: 'Andrés Tapia · Prof. Supervisor' },
-    { id: 'course',       icon: 'settings',  label: 'Preferencias del curso', desc: 'Práctica I · Semestre 2025-2' },
-    { id: 'disponibilidad', icon: 'clock',   label: 'Mi disponibilidad horaria', desc: 'Horarios para supervisión en terreno' },
-    { id: 'notifications',icon: 'bell',      label: 'Notificaciones',      desc: 'Email, atrasos, recordatorios' },
-    { id: 'integrations', icon: 'paperclip', label: 'Integraciones',       desc: 'Google Drive · Moodle' },
-    { id: 'export',       icon: 'download',  label: 'Exportar datos',      desc: 'Backup completo del curso' },
+    { id: 'profile',        icon: 'user',      label: 'Perfil',                    desc: nombre + (titulo ? ' · ' + titulo : '') },
+    { id: 'course',         icon: 'settings',  label: 'Preferencias del curso',     desc: 'Práctica I · Semestre 2025-2' },
+    { id: 'disponibilidad', icon: 'clock',     label: 'Mi disponibilidad horaria',  desc: 'Horarios para supervisión en terreno' },
+    { id: 'notifications',  icon: 'bell',      label: 'Notificaciones',             desc: 'Email, atrasos, recordatorios' },
+    { id: 'integrations',   icon: 'paperclip', label: 'Integraciones',              desc: 'Google Drive · Moodle' },
+    { id: 'export',         icon: 'download',  label: 'Exportar datos',             desc: 'Backup completo del curso' },
     { divider: true },
-    { id: 'help',         icon: 'doc',       label: 'Ayuda y documentación' },
-    { id: 'logout',       icon: 'x',         label: 'Cerrar sesión',        danger: true },
+    { id: 'help',           icon: 'doc',       label: 'Ayuda y documentación' },
+    { id: 'logout',         icon: 'x',         label: 'Cerrar sesión',              danger: true },
   ];
   return (
     <div style={{
@@ -198,10 +213,10 @@ function SettingsMenu({ onClose, onPick }) {
       padding: 6,
     }} onClick={e => e.stopPropagation()}>
       <div style={{ padding: '10px 12px 12px', borderBottom: '1px solid var(--border)', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div className="avatar" style={{ background: 'linear-gradient(135deg, var(--teal-400), var(--orange-500))' }}>AT</div>
+        <div className="avatar" style={{ background: 'linear-gradient(135deg, var(--teal-400), var(--orange-500))' }}>{initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-900)' }}>Andrés Tapia</div>
-          <div className="muted" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>andres.tapia@usach.cl</div>
+          <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--ink-900)' }}>{nombre || '—'}</div>
+          <div className="muted" style={{ fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</div>
         </div>
       </div>
       {items.map((it, i) => {

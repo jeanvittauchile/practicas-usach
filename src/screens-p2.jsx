@@ -29,6 +29,19 @@ function SupervisorP2Screen({ ctx }) {
   const [commentFor, setCommentFor] = useState(null);
   const [reportFor, setReportFor] = useState(null);
 
+  if (!estudiantes.length) {
+    return (
+      <div data-screen-label="Supervisión en terreno">
+        <div className="section-head"><div><h1>Supervisión en terreno</h1><div className="subtitle">Visitas al centro + evaluación de proceso · pondera 15% de la nota final</div></div></div>
+        <div className="card" style={{ textAlign: 'center', padding: 56, color: 'var(--ink-500)' }}>
+          <I.mapPin size={32} />
+          <div style={{ marginTop: 12, fontSize: 15, fontWeight: 600, color: 'var(--ink-700)' }}>Aún no hay estudiantes en esta práctica</div>
+          <div className="muted" style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>Agrega estudiantes desde <strong>Estudiantes</strong> para comenzar.</div>
+        </div>
+      </div>
+    );
+  }
+
   const est = estudiantes.find(e => e.id === sel) || estudiantes[0];
   const visitas = (ctx.state.terreno && ctx.state.terreno[est.id]) || [];
   const supRes = D.notaSupervisorP2(est.id, ctx.state);

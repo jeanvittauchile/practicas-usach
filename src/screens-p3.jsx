@@ -37,6 +37,19 @@ function SupervisorPIScreen({ ctx }) {
   const [reportFor, setReportFor] = useState(null);
   const [filterArea, setFilterArea] = useState('todas');
 
+  if (!estudiantes.length) {
+    return (
+      <div data-screen-label="Supervisión profesional">
+        <div className="section-head"><div><h1>Supervisión en terreno</h1><div className="subtitle">Visitas al centro por área + portafolio · pondera 25% · incluye evaluación del/la tutor/a (25%)</div></div></div>
+        <div className="card" style={{ textAlign: 'center', padding: 56, color: 'var(--ink-500)' }}>
+          <I.mapPin size={32} />
+          <div style={{ marginTop: 12, fontSize: 15, fontWeight: 600, color: 'var(--ink-700)' }}>Aún no hay estudiantes en esta práctica</div>
+          <div className="muted" style={{ fontSize: 13, marginTop: 6, lineHeight: 1.55 }}>Agrega estudiantes desde <strong>Estudiantes</strong> para comenzar.</div>
+        </div>
+      </div>
+    );
+  }
+
   const AREA_DEFS = meta.multiMencion ? [
     { id:'todas',     label:'Todas' },
     { id:'deportiva', label:'Entrenador' },

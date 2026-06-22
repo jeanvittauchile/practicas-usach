@@ -967,6 +967,20 @@ a:hover { text-decoration: underline; }
     top: 0;
   }
   .topbar .search { display: none; }
+  .topbar .topbar-right { gap: 4px; }
+
+  /* Breadcrumbs: shrink and truncate instead of overflowing */
+  .topbar .breadcrumbs {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .topbar .breadcrumbs .crumb-current {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+    display: inline-block;
+  }
 
   /* Content padding */
   .content {
@@ -977,11 +991,29 @@ a:hover { text-decoration: underline; }
   /* Tables become scrollable horizontally */
   .table-wrap, .rubrica-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
+  /* Grid: collapse for readability on phones */
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+
   /* Dashboard stat grid: 2 cols instead of 4 */
   .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
+  /* Section header: stack title + actions vertically */
+  .section-head { flex-direction: column; gap: 12px; align-items: stretch; }
+  .section-head > div:first-child { flex: 0 0 auto; }
+  .section-head .actions { flex-wrap: wrap; }
+  .section-head h1 { font-size: 20px; }
+
   /* Cards stacked */
   .cards-row { flex-direction: column; }
+
+  /* Tabs: horizontal scroll instead of overflow */
+  .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; flex-wrap: nowrap; padding-bottom: 1px; }
+  .tabs button { flex-shrink: 0; white-space: nowrap; }
+
+  /* Detail section: reduce left indent */
+  .detail-section .body { padding-left: 20px; }
 
   /* Modals: full screen en móvil */
   .modal-box {
@@ -1003,6 +1035,43 @@ a:hover { text-decoration: underline; }
   /* Coordinador stats grid: 2 cols */
   .coord-stats { grid-template-columns: repeat(2, 1fr) !important; }
   .practice-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ─── Extra-small phones ≤ 480px ────────────────────────────── */
+@media (max-width: 480px) {
+  /* Tighter content padding */
+  .content { padding: 14px 12px 80px; }
+
+  /* Smaller headings */
+  .section-head h1 { font-size: 18px; }
+  .section-head .subtitle { font-size: 12.5px; }
+
+  /* Smaller stat values */
+  .stat-value { font-size: 22px; }
+
+  /* Fully collapse grids */
+  .grid-3 { grid-template-columns: 1fr; }
+  .practice-grid { grid-template-columns: 1fr !important; }
+
+  /* Tighter card padding */
+  .card-pad { padding: 14px; }
+  .card-pad-lg { padding: 16px; }
+  .card-header { padding: 12px 14px; }
+  .card-section { padding: 12px 14px; }
+
+  /* Dropdown panels: keep within viewport on tiny screens */
+  [data-topbar-menu] > div {
+    position: fixed !important;
+    right: 8px !important;
+    left: 8px !important;
+    width: auto !important;
+    top: calc(var(--topbar-h) + 4px) !important;
+    max-height: calc(100dvh - var(--topbar-h) - 16px);
+    overflow-y: auto;
+  }
+
+  /* Toolbar: tighter */
+  .toolbar { padding: 10px 12px; gap: 8px; }
 }
 
 /* ─── Safe area para notch / home indicator (iOS) ───────────── */

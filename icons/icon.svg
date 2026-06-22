@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="88" fill="#009688"/>
+  <rect x="56" y="56" width="400" height="400" rx="52" fill="#00a896" opacity="0.25"/>
+  <!-- Letra P estilizada -->
+  <text x="256" y="370"
+        text-anchor="middle"
+        font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+        font-size="300"
+        font-weight="800"
+        fill="white">P</text>
+  <!-- Acento teal claro inferior -->
+  <rect x="140" y="414" width="232" height="10" rx="5" fill="rgba(255,255,255,0.32)"/>
+</svg>

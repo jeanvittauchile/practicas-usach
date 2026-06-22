@@ -1,0 +1,42 @@
+{
+  "name": "Prácticas USACH",
+  "short_name": "Prácticas",
+  "description": "Sistema de gestión de prácticas — Entrenador Deportivo, Universidad de Santiago de Chile",
+  "start_url": "./Login.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#009688",
+  "background_color": "#0B1820",
+  "lang": "es-CL",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "src/usach-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/01-dashboard.png",
+      "type": "image/png",
+      "sizes": "1440x900",
+      "form_factor": "wide",
+      "label": "Panel principal"
+    }
+  ]
+}

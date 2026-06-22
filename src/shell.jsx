@@ -7,7 +7,7 @@ const { useState, useEffect, useMemo, useRef, useCallback } = React;
 // Sidebar
 // ─────────────────────────────────────────────────────────────
 
-function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
+function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica, isOpen, onClose }) {
   const usaAutoeval = !!(window.USACH_DATA && window.USACH_DATA.PONDERACIONES &&
     window.USACH_DATA.PONDERACIONES.some(p => p.resolver === 'AUTO'));
   const navGroups = [
@@ -40,7 +40,9 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
   });
 
   return (
-    <aside className="sidebar" data-screen-label="Sidebar">
+    <>
+    {isOpen && <div className="sidebar-backdrop" onClick={onClose} />}
+    <aside className={`sidebar${isOpen ? ' sidebar-is-open' : ''}`} data-screen-label="Sidebar">
       <div className="sidebar-brand">
         <USACHCrest size={36} />
         <div className="brand-text">
@@ -74,7 +76,7 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
               const IconC = I[it.icon];
               return (
                 <button key={it.id} className={`nav-item ${current === it.id ? 'active' : ''}`}
-                        onClick={() => onNav(it.id)}>
+                        onClick={() => { onNav(it.id); if (onClose) onClose(); }}>
                   <IconC className="icon" />
                   <span>{it.label}</span>
                   {it.count != null && <span className="count">{it.count}</span>}
@@ -104,6 +106,7 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
                 style={{ marginLeft:'auto', background:'none', border:'none', cursor:'pointer', color:'rgba(255,255,255,.45)', fontSize:16, padding:'4px 6px', borderRadius:6, lineHeight:1 }}>⏻</button>
       </div>
     </aside>
+    </>
   );
 }
 
@@ -111,7 +114,7 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica }) {
 // Topbar
 // ─────────────────────────────────────────────────────────────
 
-function Topbar({ crumbs, actions, onSearch, onSettingsPick, breadcrumbRoot }) {
+function Topbar({ crumbs, actions, onSearch, onSettingsPick, breadcrumbRoot, onMenuToggle }) {
   const [openMenu, setOpenMenu] = useState(null); // 'notif' | 'settings'
   // close on outside click
   useEffect(() => {
@@ -123,6 +126,7 @@ function Topbar({ crumbs, actions, onSearch, onSettingsPick, breadcrumbRoot }) {
 
   return (
     <header className="topbar" data-screen-label="Topbar">
+      <button className="topbar-hamburger" onClick={onMenuToggle} aria-label="Menú">☰</button>
       <div className="breadcrumbs">
         <span>{breadcrumbRoot || 'Práctica I'}</span>
         {crumbs.map((c, i) => (

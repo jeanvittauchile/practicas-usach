@@ -21,6 +21,7 @@ function App() {
   // PDF / Reports modal state
   const [reportsOpen, setReportsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Cambiar de práctica (tweak o selector del sidebar)
   const cambiarPractica = useCallback((cod) => {
@@ -87,6 +88,7 @@ function App() {
   const [route, setRoute] = useState({ screen: 'dashboard', params: {} });
   const nav = useCallback((screen, params = {}) => {
     setRoute({ screen, params });
+    setSidebarOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
@@ -341,9 +343,11 @@ function App() {
   return (
     <div className="app">
       <Sidebar current={route.screen} onNav={nav} counts={counts}
-               practicaActiva={practica} onSelectPractica={cambiarPractica} />
+               practicaActiva={practica} onSelectPractica={cambiarPractica}
+               isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <main className="main">
-        <Topbar crumbs={crumbs} onSettingsPick={setSettingsOpen} breadcrumbRoot={meta.breadcrumb} />
+        <Topbar crumbs={crumbs} onSettingsPick={setSettingsOpen} breadcrumbRoot={meta.breadcrumb}
+                onMenuToggle={() => setSidebarOpen(s => !s)} />
         <div className="content">
           {route.screen === 'dashboard'   && <Dashboard ctx={ctx} onNav={nav} />}
           {route.screen === 'evaluaciones'&& <EvaluacionesScreen ctx={ctx} onOpen={(id) => nav('eval', { id })} />}

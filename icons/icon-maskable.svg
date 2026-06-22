@@ -1,0 +1,11 @@
+<!-- Maskable: el contenido importante queda dentro del círculo seguro (80% central) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#009688"/>
+  <text x="256" y="342"
+        text-anchor="middle"
+        font-family="system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif"
+        font-size="240"
+        font-weight="800"
+        fill="white">P</text>
+  <rect x="156" y="380" width="200" height="9" rx="4.5" fill="rgba(255,255,255,0.30)"/>
+</svg>

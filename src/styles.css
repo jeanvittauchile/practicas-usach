@@ -901,3 +901,114 @@ a:hover { text-decoration: underline; }
 
 /* Tweaks panel placement (in case starter doesn't position) */
 [data-tweaks-panel] { z-index: 50; }
+
+/* ─── Hamburger button (visible only en mobile) ─────────────── */
+.topbar-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  color: var(--ink-600);
+  font-size: 20px;
+  flex-shrink: 0;
+  transition: background 0.12s;
+}
+.topbar-hamburger:hover { background: var(--surface-2); }
+
+/* ─── Sidebar backdrop (mobile overlay) ─────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 24, 32, 0.55);
+  z-index: 98;
+  backdrop-filter: blur(2px);
+}
+
+/* ─── Mobile responsive ≤ 768px ─────────────────────────────── */
+@media (max-width: 768px) {
+  /* Show hamburger */
+  .topbar-hamburger { display: flex; }
+
+  /* Show backdrop when sidebar is open */
+  .sidebar-is-open ~ .main .sidebar-backdrop,
+  .sidebar-backdrop.visible { display: block; }
+
+  /* Single-column layout */
+  .app {
+    grid-template-columns: 1fr;
+  }
+
+  /* Sidebar becomes a fixed drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: min(288px, 85vw);
+    height: 100dvh;
+    height: 100vh;
+    z-index: 99;
+    transform: translateX(-100%);
+    transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+  }
+  .sidebar.sidebar-is-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.32);
+  }
+
+  /* Topbar adjustments */
+  .topbar {
+    padding: 0 12px 0 8px;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+  }
+  .topbar .search { display: none; }
+
+  /* Content padding */
+  .content {
+    padding: 20px 16px 80px;
+    max-width: 100%;
+  }
+
+  /* Tables become scrollable horizontally */
+  .table-wrap, .rubrica-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Dashboard stat grid: 2 cols instead of 4 */
+  .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Cards stacked */
+  .cards-row { flex-direction: column; }
+
+  /* Modals: full screen en móvil */
+  .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 96dvh;
+    max-height: 96vh;
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    margin: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+  .modal-overlay {
+    align-items: flex-end;
+  }
+
+  /* Coordinador stats grid: 2 cols */
+  .coord-stats { grid-template-columns: repeat(2, 1fr) !important; }
+  .practice-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ─── Safe area para notch / home indicator (iOS) ───────────── */
+@supports (padding: max(0px)) {
+  .topbar    { padding-left:  max(8px,  env(safe-area-inset-left));
+               padding-right: max(12px, env(safe-area-inset-right)); }
+  .sidebar   { padding-bottom: env(safe-area-inset-bottom); }
+  .content   { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
+}

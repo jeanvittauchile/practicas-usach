@@ -138,10 +138,8 @@ function Topbar({ crumbs, actions, onSearch, onSettingsPick, breadcrumbRoot }) {
         {actions}
         <div data-topbar-menu style={{ position: 'relative' }}>
           <button className="btn btn-ghost btn-sm" title="Notificaciones"
-                  onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'notif' ? null : 'notif'); }}
-                  style={{ position: 'relative' }}>
+                  onClick={(e) => { e.stopPropagation(); setOpenMenu(openMenu === 'notif' ? null : 'notif'); }}>
             <I.bell />
-            <span style={{ position: 'absolute', top: 3, right: 3, width: 8, height: 8, borderRadius: 4, background: 'var(--orange-500)', border: '2px solid var(--bg)' }} />
           </button>
           {openMenu === 'notif' && <NotificationsPanel onClose={() => setOpenMenu(null)} />}
         </div>
@@ -159,68 +157,20 @@ function Topbar({ crumbs, actions, onSearch, onSettingsPick, breadcrumbRoot }) {
 
 // ─── Notifications panel ────────────────────────────────────────
 function NotificationsPanel({ onClose }) {
-  const groups = [
-    { label: 'Hoy', items: [
-      { kind: 'submission', who: 'Antonia Pérez', msg: 'entregó Solemne 2: "Corporación de Deportes"', when: 'hace 14 min', icon: 'upload', color: 'teal' },
-      { kind: 'late', who: 'Benjamín Soto', msg: 'entregó Taller 2 con 1 día de atraso · −0,5 pts', when: 'hace 1 h', icon: 'warn', color: 'warn' },
-      { kind: 'reminder', who: 'Sistema', msg: 'Solemne 3 vence en 7 días — aún no calificada', when: 'hace 3 h', icon: 'clock', color: 'info' },
-    ]},
-    { label: 'Esta semana', items: [
-      { kind: 'supervisor', who: 'Camila Riquelme', msg: 'subió documento de consentimiento informado', when: 'lun 24 may', icon: 'paperclip', color: 'ink' },
-      { kind: 'system', who: 'Sistema', msg: 'Tabla de notas publicada a estudiantes', when: 'lun 24 may', icon: 'send', color: 'teal' },
-      { kind: 'submission', who: 'Francisca Mella', msg: 'subió video de Solemne 1', when: 'vie 21 may', icon: 'video', color: 'teal' },
-    ]},
-  ];
-  const colorMap = {
-    teal: { bg: 'var(--teal-50)',  fg: 'var(--teal-700)' },
-    warn: { bg: 'var(--warn-bg)',  fg: 'var(--warn)' },
-    info: { bg: 'var(--info-bg)',  fg: 'var(--info)' },
-    ink:  { bg: 'var(--ink-100)',  fg: 'var(--ink-600)' },
-  };
-
   return (
     <div style={{
       position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-      width: 380, maxHeight: 540, background: 'var(--bg)',
+      width: 320, background: 'var(--bg)',
       border: '1px solid var(--border)', borderRadius: 12,
       boxShadow: 'var(--shadow-lg)', zIndex: 50, overflow: 'hidden',
-      display: 'flex', flexDirection: 'column',
     }} onClick={e => e.stopPropagation()}>
       <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <strong style={{ fontSize: 14 }}>Notificaciones</strong>
-        <span className="tag tag-teal" style={{ fontSize: 10 }}>3 nuevas</span>
-        <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto', fontSize: 11 }}>Marcar todas leídas</button>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto' }}>
-        {groups.map(g => (
-          <div key={g.label}>
-            <div style={{ padding: '10px 16px 4px', fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--ink-500)', background: 'var(--surface-1)' }}>
-              {g.label}
-            </div>
-            {g.items.map((it, i) => {
-              const IconC = I[it.icon] || I.bell;
-              const c = colorMap[it.color] || colorMap.ink;
-              return (
-                <div key={i} style={{ padding: '12px 16px', display: 'flex', gap: 10, borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.1s' }}
-                     onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-1)'}
-                     onMouseLeave={e => e.currentTarget.style.background = ''}>
-                  <div style={{ width: 30, height: 30, borderRadius: 8, background: c.bg, color: c.fg, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-                    <IconC size={15} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, lineHeight: 1.45 }}>
-                    <span style={{ fontWeight: 600, color: 'var(--ink-900)' }}>{it.who}</span> <span style={{ color: 'var(--ink-700)' }}>{it.msg}</span>
-                    <div style={{ fontSize: 11, color: 'var(--ink-500)', marginTop: 2 }}>{it.when}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ))}
-      </div>
-      <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)', textAlign: 'center' }}>
-        <button className="btn btn-ghost btn-sm" style={{ width: '100%', justifyContent: 'center', color: 'var(--teal-700)' }}>
-          Ver todas las notificaciones
-        </button>
+      <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--ink-500)' }}>
+        <I.bell size={28} stroke="var(--ink-300)" />
+        <div style={{ marginTop: 10, fontSize: 13, fontWeight: 600, color: 'var(--ink-600)' }}>Sin notificaciones</div>
+        <div style={{ fontSize: 12, marginTop: 4, color: 'var(--ink-400)' }}>No hay novedades por ahora.</div>
       </div>
     </div>
   );

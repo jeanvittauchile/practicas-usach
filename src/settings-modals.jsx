@@ -510,7 +510,11 @@ function LogoutModal({ ctx, onClose }) {
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-danger" onClick={() => { ctx.toast('Sesión cerrada (demo)'); onClose(); }}>Cerrar sesión</button>
+          <button className="btn btn-danger" onClick={() => {
+            localStorage.removeItem('usach_auth_v2');
+            window.__authUser = null;
+            window.location.replace('Login.html');
+          }}>Cerrar sesión</button>
         </div>
       </div>
     </div>

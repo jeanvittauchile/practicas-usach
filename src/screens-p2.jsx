@@ -61,7 +61,7 @@ function SupervisorP2Screen({ ctx }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: 18, alignItems: 'start' }}>
+      <div className="panel-split" style={{ display: 'grid', gridTemplateColumns: '270px 1fr', gap: 18, alignItems: 'start' }}>
         {/* Roster lateral */}
         <div className="card" style={{ padding: 8 }}>
           {estudiantes.map(e => {
@@ -102,7 +102,7 @@ function SupervisorP2Screen({ ctx }) {
                 {supRes && supRes.parcial && <div style={{ fontSize: 11, opacity: 0.85 }}>parcial</div>}
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, background: 'var(--surface-1)' }}>
+            <div className="centro-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, background: 'var(--surface-1)' }}>
               <CentroField label="Centro de práctica" value={est.centro} />
               <CentroField label="Comuna" value={est.comuna} />
               <CentroField label="Deporte · categoría" value={`${est.deporte} · ${est.categoria}`} />

@@ -263,7 +263,7 @@ function CalendarModal({ ctx, onClose }) {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          <div className="cal-months-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {months.map(m => (
               <MonthGrid key={`${m.y}-${m.m}`} year={m.y} month={m.m}
                          evals={evals} onDateClick={(iso) => {/* allow click to pick */}}

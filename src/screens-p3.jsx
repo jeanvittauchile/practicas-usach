@@ -89,7 +89,7 @@ function SupervisorPIScreen({ ctx }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 18, alignItems: 'start' }}>
+      <div className="panel-split" style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 18, alignItems: 'start' }}>
         {/* Roster lateral */}
         <div className="card" style={{ padding: 8 }}>
           {/* Filtro por área (solo PII) */}
@@ -155,7 +155,7 @@ function SupervisorPIScreen({ ctx }) {
                 {supRes && supRes.parcial && <div style={{ fontSize: 11, opacity: 0.85 }}>parcial</div>}
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, background: 'var(--surface-1)' }}>
+            <div className="centro-info-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, background: 'var(--surface-1)' }}>
               <PiField label="Centro de práctica" value={est.centro} span={2} />
               <PiField label="Comuna" value={est.comuna} />
               <PiField label="Área de práctica" value={area.label} />

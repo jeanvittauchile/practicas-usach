@@ -167,6 +167,80 @@
     .masiva-row.on { background: var(--teal-50); }
     .masiva-check { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff; }
     .masiva-check.on { background: var(--teal-500); border-color: var(--teal-500); }
+
+    /* ─── Mobile responsive (coordinador) ≤ 768px ────────────────── */
+    @media (max-width: 768px) {
+      /* Professors: stack left list + detail panel vertically */
+      .detail-panel { grid-template-columns: 1fr; }
+
+      /* Student rows: flex-wrap so all data fits in viewport */
+      .student-head { display: none; }
+      .student-row {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        align-items: flex-start;
+        padding: 10px 12px;
+      }
+      .student-row > :nth-child(1) { flex: 1 1 0; min-width: 0; order: 1; }
+      .student-row > :nth-child(2) { flex: 0 0 auto; order: 3; font-size: 11.5px; color: var(--ink-500); }
+      .student-row > :nth-child(3) { flex: 0 0 auto; order: 3; }
+      .student-row > :nth-child(4) { flex: 1 1 60px; min-width: 0; order: 3; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .student-row > :nth-child(5) { flex: 1 1 60px; min-width: 0; order: 3; font-size: 11px; }
+      .student-row > :nth-child(6) { flex: 0 0 auto; order: 2; }
+
+      /* Carta rows: name + buttons on first line, institution + details below */
+      .carta-row {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 4px 8px;
+        align-items: flex-start;
+        padding: 10px 12px;
+      }
+      .carta-row > :nth-child(1) { flex: 1 1 0; min-width: 0; order: 1; }
+      .carta-row > :nth-child(2) { flex: 1 1 100%; order: 3; font-size: 12px; color: var(--ink-500); }
+      .carta-row > :nth-child(3) { flex: 0 0 auto; order: 4; }
+      .carta-row > :nth-child(4) { flex: 1 1 auto; order: 4; font-size: 11.5px; }
+      .carta-row > :nth-child(5) { flex: 0 0 auto; order: 2; }
+
+      /* Usuario rows: name+email on first line, chips below, buttons right */
+      .prof-row {
+        display: flex !important;
+        flex-wrap: wrap;
+        gap: 6px 8px;
+        align-items: center;
+        padding: 10px 12px;
+      }
+      .prof-row > :nth-child(1) { flex: 1 1 0; min-width: 0; order: 1; }
+      .prof-row > :nth-child(2) { flex: 0 0 100%; order: 3; }
+      .prof-row > :nth-child(3) { flex: 0 0 auto; order: 2; }
+
+      /* Hora chart: flexible name width instead of fixed 196px */
+      .hora-name { flex: 1 1 0 !important; min-width: 0; font-size: 12px; }
+      .hora-st { display: none; }
+
+      /* Schedule editor: wrap inputs to next line when needed */
+      .sched-row { flex-wrap: wrap; }
+
+      /* Practice toggles: 2 columns instead of 3 */
+      .toggle-grid { grid-template-columns: repeat(2, 1fr); }
+
+      /* Report cards: stack icon + text vertically */
+      .report-card { flex-direction: column; gap: 10px; }
+
+      /* Dashboard practice table: make scrollable (it's a real table) */
+      .card > div[style*="overflow"] { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    }
+
+    /* ─── Extra-small phones ≤ 480px ─────────────────────────────── */
+    @media (max-width: 480px) {
+      .student-row > :nth-child(5) { display: none; } /* hide Centro column */
+      .toggle-btn { font-size: 11px; padding: 6px 4px; }
+      .toggle-grid { grid-template-columns: repeat(2, 1fr); }
+      .coord-stats { grid-template-columns: repeat(2, 1fr) !important; }
+      .section-head .actions { flex-direction: column; align-items: stretch; }
+      .section-head .actions .btn { text-align: center; justify-content: center; }
+    }
   </style>
 </head>
 <body>

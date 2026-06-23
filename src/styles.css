@@ -1035,6 +1035,15 @@ a:hover { text-decoration: underline; }
   /* Coordinador stats grid: 2 cols */
   .coord-stats { grid-template-columns: repeat(2, 1fr) !important; }
   .practice-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Professor app: collapse 2-column split panel (roster + detail) */
+  .panel-split { grid-template-columns: 1fr !important; }
+
+  /* Professor info strip: 4 cols → 2 cols */
+  .centro-info-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+  /* Calendar: 3 months → 1 per row */
+  .cal-months-grid { grid-template-columns: 1fr !important; }
 }
 
 /* ─── Extra-small phones ≤ 480px ────────────────────────────── */

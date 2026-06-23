@@ -262,6 +262,10 @@
   <script src="src/coord-firebase.js"></script>
   <script src="src/letterhead-data.js"></script>
 
+  <!-- Shared UI components (icons, iOS frame) needed by coord-mobile -->
+  <script type="text/babel" src="src/icons.jsx"></script>
+  <script type="text/babel" src="src/ios-frame.jsx"></script>
+
   <!-- Screens load first so their components are defined before coord-app.jsx renders -->
   <script type="text/babel" src="src/coord-dashboard.jsx"></script>
   <script type="text/babel" src="src/coord-centros.jsx"></script>
@@ -270,6 +274,7 @@
   <script type="text/babel" src="src/coord-estudiantes.jsx"></script>
   <script type="text/babel" src="src/coord-cartas.jsx"></script>
   <script type="text/babel" src="src/coord-usuarios.jsx"></script>
+  <script type="text/babel" src="src/coord-mobile.jsx"></script>
   <!-- coord-app.jsx MUST load last: defines CI, mounts React -->
   <script type="text/babel" src="src/coord-app.jsx"></script>
   <script>

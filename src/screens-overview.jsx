@@ -706,6 +706,7 @@ function Field({ label, children }) {
 
 function AnexosScreen({ ctx }) {
   const [managing, setManaging] = useState(null); // eval id
+  const [showUpload, setShowUpload] = useState(false);
   const evalAnexos = ctx.state.evalAnexos || {};
   return (
     <div data-screen-label="Anexos administrativos">
@@ -715,7 +716,7 @@ function AnexosScreen({ ctx }) {
           <div className="subtitle">Documentación común a todas las evaluaciones de {(D.meta || {}).breadcrumb || 'la práctica'}</div>
         </div>
         <div className="actions">
-          <button className="btn btn-secondary"><I.upload /> Subir documento</button>
+          <button className="btn btn-secondary" onClick={() => setShowUpload(true)}><I.upload /> Subir documento</button>
         </div>
       </div>
 
@@ -728,8 +729,8 @@ function AnexosScreen({ ctx }) {
               <div className="muted" style={{ fontSize: 12.5 }}>{a.desc}</div>
             </div>
             <span className="tag tag-outline tnum">{a.tamano}</span>
-            <button className="btn btn-secondary btn-sm"><I.download /> Descargar</button>
-            <button className="btn btn-ghost btn-sm"><I.edit /></button>
+            <button className="btn btn-secondary btn-sm" onClick={() => ctx.toast(`Descargando "${a.titulo}"…`)}><I.download /> Descargar</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => ctx.toast(`Editando "${a.titulo}"…`)}><I.edit /></button>
           </div>
         ))}
       </div>
@@ -761,6 +762,7 @@ function AnexosScreen({ ctx }) {
       </div>
 
       {managing && <EvalAnexosModal evalId={managing} ctx={ctx} onClose={() => setManaging(null)} />}
+      {showUpload && <UploadAnexoModal evalId="admin" ctx={ctx} onClose={() => setShowUpload(false)} />}
     </div>
   );
 }

@@ -162,7 +162,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
 
       {tab === 'estudiantes' && <EvalStudentList ev={ev} ctx={ctx} onOpenPdf={(est) => ctx.openStudentPdf(ev, est)} />}
 
-      {tab === 'anexos' && <EvalAnexos ev={ev} />}
+      {tab === 'anexos' && <EvalAnexos ev={ev} ctx={ctx} />}
     </div>
   );
 }
@@ -309,34 +309,60 @@ function EvalStudentList({ ev, ctx, onOpenPdf }) {
   );
 }
 
-function EvalAnexos({ ev }) {
-  const sample = [
-    { titulo: 'Pauta de la evaluación', tamano: '0.3 MB', subido: '12 ago 2025' },
-    { titulo: 'Lectura complementaria — Marco teórico', tamano: '0.8 MB', subido: '12 ago 2025' },
-  ];
+function EvalAnexos({ ev, ctx }) {
+  const [showAdd, setShowAdd] = useState(false);
+  const [renaming, setRenaming] = useState(null);
+  const items = (ctx.state.evalAnexos || {})[ev.id] || [];
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <p className="muted" style={{ margin: 0, fontSize: 13 }}>Materiales PDF compartidos con los estudiantes para esta evaluación.</p>
-        <button className="btn btn-primary btn-sm"><I.upload /> Subir anexo</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <p className="muted" style={{ margin: 0, fontSize: 13 }}>
+          {items.length === 0 ? 'Aún no hay anexos para esta evaluación.' : `${items.length} archivo${items.length === 1 ? '' : 's'} compartido${items.length === 1 ? '' : 's'} con los estudiantes`}
+        </p>
+        <button className="btn btn-primary btn-sm" onClick={() => setShowAdd(true)}><I.upload /> Subir anexo</button>
       </div>
       <div className="col" style={{ gap: 10 }}>
-        {sample.map((a, i) => (
-          <div key={i} className="anexo-row">
-            <div className="file-icon">PDF</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 14 }}>{a.titulo}</div>
-              <div className="muted" style={{ fontSize: 12 }}>Subido el {a.subido}</div>
-            </div>
-            <span className="tag tag-outline">{a.tamano}</span>
-            <button className="btn btn-secondary btn-sm"><I.download /></button>
-            <button className="btn btn-ghost btn-sm"><I.trash /></button>
-          </div>
-        ))}
-        <button className="anexo-row" style={{ borderStyle: 'dashed', justifyContent: 'center', color: 'var(--ink-500)', cursor: 'pointer', background: 'transparent' }}>
-          <I.upload /> Arrastra archivos aquí o haz clic para seleccionar
-        </button>
+        {items.length === 0 ? (
+          <button className="anexo-row" style={{ borderStyle: 'dashed', justifyContent: 'center', color: 'var(--ink-500)', cursor: 'pointer', background: 'transparent', padding: 28, flexDirection: 'column', gap: 6 }}
+                  onClick={() => setShowAdd(true)}>
+            <I.upload size={24} />
+            <strong style={{ fontSize: 13 }}>Arrastra archivos PDF aquí o haz clic para seleccionar</strong>
+            <span className="muted" style={{ fontSize: 11.5 }}>Máximo 10 MB por archivo</span>
+          </button>
+        ) : (
+          <>
+            {items.map(a => (
+              <div key={a.id} className="anexo-row">
+                <div className="file-icon">PDF</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {renaming?.id === a.id ? (
+                    <input className="input input-sm" autoFocus
+                           style={{ width: '100%', fontSize: 14, fontWeight: 600 }}
+                           value={renaming.titulo}
+                           onChange={e => setRenaming({ ...renaming, titulo: e.target.value })}
+                           onBlur={() => { ctx.renameEvalAnexo(ev.id, a.id, renaming.titulo); setRenaming(null); }}
+                           onKeyDown={e => { if (e.key === 'Enter') { ctx.renameEvalAnexo(ev.id, a.id, renaming.titulo); setRenaming(null); } if (e.key === 'Escape') setRenaming(null); }} />
+                  ) : (
+                    <div style={{ fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{a.titulo}</div>
+                  )}
+                  <div className="muted" style={{ fontSize: 12 }}>Subido el {a.subido} · {a.por || 'Andrés Tapia'}</div>
+                </div>
+                <span className="tag tag-outline">{a.tamano}</span>
+                <button className="btn btn-ghost btn-sm" onClick={() => setRenaming({ id: a.id, titulo: a.titulo })} title="Renombrar"><I.edit size={14} /></button>
+                <button className="btn btn-secondary btn-sm" onClick={() => ctx.toast(`Descargando "${a.titulo}"…`)}><I.download size={14} /></button>
+                <button className="btn btn-ghost btn-sm" onClick={() => { if (confirm(`¿Eliminar "${a.titulo}"?`)) { ctx.removeEvalAnexo(ev.id, a.id); ctx.toast('Anexo eliminado'); } }} title="Eliminar">
+                  <I.trash size={14} stroke="var(--danger)" />
+                </button>
+              </div>
+            ))}
+            <button className="anexo-row" style={{ borderStyle: 'dashed', justifyContent: 'center', color: 'var(--ink-500)', cursor: 'pointer', background: 'transparent' }}
+                    onClick={() => setShowAdd(true)}>
+              <I.plus /> Añadir otro anexo
+            </button>
+          </>
+        )}
       </div>
+      {showAdd && <UploadAnexoModal evalId={ev.id} ctx={ctx} onClose={() => setShowAdd(false)} />}
     </div>
   );
 }

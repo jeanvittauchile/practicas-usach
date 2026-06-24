@@ -170,6 +170,9 @@
 
     /* ─── Mobile responsive (coordinador) ≤ 768px ────────────────── */
     @media (max-width: 768px) {
+      /* Sticky topbar so the hamburger stays visible while scrolling */
+      .coord-topbar { position: sticky; top: 0; z-index: 30; padding: 0 12px; }
+
       /* Professors: stack left list + detail panel vertically */
       .detail-panel { grid-template-columns: 1fr; }
 

@@ -34,13 +34,14 @@ function CoordApp() {
   const user = (() => { try { return JSON.parse(localStorage.getItem('usach_auth_v2')); } catch { return null; } })();
   const [screen, setScreen] = useState('dashboard');
   const [navParams, setNavParams] = useState({});
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profs, setProfs] = useState([]);
   const [students, setStudents] = useState([]);
   const [cartas, setCartas] = useState([]);
   const [centros, setCentros] = useState([]);
   const [toasts, setToasts] = useState([]);
 
-  const nav = (s, params = {}) => { setNavParams(params); setScreen(s); };
+  const nav = (s, params = {}) => { setNavParams(params); setScreen(s); setSidebarOpen(false); };
 
   useEffect(() => {
     if (!user || user.rol !== 'coordinador') { window.location.replace('Login.html'); return; }
@@ -99,8 +100,11 @@ function CoordApp() {
 
   return (
     <div className="app">
+      {/* Sidebar backdrop (mobile) */}
+      {sidebarOpen && <div className="sidebar-backdrop visible" onClick={() => setSidebarOpen(false)} />}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar${sidebarOpen ? ' sidebar-is-open' : ''}`}>
         <div className="sidebar-brand" style={{ gap:12 }}>
           <img src="src/usach-logo.png" alt="" style={{ width:32, height:32, borderRadius:6, objectFit:'contain' }} onError={e=>e.target.style.display='none'}/>
           <div>
@@ -138,6 +142,11 @@ function CoordApp() {
       {/* Main */}
       <main className="main">
         <div className="coord-topbar">
+          <button className="topbar-hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Menú">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <div className="crumb">
             Coordinador <span style={{ color:'var(--border)', margin:'0 4px' }}>›</span>
             <strong>{NAV.find(n=>n.id===screen)?.label || screen}</strong>

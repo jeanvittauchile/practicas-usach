@@ -173,6 +173,18 @@
       /* Sticky topbar so the hamburger stays visible while scrolling */
       .coord-topbar { position: sticky; top: 0; z-index: 30; padding: 0 12px; }
 
+      /* Dashboard: reduce header gap and tighten stat cards */
+      .section-head { margin-bottom: 12px !important; }
+      .stat-card { padding: 14px 16px !important; }
+      .stat-card .stat-lbl { font-size: 10.5px !important; }
+
+      /* Practice table: tighter padding */
+      .coord-prac-table th,
+      .coord-prac-table td { padding: 8px 12px !important; }
+
+      /* Bottom grid: stack to 1 column */
+      .coord-bottom-grid { grid-template-columns: 1fr !important; }
+
       /* Professors: stack left list + detail panel vertically */
       .detail-panel { grid-template-columns: 1fr; }
 
@@ -243,6 +255,23 @@
       .coord-stats { grid-template-columns: repeat(2, 1fr) !important; }
       .section-head .actions { flex-direction: column; align-items: stretch; }
       .section-head .actions .btn { text-align: center; justify-content: center; }
+
+      /* Dashboard: tighten gap between header and stats */
+      .section-head { margin-bottom: 10px !important; }
+
+      /* Stat cards: reduce padding so labels fit in 2-col grid */
+      .stat-card { padding: 12px 14px !important; }
+      .stat-card .stat-val { font-size: 26px !important; }
+      .stat-card .stat-lbl { font-size: 10px !important; }
+
+      /* Practice table: tighter padding, hide less critical columns */
+      .coord-prac-table th,
+      .coord-prac-table td { padding: 8px 10px !important; }
+      .coord-prac-table .col-cartas,
+      .coord-prac-table .col-action { display: none; }
+
+      /* Bottom grid: stack cohortes + acciones vertically */
+      .coord-bottom-grid { grid-template-columns: 1fr !important; }
     }
   </style>
 </head>

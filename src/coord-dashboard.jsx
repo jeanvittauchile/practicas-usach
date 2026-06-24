@@ -63,12 +63,14 @@ function DashboardScreen({ ctx }) {
           Estado por práctica
         </div>
         <div style={{ overflowX:'auto' }}>
-          <table style={{ width:'100%', borderCollapse:'collapse' }}>
+          <table className="coord-prac-table" style={{ width:'100%', borderCollapse:'collapse' }}>
             <thead>
               <tr style={{ background:'var(--surface-1)' }}>
-                {['Práctica','Profesores','Estudiantes','Cartas emitidas',''].map((h,i) => (
-                  <th key={h||'acc'} style={{ padding:'9px 20px', textAlign: i===0?'left':'right', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', color:'var(--ink-500)' }}>{h}</th>
-                ))}
+                <th style={{ padding:'9px 20px', textAlign:'left', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', color:'var(--ink-500)' }}>Práctica</th>
+                <th style={{ padding:'9px 20px', textAlign:'right', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', color:'var(--ink-500)' }}>Profesores</th>
+                <th style={{ padding:'9px 20px', textAlign:'right', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', color:'var(--ink-500)' }}>Estudiantes</th>
+                <th className="col-cartas" style={{ padding:'9px 20px', textAlign:'right', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'.05em', color:'var(--ink-500)' }}>Cartas emitidas</th>
+                <th className="col-action" style={{ padding:'9px 20px' }}></th>
               </tr>
             </thead>
             <tbody>
@@ -83,8 +85,8 @@ function DashboardScreen({ ctx }) {
                     {p.profCount === 0 && <span style={{ marginLeft:6, fontSize:11, color:'#b45309', fontWeight:700 }}>⚠ sin asignar</span>}
                   </td>
                   <td style={{ padding:'12px 20px', textAlign:'right', fontSize:14, fontWeight:600 }}>{p.studCount}</td>
-                  <td style={{ padding:'12px 20px', textAlign:'right', fontSize:14, fontWeight:600 }}>{p.cartaCount}</td>
-                  <td style={{ padding:'10px 20px', textAlign:'right' }}>
+                  <td className="col-cartas" style={{ padding:'12px 20px', textAlign:'right', fontSize:14, fontWeight:600 }}>{p.cartaCount}</td>
+                  <td className="col-action" style={{ padding:'10px 20px', textAlign:'right' }}>
                     <a href={`App Prácticas USACH.html?practica=${p.code}`} className="btn btn-secondary btn-sm" title={`Entrar a ${p.name} y editar`}>✎ Entrar / Editar</a>
                   </td>
                 </tr>
@@ -117,7 +119,7 @@ function DashboardScreen({ ctx }) {
         </div>
       </div>
 
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+      <div className="coord-bottom-grid" style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
         <div className="card" style={{ padding:'16px 20px' }}>
           <div style={{ fontWeight:700, fontSize:14 }}>Estudiantes por cohorte</div>
           <div className="muted" style={{ fontSize:12, marginBottom:14 }}>Clic en una cohorte para ver su nómina filtrada.</div>

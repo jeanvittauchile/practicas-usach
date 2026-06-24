@@ -29,7 +29,7 @@ function DashboardScreen({ ctx }) {
           <div className="subtitle">Semestre 2025‑2 · Vista consolidada de todas las prácticas</div>
         </div>
         <div className="actions">
-          <a href="App Prácticas USACH.html" className="btn btn-secondary">↗ Entrar a las prácticas</a>
+          <a href="App Prácticas USACH.html" className="btn btn-secondary btn-sm">↗ Entrar a las prácticas</a>
         </div>
       </div>
 

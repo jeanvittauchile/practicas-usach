@@ -46,31 +46,31 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
 
       {/* Hero */}
       <div className="card" style={{ overflow: 'hidden', marginBottom: 18 }}>
-        <div style={{
+        <div className="eval-hero" style={{
           padding: '24px 28px',
           background: esTeal
             ? 'linear-gradient(105deg, var(--teal-700), var(--teal-500))'
             : 'linear-gradient(105deg, var(--orange-700), var(--orange-500))',
           color: '#fff',
-          display: 'flex', gap: 20, alignItems: 'flex-start',
+          display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap',
         }}>
           <div style={{ width: 64, height: 64, borderRadius: 12, background: 'rgba(255,255,255,0.18)', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 22, flex: '0 0 64px' }}>
             {window.evalSigla(ev)}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: '1 1 180px', minWidth: 0 }}>
             <div style={{ fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85, fontWeight: 600 }}>
               {grupo.singular} {ev.numero} · {ev.tipo}
             </div>
             <h1 style={{ fontSize: 22, fontWeight: 700, margin: '4px 0', color: '#fff', letterSpacing: '-0.005em' }}>{ev.titulo}</h1>
             <div style={{ fontSize: 13, opacity: 0.92, marginTop: 4 }}>{ev.descripcion}</div>
           </div>
-          <div style={{ textAlign: 'right', flex: '0 0 auto', minWidth: 150, whiteSpace: 'nowrap' }}>
+          <div style={{ flex: '0 0 auto', minWidth: 130, whiteSpace: 'nowrap' }}>
             <div style={{ fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85, fontWeight: 600 }}>Fecha entrega</div>
             <div style={{ fontSize: 18, fontWeight: 700 }}>{fechaFmt(ev.fecha)}</div>
             <div style={{ fontSize: 12, opacity: 0.9 }}>{ev.duracion}</div>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 28, padding: '16px 28px', background: 'var(--surface-1)' }}>
+        <div className="eval-hero-meta" style={{ display: 'flex', alignItems: 'center', gap: 28, padding: '16px 28px', background: 'var(--surface-1)' }}>
           <Metric label="Calificación" value={`${completados}/${total}`} sub={esPresent ? 'con dim. 7 completa' : 'estudiantes'} />
           {!esPresent && <Metric label="Puntaje máx." value={ev.maxPuntos} sub="puntos" />}
           {!esPresent && <Metric label="Criterios" value={ev.criterios.length} sub={`${ev.criterios.filter(c=>c.doble).length} con doble puntaje`} />}

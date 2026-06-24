@@ -134,9 +134,9 @@ function EstudiantesCoordScreen({ ctx }) {
         <strong>Formato CSV para importación:</strong> columnas Nombre, RUT, Email, Cohorte, Práctica, Centro — separadas por coma o punto y coma.
       </div>
 
-      <div className="card" style={{ padding:0, overflow:'hidden' }}>
+      <div className="card" style={{ padding:0, overflow:'hidden', overflowX:'auto' }}>
         {/* Header */}
-        <div className="student-row student-head" style={{ background:'var(--surface-1)', borderBottom:'1px solid var(--border)' }}>
+        <div className="student-row student-head" style={{ background:'var(--surface-1)', borderBottom:'1px solid var(--border)', minWidth:480 }}>
           <span>Estudiante</span>
           <span>Cohorte</span>
           <span>Práctica</span>
@@ -148,7 +148,7 @@ function EstudiantesCoordScreen({ ctx }) {
           <div className="muted" style={{ padding:32, textAlign:'center', fontSize:13 }}>Sin estudiantes con los filtros actuales.</div>
         )}
         {visible.map(s => (
-          <div key={s.id} className="student-row">
+          <div key={s.id} className="student-row" style={{ minWidth:480 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}>
               <div className="avatar-sm" style={{ width:26, height:26, fontSize:10 }}>{avatar(s.nombre)}</div>
               <div>

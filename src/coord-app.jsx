@@ -26,7 +26,6 @@ const NAV = [
   { id:'cartas',       label:'Cartas',              icon:'mail'     },
   { id:'reportes',     label:'Reportes',            icon:'chart'    },
   { id:'usuarios',     label:'Usuarios',            icon:'users'    },
-  { id:'mobile',       label:'Vista Mobile',        icon:'phone'    },
 ];
 
 // ─── CoordApp ──────────────────────────────────────────────────────────────
@@ -94,7 +93,6 @@ function CoordApp() {
   const CartasScreen           = window.CartasScreen;
   const ReportesScreen         = window.ReportesScreen;
   const UsuariosScreen         = window.UsuariosScreen;
-  const CoordMobileScreens     = window.CoordMobileScreens;
 
   const avatar = n => (n||'').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
 
@@ -166,7 +164,7 @@ function CoordApp() {
           {screen==='cartas'       && <CartasScreen           ctx={ctx} />}
           {screen==='reportes'     && <ReportesScreen         ctx={ctx} />}
           {screen==='usuarios'     && <UsuariosScreen         ctx={ctx} />}
-          {screen==='mobile'       && <CoordMobileScreens     ctx={ctx} />}
+
         </div>
       </main>
 

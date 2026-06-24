@@ -1095,3 +1095,111 @@ a:hover { text-decoration: underline; }
   .sidebar   { padding-bottom: env(safe-area-inset-bottom); }
   .content   { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 }
+
+/* ─── Coordinator topbar ─────────────────────────────────────── */
+.coord-topbar {
+  height: var(--topbar-h);
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.crumb {
+  font-size: 13px;
+  color: var(--ink-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.crumb strong { color: var(--ink-800); }
+
+/* ─── Student table rows ─────────────────────────────────────── */
+.student-row {
+  display: grid;
+  grid-template-columns: 2fr 60px 72px 1.4fr 1.2fr 90px;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.student-head {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--ink-500);
+  padding: 8px 16px;
+}
+
+/* ─── Filter bar ─────────────────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.filter-bar input, .filter-bar select {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+/* ─── Two-panel split (asignaciones) ────────────────────────── */
+.detail-panel {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ─── Coordinator mobile fixes ≤ 768px ──────────────────────── */
+@media (max-width: 768px) {
+  .coord-topbar {
+    padding: 0 12px 0 8px;
+    gap: 6px;
+  }
+  /* Hide login button, keep only "Entrar a las prácticas" */
+  .coord-topbar .btn-ghost { display: none; }
+  /* Shorten "Entrar a las prácticas" text via CSS content trick — handled via font-size */
+  .coord-topbar .btn-secondary { font-size: 11px; padding: 4px 8px; white-space: nowrap; }
+
+  /* Students table: horizontal scroll */
+  .student-row {
+    grid-template-columns: 2fr 55px 65px 1fr 1fr 80px;
+    font-size: 12px;
+    padding: 8px 12px;
+    gap: 6px;
+  }
+
+  /* Filter bar: wrap to 2 per row */
+  .filter-bar select { flex: 1 1 140px; }
+
+  /* Asignaciones: stack panels */
+  .detail-panel { grid-template-columns: 1fr; }
+
+  /* Coord bottom grid: single column */
+  .coord-bottom-grid { grid-template-columns: 1fr !important; }
+
+  /* Horas/dispo grid inside detail panel: single column */
+  .detail-panel > div > div[style*="minmax"] { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 480px) {
+  /* Students table: hide centro column, keep essential columns */
+  .student-row {
+    grid-template-columns: 1fr 55px 65px 75px;
+  }
+  .student-row > :nth-child(4),  /* Profesor */
+  .student-head > :nth-child(4) { display: none; }
+  .student-row > :nth-child(5),  /* Centro */
+  .student-head > :nth-child(5) { display: none; }
+
+  .coord-topbar .btn-secondary { display: none; }
+}

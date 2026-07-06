@@ -167,6 +167,22 @@ function SupervisorPIScreen({ ctx }) {
             </div>
           </div>
 
+          {(!portRes || portRes.parcial) && (
+            <div style={{ padding: '14px 18px', background: 'linear-gradient(105deg, var(--teal-50), var(--orange-50))', border: '1px solid var(--teal-200)', borderRadius: 10, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              <I.mapPin size={22} style={{ color: 'var(--teal-600)', flexShrink: 0, marginTop: 2 }} />
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--teal-800)', marginBottom: 4 }}>Falta calificar el Portafolio evaluación.</div>
+                <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.5 }}>
+                  La nota de "Superv.+Port" (25%) promedia las visitas en terreno con la evaluación del Portafolio. Esta última no se llena aquí, sino en
+                  <strong> Evaluaciones → Portafolio Virtual y Bitácora</strong>.
+                </div>
+                <button className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => ctx.openEval && ctx.openEval('PORT')}>
+                  <I.checkSquare size={14} /> Ir a Evaluaciones → Portafolio
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="tabs">
             <button className={tab === 'terreno' ? 'active' : ''} onClick={() => setTab('terreno')}>Visitas en terreno ({visitas.length})</button>
             <button className={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Eval. Entrenador/a Tutor/a</button>

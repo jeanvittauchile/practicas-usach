@@ -251,9 +251,10 @@ body{font-family:Arial,sans-serif;font-size:9pt;color:#111;line-height:1.45}
 ${catalog.map(sec).join('')}
 <div class="pie">Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; www.usach.cl</div>
 </body></html>`;
-  const w = window.open('','_blank','width=1000,height=750');
-  if (!w) { alert('Habilita las ventanas emergentes para generar el PDF.'); return; }
-  w.document.write(html); w.document.close();
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const w = window.open(url, '_blank', 'width=1000,height=750');
+  if (!w) { window.location.href = url; return; }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 // ─── Reporte: disponibilidad horaria de profesores ─────────────────────

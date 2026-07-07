@@ -196,8 +196,10 @@ function generarCartaMasivaPDF(payload) {
 }
 
 // ─── Catálogo PDF ────────────────────────────────────────────────
-function generarCatalogoPDF() {
-  const catalog = window.EVAL_CATALOG || [];
+function generarCatalogoPDF(practicaCodigo) {
+  const full = window.EVAL_CATALOG || [];
+  const catalog = practicaCodigo ? full.filter(p => p.codigo === practicaCodigo) : full;
+  const scopeTitle = practicaCodigo ? (catalog[0] ? catalog[0].nombre.replace(/—.*/, '').trim() : practicaCodigo) : 'Todas las Prácticas';
   const fecha = new Date().toLocaleDateString('es-CL');
   const col = (ev) => `<tr>
     <td class="ev-id">${ev.id}</td>
@@ -218,7 +220,7 @@ function generarCatalogoPDF() {
       : `<div class="pw"><div style="flex:1"><div class="pl">Ponderaciones (nota final)</div><table class="pt"><tbody>${(p.ponderaciones||[]).map(prow).join('')}</tbody><tfoot><tr><td><b>Total</b></td><td class="c"><b>100%</b></td></tr></tfoot></table></div></div>`
     }</div>`;
   const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
-<title>Catálogo de Evaluaciones — Prácticas USACH</title>
+<title>Catálogo de Evaluaciones — ${_esc(scopeTitle)}</title>
 <style>@page{size:letter;margin:18mm 16mm}*{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;font-size:9pt;color:#111;line-height:1.45}
 .topbar{background:#003366;color:#fff;padding:9px 16px;display:flex;align-items:center;gap:10px;font-size:9pt}
@@ -242,12 +244,12 @@ body{font-family:Arial,sans-serif;font-size:9pt;color:#111;line-height:1.45}
 .w{font-weight:700;color:#003366;text-align:center;white-space:nowrap}
 .pie{margin-top:20px;border-top:1px solid #ddd;padding-top:5px;font-size:7.5pt;color:#999;text-align:center}
 @media print{.topbar{display:none}}</style></head><body>
-<div class="topbar">ℹ Catálogo de Evaluaciones — Prácticas USACH
+<div class="topbar">ℹ Catálogo de Evaluaciones — ${_esc(scopeTitle)}
   <button onclick="window.print()">🖨 Guardar como PDF</button></div>
-<div class="dhead"><h1>Catálogo de Evaluaciones — Todas las Prácticas</h1>
+<div class="dhead"><h1>Catálogo de Evaluaciones — ${_esc(scopeTitle)}</h1>
   <p>Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; Carrera de Entrenador Deportivo</p>
   <p>Escala de exigencia 60% en evaluaciones con rúbrica &middot; Semestre 2025-2</p></div>
-<div class="meta">Generado el ${fecha} &middot; ${catalog.length} prácticas documentadas</div>
+<div class="meta">Generado el ${fecha} &middot; ${catalog.length} práctica${catalog.length!==1?'s':''} documentada${catalog.length!==1?'s':''}</div>
 ${catalog.map(sec).join('')}
 <div class="pie">Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; www.usach.cl</div>
 </body></html>`;
@@ -773,6 +775,8 @@ function ReportesScreen({ ctx }) {
   };
 
   const [selProf, setSelProf] = useState(profs[0]?.id||'');
+  const [catalogScope, setCatalogScope] = useState('');
+  const catalog = window.EVAL_CATALOG || [];
 
   return (
     <div data-screen-label="Reportes">
@@ -785,10 +789,16 @@ function ReportesScreen({ ctx }) {
       <div className="report-card" style={{ borderLeft:'3px solid var(--teal-500)' }}>
         <div className="report-icon" style={{ background:'#e8f5e9' }}>📋</div>
         <div style={{ flex:1 }}>
-          <div style={{ fontWeight:700, fontSize:15 }}>Catálogo de evaluaciones — todas las prácticas</div>
-          <div className="muted" style={{ fontSize:13, marginTop:3 }}>Descripción completa de todas las evaluaciones, tipos, puntos ideales y ponderaciones de las 6 prácticas. Listo para imprimir / guardar como PDF.</div>
+          <div style={{ fontWeight:700, fontSize:15 }}>Catálogo de evaluaciones</div>
+          <div className="muted" style={{ fontSize:13, marginTop:3 }}>Descripción completa de las evaluaciones, tipos, puntos ideales y ponderaciones. Elige el reporte completo o una práctica específica.</div>
+          <div style={{ marginTop:10 }}>
+            <select value={catalogScope} onChange={e=>setCatalogScope(e.target.value)} style={{ padding:'7px 12px', border:'1.5px solid var(--border)', borderRadius:8, fontSize:13, fontFamily:'inherit' }}>
+              <option value="">Reporte completo (todas las prácticas)</option>
+              {catalog.map(p => <option key={p.codigo} value={p.codigo}>Solo {p.nombre}</option>)}
+            </select>
+          </div>
         </div>
-        <button className="btn btn-primary" onClick={generarCatalogoPDF}>📋 Generar PDF</button>
+        <button className="btn btn-primary" onClick={() => generarCatalogoPDF(catalogScope)}>📋 Generar PDF</button>
       </div>
 
       <div className="report-card">

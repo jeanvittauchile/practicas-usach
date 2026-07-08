@@ -366,4 +366,77 @@
       ],
     },
   ];
+
+  // ─── Calendario de fechas de entrega (todas las prácticas) ────────────────
+  // Fechas oficiales de cada trabajo/evaluación, según la planificación semestral
+  // registrada en la plataforma de cada profesor/a (data.js, data-p2.js … data-p6.js).
+  window.EVAL_FECHAS = [
+    {
+      codigo:'I', nombre:'Práctica I — Introducción al Campo Laboral', color:'#009688',
+      entregas: [
+        { id:'S1', titulo:'Cápsula de video: Entrevista a un entrenador/a', tipo:'Audiovisual (15 min)', fecha:'2025-08-15' },
+        { id:'T1', titulo:'Ensayo personal: Buscando tu identidad', tipo:'Ensayo (3–5 pp.)', fecha:'2025-08-29' },
+        { id:'T2', titulo:'Preguntas para entrevista a entrenador/a', tipo:'Informe escrito', fecha:'2025-09-12' },
+        { id:'S2', titulo:'Investigación en terreno: Corporación de Deportes Municipal', tipo:'Terreno + Informe (6–8 pp.)', fecha:'2025-10-10' },
+        { id:'PT', titulo:'Presentación: Salidas a terreno', tipo:'Exposición oral', fecha:'2025-11-05' },
+        { id:'T3', titulo:'Cápsula de video sobre motivaciones a futuro', tipo:'Audiovisual (5–8 min)', fecha:'2025-11-07' },
+        { id:'S3', titulo:'Investigación en terreno: Comité Olímpico o Paralímpico', tipo:'Terreno + Informe (6–8 pp.)', fecha:'2025-11-21' },
+      ],
+    },
+    {
+      codigo:'II', nombre:'Práctica II — Escuelas y Talleres Deportivos', color:'#1565C0',
+      entregas: [
+        { id:'INF', titulo:'Informe: Diagnóstico y Desarrollo de Habilidades Motrices', tipo:'Informe Word (máx. 7 pp.)', fecha:'2025-10-01' },
+        { id:'PF1', titulo:'Portafolio · Evaluación N°1', tipo:'Portafolio Drive', fecha:'2025-10-01' },
+        { id:'PF2', titulo:'Portafolio · Evaluación N°2', tipo:'Portafolio Drive', fecha:'2025-10-31' },
+        { id:'MAN', titulo:'Manual Técnico de Psicomotricidad en el Deporte', tipo:'Manual técnico PDF', fecha:'2025-11-05' },
+        { id:'PRE', titulo:'Presentación Final', tipo:'Presentación (15 min + 5 preguntas)', fecha:'2025-11-28' },
+        { id:'PF3', titulo:'Portafolio · Evaluación N°3', tipo:'Portafolio Drive', fecha:'2025-11-28' },
+      ],
+    },
+    {
+      codigo:'III', nombre:'Práctica III — Intervención en Fitness y Actividad Física', color:'#880E4F',
+      entregas: [
+        { id:'INF', titulo:'Informe: Descripción administrativa y técnica de la actividad', tipo:'Informe Word (máx. 8 pp.)', fecha:'2025-10-08' },
+        { id:'PORT1', titulo:'Portafolio — Evaluación N°1 (Construcción + Bitácora)', tipo:'Portafolio Drive', fecha:'2025-10-08' },
+        { id:'PORT2', titulo:'Portafolio — Evaluación N°2 (Bitácora)', tipo:'Portafolio Drive', fecha:'2025-10-22' },
+        { id:'PLAN', titulo:'Planificación de entrenamiento (8 sesiones)', tipo:'Excel + Word (anexo)', fecha:'2025-10-29' },
+        { id:'PRES', titulo:'Presentación Final', tipo:'Exposición PPT/Canva/Prezi (15 min)', fecha:'2025-11-28' },
+        { id:'PORT3', titulo:'Portafolio — Evaluación N°3 (Carga completa + Bitácora)', tipo:'Portafolio Drive', fecha:'2025-11-28' },
+      ],
+    },
+    {
+      codigo:'IV', nombre:'Práctica IV — Intervención deportiva con tutor/a', color:'#E65100',
+      entregas: [
+        { id:'INF', titulo:'Informe: Estructura organizacional y descripción del deporte', tipo:'Informe Word (máx. 8 pp.)', fecha:'2025-10-01' },
+        { id:'PORT1', titulo:'Portafolio — Evaluación N°1 (Construcción + Bitácora)', tipo:'Portafolio Drive', fecha:'2025-10-01' },
+        { id:'PORT2', titulo:'Portafolio — Evaluación N°2 (Bitácora)', tipo:'Portafolio Drive', fecha:'2025-10-22' },
+        { id:'PLAN', titulo:'Planificación de entrenamiento deportivo', tipo:'Excel editable', fecha:'2025-10-29' },
+        { id:'PRES', titulo:'Presentación Final', tipo:'Exposición PPT/Canva/Prezi (15 min)', fecha:'2025-11-28' },
+        { id:'PORT3', titulo:'Portafolio — Evaluación N°3 (Carga completa + Bitácora)', tipo:'Portafolio Drive', fecha:'2025-11-28' },
+      ],
+    },
+    {
+      codigo:'PI', nombre:'Práctica Profesional I — Integración al Campo Profesional', color:'#4A148C',
+      entregas: [
+        { id:'PORT', titulo:'Portafolio Virtual y Bitácora', tipo:'Portafolio Drive', fecha:'2026-05-07' },
+        { id:'INF', titulo:'Informe: Estructura Organizacional y Descripción del Deporte/Área', tipo:'Informe Word (máx. 8 pp.)', fecha:'2026-05-27' },
+        { id:'PRO', titulo:'Proyecto de Mejora, Presentación y Reflexión', tipo:'Informe + Presentación (15 min)', fecha:'2026-06-24' },
+      ],
+    },
+    {
+      codigo:'PII', nombre:'Práctica Profesional II — Integración profesional por mención', color:'#1B5E20',
+      entregas: [
+        { id:'PLAN', titulo:'Planificación Deportiva (macrociclo)', tipo:'Excel + Presentación (20 min)', fecha:'2025-09-24' },
+        { id:'PORT1', titulo:'Portafolio — Evaluación N°1 (Construcción + Bitácora)', tipo:'Portafolio Drive', fecha:'2025-09-24' },
+        { id:'SESION', titulo:'Sesión de Entrenamiento (ejecución + preguntas)', tipo:'Ejecución en terreno', fecha:'2025-10-15' },
+        { id:'PORT2', titulo:'Portafolio — Evaluación N°2 (Bitácora)', tipo:'Portafolio Drive', fecha:'2025-10-29' },
+        { id:'MANUAL', titulo:'Manual de Ejercicios', tipo:'Manual Word/PDF (máx. 20 pp.)', fecha:'2025-11-12' },
+        { id:'PROY', titulo:'Proyecto de Investigación (propuesta)', tipo:'Propuesta Word', fecha:'2025-11-12' },
+        { id:'PROC', titulo:'Proceso en mi Centro de Práctica (rediseño)', tipo:'Informe Word (máx. 8 pp.)', fecha:'2025-11-12' },
+        { id:'ENS', titulo:'Ensayo Final y Reflexión', tipo:'Ensayo (máx. 3 pp.) + Presentación', fecha:'2025-11-26' },
+        { id:'PORT3', titulo:'Portafolio — Evaluación N°3 (Carga completa + Bitácora)', tipo:'Portafolio Drive', fecha:'2025-11-26' },
+      ],
+    },
+  ];
 })();

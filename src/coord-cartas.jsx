@@ -259,6 +259,58 @@ ${catalog.map(sec).join('')}
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
+// ─── Calendario de fechas de entrega ────────────────────────────────────
+function generarFechasEntregaPDF(practicaCodigo) {
+  const full = window.EVAL_FECHAS || [];
+  const practicas = practicaCodigo ? full.filter(p => p.codigo === practicaCodigo) : full;
+  const scopeTitle = practicaCodigo ? (practicas[0] ? practicas[0].nombre.replace(/—.*/, '').trim() : practicaCodigo) : 'Todas las Prácticas';
+  const fecha = new Date().toLocaleDateString('es-CL');
+  const filaFmt = d => {
+    const [y,m,dd] = d.split('-');
+    return new Date(+y, +m-1, +dd).toLocaleDateString('es-CL', { day:'2-digit', month:'short', year:'numeric' });
+  };
+  const rows = practicas
+    .flatMap(p => p.entregas.map(e => ({ ...e, practica: p })))
+    .sort((a,b) => a.fecha.localeCompare(b.fecha))
+    .map(e => `<tr>
+      <td class="fc">${filaFmt(e.fecha)}</td>
+      <td><span class="pr" style="background:${e.practica.color}">${e.practica.codigo}</span></td>
+      <td><strong>${_esc(e.titulo)}</strong></td>
+      <td>${_esc(e.tipo)}</td></tr>`).join('');
+  const totalEntregas = practicas.reduce((a,p) => a + p.entregas.length, 0);
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
+<title>Calendario de Fechas de Entrega — ${_esc(scopeTitle)}</title>
+<style>@page{size:letter;margin:18mm 16mm}*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:9.5pt;color:#111;line-height:1.45}
+.topbar{background:#003366;color:#fff;padding:9px 16px;display:flex;align-items:center;gap:10px;font-size:9pt}
+.topbar button{margin-left:auto;background:#fff;color:#003366;border:none;padding:6px 16px;border-radius:3px;font-weight:700;cursor:pointer}
+.dhead{border-bottom:2.5px solid #003366;padding-bottom:10px;margin:14px 0 6px}
+.dhead h1{font-size:13pt;color:#003366;margin-bottom:2px}.dhead p{font-size:8pt;color:#555}
+.meta{font-size:7.5pt;color:#888;text-align:right;margin-bottom:14px;border-bottom:1px solid #e0e0e0;padding-bottom:6px}
+table{width:100%;border-collapse:collapse;font-size:9pt}
+thead tr{background:#f5f5f5}
+th{padding:7px 10px;text-align:left;font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em;color:#555;border:1px solid #ddd}
+td{padding:7px 10px;border:1px solid #ddd;vertical-align:top}
+td.fc{white-space:nowrap;font-weight:700;color:#003366}
+.pr{display:inline-block;color:#fff;font-weight:700;font-size:8pt;padding:2px 9px;border-radius:10px}
+tr:nth-child(even) td{background:#fafcfe}
+.pie{margin-top:18px;border-top:1px solid #ddd;padding-top:5px;font-size:7.5pt;color:#999;text-align:center}
+@media print{.topbar{display:none}}</style></head><body>
+<div class="topbar">📅 Calendario de Fechas de Entrega — ${_esc(scopeTitle)}
+  <button onclick="window.print()">🖨 Guardar como PDF</button></div>
+<div class="dhead"><h1>Calendario de Fechas de Entrega — ${_esc(scopeTitle)}</h1>
+  <p>Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; Carrera de Entrenador Deportivo</p></div>
+<div class="meta">Generado el ${fecha} &middot; ${totalEntregas} entrega${totalEntregas!==1?'s':''} &middot; ${practicas.length} práctica${practicas.length!==1?'s':''}</div>
+<table><thead><tr><th>Fecha</th><th>Práctica</th><th>Trabajo / Evaluación</th><th>Tipo</th></tr></thead>
+<tbody>${rows}</tbody></table>
+<div class="pie">Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; www.usach.cl</div>
+</body></html>`;
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+  const w = window.open(url, '_blank', 'width=1000,height=750');
+  if (!w) { window.location.href = url; return; }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
 // ─── Reporte: disponibilidad horaria de profesores ─────────────────────
 function generarDisponibilidadPDF(profs) {
   const fmt = (window.SCHED && window.SCHED.fmtBlock) || (b => `${b.dia} ${b.desde}–${b.hasta}`);
@@ -777,6 +829,8 @@ function ReportesScreen({ ctx }) {
   const [selProf, setSelProf] = useState(profs[0]?.id||'');
   const [catalogScope, setCatalogScope] = useState('');
   const catalog = window.EVAL_CATALOG || [];
+  const [fechasScope, setFechasScope] = useState('');
+  const fechasCatalog = window.EVAL_FECHAS || [];
 
   return (
     <div data-screen-label="Reportes">
@@ -799,6 +853,21 @@ function ReportesScreen({ ctx }) {
           </div>
         </div>
         <button className="btn btn-primary" onClick={() => generarCatalogoPDF(catalogScope)}>📋 Generar PDF</button>
+      </div>
+
+      <div className="report-card" style={{ borderLeft:'3px solid #003366' }}>
+        <div className="report-icon" style={{ background:'#e3f2fd' }}>📅</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontWeight:700, fontSize:15 }}>Calendario de fechas de entrega</div>
+          <div className="muted" style={{ fontSize:13, marginTop:3 }}>Listado cronológico de las fechas de entrega de los trabajos y evaluaciones. Elige el reporte general (todas las prácticas) o una práctica específica.</div>
+          <div style={{ marginTop:10 }}>
+            <select value={fechasScope} onChange={e=>setFechasScope(e.target.value)} style={{ padding:'7px 12px', border:'1.5px solid var(--border)', borderRadius:8, fontSize:13, fontFamily:'inherit' }}>
+              <option value="">Reporte general (todas las prácticas)</option>
+              {fechasCatalog.map(p => <option key={p.codigo} value={p.codigo}>Solo {p.nombre}</option>)}
+            </select>
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={() => generarFechasEntregaPDF(fechasScope)}>📅 Generar PDF</button>
       </div>
 
       <div className="report-card">

@@ -260,8 +260,35 @@ ${catalog.map(sec).join('')}
 }
 
 // ─── Calendario de fechas de entrega ────────────────────────────────────
+// Arma el calendario leyendo el estado real que cada profesor/a guardó (y que
+// cloud.js ya sincroniza vía localStorage ↔ Firestore, clave usach_state_v1_*).
+// Si una práctica aún no tiene datos guardados, usa la fecha semilla por defecto.
+function buildFechasEntrega() {
+  const codigos = window.PRACTICES || ['I','II','III','IV','PI','PII'];
+  const catalog = window.EVAL_CATALOG || [];
+  return codigos.map(codigo => {
+    const meta = catalog.find(c => c.codigo === codigo) || {};
+    let evaluaciones = null;
+    try {
+      const raw = localStorage.getItem(`usach_state_v1_${codigo}_demo`);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && Array.isArray(parsed.evaluaciones) && parsed.evaluaciones.length) evaluaciones = parsed.evaluaciones;
+    } catch (e) { /* localStorage corrupto o inaccesible: usar respaldo */ }
+    if (!evaluaciones) {
+      if (window.activatePractica) window.activatePractica(codigo);
+      evaluaciones = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
+    }
+    return {
+      codigo,
+      nombre: meta.nombre || codigo,
+      color: meta.color || '#666',
+      entregas: evaluaciones.filter(e => e.fecha).map(e => ({ id: e.id, titulo: e.titulo, tipo: e.tipo, fecha: e.fecha })),
+    };
+  });
+}
+
 function generarFechasEntregaPDF(practicaCodigo) {
-  const full = window.EVAL_FECHAS || [];
+  const full = buildFechasEntrega();
   const practicas = practicaCodigo ? full.filter(p => p.codigo === practicaCodigo) : full;
   const scopeTitle = practicaCodigo ? (practicas[0] ? practicas[0].nombre.replace(/—.*/, '').trim() : practicaCodigo) : 'Todas las Prácticas';
   const fecha = new Date().toLocaleDateString('es-CL');
@@ -830,7 +857,7 @@ function ReportesScreen({ ctx }) {
   const [catalogScope, setCatalogScope] = useState('');
   const catalog = window.EVAL_CATALOG || [];
   const [fechasScope, setFechasScope] = useState('');
-  const fechasCatalog = window.EVAL_FECHAS || [];
+  const fechasCatalog = buildFechasEntrega();
 
   return (
     <div data-screen-label="Reportes">

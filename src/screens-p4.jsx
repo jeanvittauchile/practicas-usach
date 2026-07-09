@@ -167,7 +167,7 @@ function PortafolioTabP3({ est, ctx, onOpenEval }) {
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: 13.5 }}>{ev.titulo}</div>
-              <div className="muted" style={{ fontSize: 12 }}>{fechaFmt(ev.fecha)} · ideal {ev.maxPuntos} pts</div>
+              <div className="muted" style={{ fontSize: 12 }}>{window.evalFechaInfo(ev, ctx.state).label} · ideal {ev.maxPuntos} pts</div>
             </div>
             <span className={`nota ${notaClass(r?.nota)}`}>{formatNota(r && !r.parcial ? r.notaFinal : null)}</span>
             <button className="btn btn-secondary btn-sm" onClick={() => onOpenEval(ev.id)}><I.chev size={14} style={{ transform: 'rotate(-90deg)' }} /> Calificar</button>

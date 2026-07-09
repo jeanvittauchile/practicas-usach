@@ -90,6 +90,20 @@ function EditEvalModal({ ev, ctx, onClose }) {
                   </Field>
                   <Field label="Fecha de entrega">
                     <input className="input" type="date" value={draft.fecha} onChange={e => set('fecha', e.target.value)} />
+                    {draft.fechaManual && ctx.state.inicioPractica && draft.semanaEntrega && (
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 6, padding: '3px 6px', fontSize: 11 }}
+                              onClick={() => set('fechaManual', false)}>
+                        <I.refresh size={12} /> Fecha fijada manualmente · Volver a automático (Semana {draft.semanaEntrega})
+                      </button>
+                    )}
+                    {!draft.fechaManual && ctx.state.inicioPractica && draft.semanaEntrega && (() => {
+                      const r = window.semanaRango(ctx.state.inicioPractica, draft.semanaEntrega);
+                      return (
+                        <small className="muted" style={{ fontSize: 11, marginTop: 4, display: 'block' }}>
+                          Automático: {window.fechaRangoFmt(r.startISO, r.endISO)}
+                        </small>
+                      );
+                    })()}
                   </Field>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -219,7 +233,7 @@ function CalendarModal({ ctx, onClose }) {
   const onDrop = (iso) => {
     if (editing) {
       ctx.setEvalDate(editing.id, iso);
-      ctx.toast(`"${editing.titulo}" reprogramada para ${fechaFmt(iso)}`);
+      ctx.toast(`"${editing.titulo}" reprogramada manualmente para ${fechaFmt(iso)}`);
       setEditing(null);
       setDragOver(null);
     }
@@ -432,7 +446,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                 <CoverRow k="Profesor evaluador" v="Andrés Tapia Vergara" />
                 <CoverRow k="Email institucional" v="andres.tapia@usach.cl" />
                 <CoverRow k="Semestre" v="2025 — Segundo semestre" />
-                <CoverRow k="Fecha de entrega" v={fechaFmt(ev.fecha)} />
+                <CoverRow k="Fecha de entrega" v={window.evalFechaInfo(ev, ctx.state).label} />
                 <CoverRow k="Tipo de evaluación" v={ev.tipo} />
                 <CoverRow k="Duración / extensión" v={ev.duracion} />
                 <CoverRow k="Puntaje máximo" v={`${ev.maxPuntos} puntos`} />

@@ -65,8 +65,10 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
             <div style={{ fontSize: 13, opacity: 0.92, marginTop: 4 }}>{ev.descripcion}</div>
           </div>
           <div style={{ flex: '0 0 auto', minWidth: 130, whiteSpace: 'nowrap' }}>
-            <div style={{ fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85, fontWeight: 600 }}>Fecha entrega</div>
-            <div style={{ fontSize: 18, fontWeight: 700 }}>{fechaFmt(ev.fecha)}</div>
+            <div style={{ fontSize: 11.5, textTransform: 'uppercase', letterSpacing: '0.08em', opacity: 0.85, fontWeight: 600 }}>
+              Fecha entrega{ev.semanaEntrega ? ` · Semana ${ev.semanaEntrega}` : ''}
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700 }}>{window.evalFechaInfo(ev, ctx.state).label}</div>
             <div style={{ fontSize: 12, opacity: 0.9 }}>{ev.duracion}</div>
           </div>
         </div>

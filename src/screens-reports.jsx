@@ -135,7 +135,7 @@ function ReportTargetPicker({ pick, ctx, onBack, onClose }) {
                 </span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{ev.titulo}</div>
-                  <div className="muted" style={{ fontSize: 12 }}>{ev.tipo} · {fechaFmt(ev.fecha)}</div>
+                  <div className="muted" style={{ fontSize: 12 }}>{ev.tipo} · {window.evalFechaInfo(ev, ctx.state).label}</div>
                 </div>
                 <I.arrowRight size={16} stroke="var(--ink-400)" />
               </button>

@@ -105,6 +105,7 @@ function NotasCoordScreen({ ctx }) {
   const PRACS_INDEX = window.PRACTICAS_INDEX || [];
   const [practica, setPractica] = useState((PRACS_INDEX[0] && PRACS_INDEX[0].codigo) || 'I');
   const [exportOpen, setExportOpen] = useState(false);
+  const [configOpen, setConfigOpen] = useState(false);
 
   window.activatePractica(practica);
   const D = window.USACH_DATA || {};
@@ -139,6 +140,9 @@ function NotasCoordScreen({ ctx }) {
           <div className="subtitle">Vista consolidada de las evaluaciones ingresadas en cada práctica</div>
         </div>
         <div className="actions">
+          <button className="btn btn-secondary btn-sm" onClick={() => setConfigOpen(true)}>
+            <I.calendar /> Configurar inicio de práctica
+          </button>
           <button className="btn btn-secondary btn-sm" disabled={estudiantes.length === 0} onClick={() => setExportOpen(true)}>
             <I.download /> Exportar / Imprimir
           </button>
@@ -221,6 +225,99 @@ function NotasCoordScreen({ ctx }) {
       )}
 
       {exportOpen && <NotasExportModal practica={practica} D={D} cols={cols} filas={filas} onClose={() => setExportOpen(false)} />}
+      {configOpen && (
+        <ConfigurarInicioModal codigo={practica} D={D} state={state}
+          onSaved={() => { setConfigOpen(false); ctx.toast && ctx.toast(`Semana 1 de ${practica} configurada`); }}
+          onClose={() => setConfigOpen(false)} />
+      )}
+    </div>
+  );
+}
+
+// Siembra un estado completo si aún no existe (para no escribir un objeto parcial que
+// rompa la próxima lectura del profesor), y guarda inicioPractica. El setItem ya está
+// parcheado por cloud.js (prefijo usach_state_v1_), así que sincroniza a Firestore solo.
+function setInicioPracticaFor(codigo, iso) {
+  window.activatePractica(codigo);
+  const D = window.USACH_DATA;
+  const key = `usach_state_v1_${codigo}_demo`;
+  let state = null;
+  try {
+    const raw = localStorage.getItem(key);
+    state = raw ? JSON.parse(raw) : null;
+  } catch (e) { state = null; }
+  if (!state || !Array.isArray(state.evaluaciones)) {
+    state = D.initialState ? D.initialState('demo') : { evaluaciones: [], estudiantes: [] };
+  }
+  localStorage.setItem(key, JSON.stringify({ ...state, inicioPractica: iso }));
+}
+
+function ConfigurarInicioModal({ codigo, D, state, onSaved, onClose }) {
+  const { useState } = React;
+  const [iso, setIso] = useState((state && state.inicioPractica) || '');
+  const evals = (state && state.evaluaciones && state.evaluaciones.length) ? state.evaluaciones : (D.EVALUACIONES || []);
+  const earliest = evals.reduce((min, e) => (e.fecha && (!min || e.fecha < min)) ? e.fecha : min, null);
+  const preview = iso
+    ? evals
+        .filter(e => e.semanaEntrega)
+        .map(e => {
+          const r = window.semanaRango(iso, e.semanaEntrega);
+          return { ...e, startISO: r.startISO, endISO: r.endISO };
+        })
+        .sort((a, b) => a.semanaEntrega - b.semanaEntrega)
+    : [];
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <I.calendar />
+          <h3 className="h3" style={{ margin: 0 }}>Configurar inicio de práctica — {codigo}</h3>
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
+        </div>
+        <div className="modal-body">
+          <p className="muted" style={{ fontSize: 13, marginBottom: 10 }}>
+            Ingresa la fecha de inicio de la <strong>Semana 1</strong>. El sistema calculará automáticamente
+            el rango de fechas de cada evaluación (7 días por semana) en todas las vistas. Las evaluaciones
+            con una fecha fijada manualmente no se ven afectadas.
+          </p>
+          <div className="form-field">
+            <label>Inicio de Semana 1</label>
+            <input type="date" value={iso} onChange={e => setIso(e.target.value)} />
+          </div>
+          {earliest && (
+            <button className="btn btn-ghost btn-sm" style={{ marginTop: 6 }} onClick={() => setIso(earliest)}>
+              Usar fecha más temprana registrada ({fechaFmt(earliest)})
+            </button>
+          )}
+          {preview.length > 0 && (
+            <div style={{ marginTop: 16, maxHeight: 260, overflowY: 'auto' }}>
+              <table style={{ width: '100%', fontSize: 12.5, borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '4px 6px' }}>Sem.</th>
+                    <th style={{ textAlign: 'left', padding: '4px 6px' }}>Evaluación</th>
+                    <th style={{ textAlign: 'left', padding: '4px 6px' }}>Rango calculado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.map(e => (
+                    <tr key={e.id} style={{ borderTop: '1px solid var(--border)' }}>
+                      <td className="tnum" style={{ padding: '4px 6px' }}>{e.semanaEntrega}</td>
+                      <td style={{ padding: '4px 6px' }}>{e.titulo}</td>
+                      <td style={{ padding: '4px 6px' }}>{window.fechaRangoFmt(e.startISO, e.endISO)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" disabled={!iso} onClick={() => { setInicioPracticaFor(codigo, iso); onSaved(); }}>Guardar</button>
+        </div>
+      </div>
     </div>
   );
 }

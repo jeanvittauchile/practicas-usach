@@ -269,10 +269,11 @@ function buildFechasEntrega() {
   return codigos.map(codigo => {
     const meta = catalog.find(c => c.codigo === codigo) || {};
     let evaluaciones = null;
+    let parsedState = null;
     try {
       const raw = localStorage.getItem(`usach_state_v1_${codigo}_demo`);
-      const parsed = raw ? JSON.parse(raw) : null;
-      if (parsed && Array.isArray(parsed.evaluaciones) && parsed.evaluaciones.length) evaluaciones = parsed.evaluaciones;
+      parsedState = raw ? JSON.parse(raw) : null;
+      if (parsedState && Array.isArray(parsedState.evaluaciones) && parsedState.evaluaciones.length) evaluaciones = parsedState.evaluaciones;
     } catch (e) { /* localStorage corrupto o inaccesible: usar respaldo */ }
     if (!evaluaciones) {
       if (window.activatePractica) window.activatePractica(codigo);
@@ -282,7 +283,11 @@ function buildFechasEntrega() {
       codigo,
       nombre: meta.nombre || codigo,
       color: meta.color || '#666',
-      entregas: evaluaciones.filter(e => e.fecha).map(e => ({ id: e.id, titulo: e.titulo, tipo: e.tipo, fecha: e.fecha })),
+      inicioPractica: (parsedState && parsedState.inicioPractica) || null,
+      entregas: evaluaciones.filter(e => e.fecha).map(e => {
+        const info = window.evalFechaInfo(e, parsedState || {});
+        return { id: e.id, titulo: e.titulo, tipo: e.tipo, fecha: e.fecha, semanaEntrega: e.semanaEntrega || null, ...info };
+      }),
     };
   });
 }
@@ -298,9 +303,10 @@ function generarFechasEntregaPDF(practicaCodigo) {
   };
   const rows = practicas
     .flatMap(p => p.entregas.map(e => ({ ...e, practica: p })))
-    .sort((a,b) => a.fecha.localeCompare(b.fecha))
+    .sort((a,b) => (a.deadline || a.fecha).localeCompare(b.deadline || b.fecha))
     .map(e => `<tr>
-      <td class="fc">${filaFmt(e.fecha)}</td>
+      <td class="fc">${_esc(e.label || filaFmt(e.fecha))}</td>
+      <td class="c">${e.semanaEntrega ? 'Sem. ' + e.semanaEntrega : '—'}</td>
       <td><span class="pr" style="background:${e.practica.color}">${e.practica.codigo}</span></td>
       <td><strong>${_esc(e.titulo)}</strong></td>
       <td>${_esc(e.tipo)}</td></tr>`).join('');
@@ -319,6 +325,7 @@ thead tr{background:#f5f5f5}
 th{padding:7px 10px;text-align:left;font-size:7.5pt;text-transform:uppercase;letter-spacing:.04em;color:#555;border:1px solid #ddd}
 td{padding:7px 10px;border:1px solid #ddd;vertical-align:top}
 td.fc{white-space:nowrap;font-weight:700;color:#003366}
+td.c{text-align:center;white-space:nowrap;color:#555}
 .pr{display:inline-block;color:#fff;font-weight:700;font-size:8pt;padding:2px 9px;border-radius:10px}
 tr:nth-child(even) td{background:#fafcfe}
 .pie{margin-top:18px;border-top:1px solid #ddd;padding-top:5px;font-size:7.5pt;color:#999;text-align:center}
@@ -328,7 +335,7 @@ tr:nth-child(even) td{background:#fafcfe}
 <div class="dhead"><h1>Calendario de Fechas de Entrega — ${_esc(scopeTitle)}</h1>
   <p>Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; Carrera de Entrenador Deportivo</p></div>
 <div class="meta">Generado el ${fecha} &middot; ${totalEntregas} entrega${totalEntregas!==1?'s':''} &middot; ${practicas.length} práctica${practicas.length!==1?'s':''}</div>
-<table><thead><tr><th>Fecha</th><th>Práctica</th><th>Trabajo / Evaluación</th><th>Tipo</th></tr></thead>
+<table><thead><tr><th>Fecha</th><th>Semana</th><th>Práctica</th><th>Trabajo / Evaluación</th><th>Tipo</th></tr></thead>
 <tbody>${rows}</tbody></table>
 <div class="pie">Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; www.usach.cl</div>
 </body></html>`;

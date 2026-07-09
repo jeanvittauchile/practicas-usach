@@ -73,7 +73,7 @@
   const INFORME = {
     id: 'INF', grupo: 'documento', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_INFORME',
     titulo: 'Informe: Descripción administrativa y técnica de la actividad', tipo: 'Informe (Word)', duracion: 'Máx. 8 pp.',
-    fecha: '2025-10-08', semana: 6, estado: 'pendiente', maxPuntos: 54, ponderacion: 0.20,
+    fecha: '2025-10-08', semanaEntrega: 1, estado: 'pendiente', maxPuntos: 54, ponderacion: 0.20,
     descripcion: 'Indaga la estructura organizacional y el funcionamiento del centro de práctica, describiendo la disciplina a intervenir, los medios y métodos de entrenamiento utilizados y los usuarios que frecuentan el centro.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -127,7 +127,7 @@
   const PLANIFICACION = {
     id: 'PLAN', grupo: 'documento', numero: 2, nivelesKey: 'NIVELES_PLANIF', escalaKey: 'ESCALA_PLANIF',
     titulo: 'Planificación de entrenamiento', tipo: 'Excel + Word (anexo)', duracion: '8 sesiones',
-    fecha: '2025-10-29', semana: 9, estado: 'pendiente', maxPuntos: 40, ponderacion: 0.20,
+    fecha: '2025-10-29', semanaEntrega: 4, estado: 'pendiente', maxPuntos: 40, ponderacion: 0.20,
     descripcion: 'Diseño de una planificación de entrenamiento basada en el mejoramiento de las capacidades físicas predominantes, de acuerdo a las instrucciones del/la profesor/a tutor/a del centro de práctica.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -183,7 +183,7 @@
   const PRESENTACION = {
     id: 'PRES', grupo: 'documento', numero: 3, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PRESENT',
     titulo: 'Presentación Final', tipo: 'Exposición (PPT/Canva/Prezi)', duracion: '15 min + 5 preguntas',
-    fecha: '2025-11-28', semana: 14, estado: 'pendiente', maxPuntos: 42, ponderacion: 0.20,
+    fecha: '2025-11-28', semanaEntrega: 8, estado: 'pendiente', maxPuntos: 42, ponderacion: 0.20,
     descripcion: 'Exposición de la experiencia personal de la intervención en el centro de práctica y la reflexión sobre la integración de las asignaturas teóricas a la práctica.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -242,7 +242,7 @@
   const PORT1 = {
     id: 'PORT1', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT1',
     titulo: 'Portafolio — Evaluación N°1 (Construcción + Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Construcción',
-    fecha: '2025-10-08', semana: 6, estado: 'pendiente', maxPuntos: 36, ponderacion: 0,
+    fecha: '2025-10-08', semanaEntrega: 1, estado: 'pendiente', maxPuntos: 36, ponderacion: 0,
     descripcion: 'Construcción del portafolio en DRIVE con todas las carpetas indicadas y registro diario de la bitácora.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -266,7 +266,7 @@
   const PORT2 = {
     id: 'PORT2', grupo: 'portafolio', numero: 2, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT2',
     titulo: 'Portafolio — Evaluación N°2 (Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Aleatoria',
-    fecha: '2025-10-22', semana: 8, estado: 'pendiente', maxPuntos: 27, ponderacion: 0,
+    fecha: '2025-10-22', semanaEntrega: 3, estado: 'pendiente', maxPuntos: 27, ponderacion: 0,
     descripcion: 'Revisión aleatoria del registro diario de la bitácora durante el semestre.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: ['Mantener actualizado el registro diario de la bitácora en cualquier momento del semestre.'],
@@ -278,7 +278,7 @@
   const PORT3 = {
     id: 'PORT3', grupo: 'portafolio', numero: 3, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT3',
     titulo: 'Portafolio — Evaluación N°3 (Carga completa + Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Cierre',
-    fecha: '2025-11-28', semana: 14, estado: 'pendiente', maxPuntos: 30, ponderacion: 0,
+    fecha: '2025-11-28', semanaEntrega: 8, estado: 'pendiente', maxPuntos: 30, ponderacion: 0,
     descripcion: 'Carga de la totalidad de documentos del portafolio y registro completo de la bitácora al cierre del semestre.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: ['Cargar todos los documentos en las fechas estipuladas.', 'Completar la bitácora con todas las sesiones realizadas.'],
@@ -451,6 +451,7 @@
       initialState: () => ({
         evaluaciones: EVALUACIONES.map(e => ({ ...e })),
         estudiantes: [],
+        inicioPractica: null,
         niveles: {}, atrasos: {}, terreno: {}, tutor: {},
         supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
       }),

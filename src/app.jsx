@@ -302,7 +302,12 @@ function App() {
     })),
     updateEval: (evId, draft) => setState(s => ({
       ...s,
-      evaluaciones: s.evaluaciones.map(e => e.id === evId ? { ...e, ...draft } : e),
+      evaluaciones: s.evaluaciones.map(e => {
+        if (e.id !== evId) return e;
+        const next = { ...e, ...draft };
+        if (draft.fecha !== undefined && draft.fecha !== e.fecha) next.fechaManual = true;
+        return next;
+      }),
     })),
     // ─── Variante de rúbrica (p. ej. Informe P4: deporte individual / colectivo) ───
     setEvalVariante: (evId, key) => setState(s => ({
@@ -315,7 +320,7 @@ function App() {
     })),
     setEvalDate: (evId, iso) => setState(s => ({
       ...s,
-      evaluaciones: s.evaluaciones.map(e => e.id === evId ? { ...e, fecha: iso } : e),
+      evaluaciones: s.evaluaciones.map(e => e.id === evId ? { ...e, fecha: iso, fechaManual: true } : e),
     })),
   }), [state, nav, toastMsg, t.driveUrl]);
 
@@ -416,7 +421,7 @@ function App() {
 function initialState(kind) {
   const D = window.USACH_DATA;
   if (D.initialState) return D.initialState(kind);
-  return { evaluaciones: [], estudiantes: [], niveles: {}, atrasos: {}, supervisor: {}, autoeval: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {} };
+  return { evaluaciones: [], estudiantes: [], inicioPractica: null, niveles: {}, atrasos: {}, supervisor: {}, autoeval: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {} };
 }
 
 // ─── Persistencia por práctica (localStorage, compartido entre cuentas) ────

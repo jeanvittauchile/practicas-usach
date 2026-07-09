@@ -92,7 +92,7 @@
   const INFORME = {
     id: 'INF', grupo: 'documento', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_INF_DEP',
     titulo: 'Informe: Estructura Organizacional y Descripción del Deporte', tipo: 'Informe (Word)', duracion: 'Máx. 8 pp.',
-    fecha: '2026-05-27', estado: 'corregida', maxPuntos: 51, ponderacion: 0.15,
+    fecha: '2026-05-27', semanaEntrega: 3, estado: 'corregida', maxPuntos: 51, ponderacion: 0.15,
     descripcion: 'Indaga la estructura organizacional y el funcionamiento del centro de práctica, describiendo la disciplina o función a intervenir, los métodos de entrenamiento y los usuarios.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -133,7 +133,7 @@
   const PROYECTO = {
     id: 'PRO', grupo: 'documento', numero: 2, nivelesKey: 'NIVELES_APREC', escalaKey: 'ESCALA_PROYECTO',
     titulo: 'Proyecto de Mejora, Presentación y Reflexión', tipo: 'Informes + Presentación', duracion: '15 min + 5 preguntas',
-    fecha: '2026-06-24', estado: 'en-evaluacion', maxPuntos: 104, ponderacion: 0.30,
+    fecha: '2026-06-24', semanaEntrega: 7, estado: 'en-evaluacion', maxPuntos: 104, ponderacion: 0.30,
     descripcion: 'Proyecto de mejora para el centro de práctica más la reflexión de la intervención del semestre, entregados como informe escrito y presentación.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -188,7 +188,7 @@
   const PORTAFOLIO = {
     id: 'PORT', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT',
     titulo: 'Portafolio Virtual y Bitácora', tipo: 'Portafolio (Drive)', duracion: 'Construcción + Bitácora',
-    fecha: '2026-05-07', estado: 'corregida', maxPuntos: 33, ponderacion: 0,
+    fecha: '2026-05-07', semanaEntrega: 1, estado: 'corregida', maxPuntos: 33, ponderacion: 0,
     descripcion: 'Construcción del portafolio en DRIVE y registro diario de las acciones del centro de práctica en la bitácora, revisado en las supervisiones en terreno.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -567,6 +567,7 @@
           return {
             evaluaciones: EVALUACIONES.map(e => ({ ...e, estado: 'pendiente' })),
             estudiantes: ESTUDIANTES.map(e => ({ ...e })),
+            inicioPractica: null,
             niveles: {}, atrasos: {}, terreno: {}, tutor: {}, autoeval: {}, semestral: {},
             supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
           };
@@ -574,6 +575,7 @@
         return {
           evaluaciones: EVALUACIONES.map(e => ({ ...e })),
           estudiantes: ESTUDIANTES.map(e => ({ ...e })),
+          inicioPractica: null,
           niveles: JSON.parse(JSON.stringify(niveles)),
           atrasos: JSON.parse(JSON.stringify(atrasos)),
           terreno: JSON.parse(JSON.stringify(terreno)),

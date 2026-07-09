@@ -245,7 +245,7 @@ const PRESENTACION_TERRENO_P1 = {
   id: 'PT', grupo: 'presentacion', numero: 1,
   titulo: 'Presentación: Salidas a terreno',
   tipo: 'Exposición oral', duracion: '10–15 min + 5 min preguntas',
-  fecha: '2025-11-05', semana: 14, estado: 'pendiente',
+  fecha: '2025-11-05', semanaEntrega: 12, estado: 'pendiente',
   maxPuntos: 16, ponderacion: 0,
   vinculado: 'supervisor-d7',
   descripcion: 'Exposición oral y reflexiva sobre las experiencias vividas en las salidas a terreno en la comuna y las federaciones deportivas observadas durante el semestre. Se evalúa mediante la Dimensión 7 del instrumento del Supervisor.',
@@ -291,7 +291,7 @@ const SOLEMNES_P1 = [
   {
     id: 'S1', grupo: 'solemne', numero: 1, nivelesKey: 'NIVELES_SOLEMNE', escalaKey: 'ESCALA_SOLEMNES',
     titulo: 'Cápsula de video: Entrevista a un entrenador', tipo: 'Audiovisual', duracion: '15 min máx.',
-    fecha: '2025-08-15', semana: 3.15, estado: 'corregida', maxPuntos: 30,
+    fecha: '2025-08-15', semanaEntrega: 1, estado: 'corregida', maxPuntos: 30,
     descripcion: 'Realizar una entrevista en formato audiovisual a un entrenador o entrenadora, con análisis y reflexión.',
     resultadosAprendizaje: [
       'Reconocer el campo laboral del entrenador deportivo a través del contacto directo con profesionales en ejercicio.',
@@ -340,7 +340,7 @@ const SOLEMNES_P1 = [
   {
     id: 'S2', grupo: 'solemne', numero: 2, nivelesKey: 'NIVELES_SOLEMNE', escalaKey: 'ESCALA_SOLEMNES',
     titulo: 'Investigación en terreno: Corporación de Deportes Municipal', tipo: 'Terreno + Informe', duracion: 'Visita + 6-8 pp.',
-    fecha: '2025-10-10', semana: 4.7, estado: 'en-evaluacion', maxPuntos: 30,
+    fecha: '2025-10-10', semanaEntrega: 9, estado: 'en-evaluacion', maxPuntos: 30,
     descripcion: 'Visita a terreno a la corporación de deportes de la comuna del estudiante e informe descriptivo.',
     resultadosAprendizaje: [
       'Identificar la institucionalidad deportiva local y los actores que la conforman.',
@@ -389,7 +389,7 @@ const SOLEMNES_P1 = [
   {
     id: 'S3', grupo: 'solemne', numero: 3, nivelesKey: 'NIVELES_SOLEMNE', escalaKey: 'ESCALA_SOLEMNES',
     titulo: 'Investigación en terreno: Comité Olímpico o Paralímpico', tipo: 'Terreno + Informe', duracion: 'Visita + 6-8 pp.',
-    fecha: '2025-11-21', semana: 9.0, estado: 'pendiente', maxPuntos: 30,
+    fecha: '2025-11-21', semanaEntrega: 15, estado: 'pendiente', maxPuntos: 30,
     descripcion: 'Investigación en terreno sobre un deporte del Estadio Nacional, Comité Olímpico o Paralímpico.',
     resultadosAprendizaje: [
       'Conocer la institucionalidad deportiva nacional de alto rendimiento.',
@@ -440,7 +440,7 @@ const TALLERES_P1 = [
   {
     id: 'T1', grupo: 'taller', numero: 1, nivelesKey: 'NIVELES_TALLER', escalaKey: 'ESCALA_TALLERES',
     titulo: 'Ensayo personal: Buscando tu identidad', tipo: 'Ensayo', duracion: '3-5 pp.',
-    fecha: '2025-08-29', semana: 14.0, estado: 'corregida', maxPuntos: 18,
+    fecha: '2025-08-29', semanaEntrega: 3, estado: 'corregida', maxPuntos: 18,
     descripcion: 'Ensayo personal narrativo sobre la propia identidad y vocación profesional.',
     resultadosAprendizaje: ['Reflexionar sobre la motivación personal hacia la carrera de Entrenador Deportivo.'],
     objetivosEspecificos: [
@@ -479,7 +479,7 @@ const TALLERES_P1 = [
   {
     id: 'T2', grupo: 'taller', numero: 2, nivelesKey: 'NIVELES_TALLER', escalaKey: 'ESCALA_TALLERES',
     titulo: 'Preguntas para entrevista a entrenador', tipo: 'Informe', duracion: '14 preguntas + análisis',
-    fecha: '2025-09-12', semana: 3.15, estado: 'corregida', maxPuntos: 18,
+    fecha: '2025-09-12', semanaEntrega: 5, estado: 'corregida', maxPuntos: 18,
     descripcion: 'Recopilación, selección y elaboración de preguntas para entrevistar a un entrenador.',
     resultadosAprendizaje: ['Desarrollar habilidades de diseño de instrumentos cualitativos.'],
     objetivosEspecificos: [
@@ -520,7 +520,7 @@ const TALLERES_P1 = [
   {
     id: 'T3', grupo: 'taller', numero: 3, nivelesKey: 'NIVELES_TALLER', escalaKey: 'ESCALA_TALLERES',
     titulo: 'Cápsula de video sobre motivaciones a futuro', tipo: 'Audiovisual', duracion: '5-8 min',
-    fecha: '2025-11-07', semana: 14.0, estado: 'pendiente', maxPuntos: 18,
+    fecha: '2025-11-07', semanaEntrega: 13, estado: 'pendiente', maxPuntos: 18,
     descripcion: 'Cápsula audiovisual sobre las motivaciones a futuro del/la estudiante en la carrera.',
     resultadosAprendizaje: ['Comunicar proyecciones profesionales en formato audiovisual.'],
     objetivosEspecificos: [
@@ -688,6 +688,7 @@ function buildPracticaI() {
         return {
           evaluaciones: [...EVALUACIONES_P1, PRESENTACION_TERRENO_P1].map(e => ({ ...e, estado: 'pendiente' })),
           estudiantes: ESTUDIANTES_P1.map(e => ({ ...e })),
+          inicioPractica: null,
           niveles: {}, atrasos: {}, supervisor: {}, autoeval: {},
           supervisorDims: JSON.parse(JSON.stringify(SUPERVISOR_DIMENSIONES_P1)),
           supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
@@ -696,6 +697,7 @@ function buildPracticaI() {
       return {
         evaluaciones: [...EVALUACIONES_P1, PRESENTACION_TERRENO_P1].map(e => ({ ...e })),
         estudiantes: ESTUDIANTES_P1.map(e => ({ ...e })),
+        inicioPractica: null,
         niveles: JSON.parse(JSON.stringify(niveles)),
         atrasos: JSON.parse(JSON.stringify(atrasos)),
         supervisor: JSON.parse(JSON.stringify(supervisor)),

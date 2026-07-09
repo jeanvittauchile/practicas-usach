@@ -41,7 +41,7 @@ function Dashboard({ ctx, onNav }) {
   const today = new Date('2025-09-15');
   const proximas = [...evaluaciones]
     .filter(e => e.estado !== 'corregida')
-    .sort((a, b) => a.fecha.localeCompare(b.fecha))
+    .sort((a, b) => window.evalFechaInfo(a, ctx.state).deadline.localeCompare(window.evalFechaInfo(b, ctx.state).deadline))
     .slice(0, 4);
 
   return (
@@ -82,7 +82,8 @@ function Dashboard({ ctx, onNav }) {
           </div>
           <div>
             {proximas.map(ev => {
-              const dias = Math.ceil((new Date(ev.fecha) - today) / 86400000);
+              const info = window.evalFechaInfo(ev, ctx.state);
+              const dias = Math.ceil((new Date(info.deadline) - today) / 86400000);
               const esTeal = window.grupoEsTeal(ev.grupo);
               return (
                 <div key={ev.id} className="card-section" style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
@@ -98,7 +99,7 @@ function Dashboard({ ctx, onNav }) {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--ink-900)' }}>{ev.titulo}</div>
                     <div className="muted" style={{ fontSize: 12, marginTop: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <I.calendar size={13} /> {fechaFmt(ev.fecha)} · <I.clock size={13} /> {ev.tipo}
+                      <I.calendar size={13} /> {info.label} · <I.clock size={13} /> {ev.tipo}
                     </div>
                   </div>
                   <span className={`tag ${dias <= 7 ? 'tag-warn' : dias <= 21 ? 'tag-info' : 'tag-outline'}`}>
@@ -455,7 +456,7 @@ function EvalCard({ ev, state, onClick, mencionBadge }) {
       <div className="row" style={{ gap: 8 }}>
         {estadoTag}
         {mencionBadge && <span style={{ display:'flex', gap:4, flexWrap:'wrap' }}>{mencionBadge}</span>}
-        <span className="tag tag-outline"><I.calendar size={11} /> {fechaFmt(ev.fecha)}</span>
+        <span className="tag tag-outline"><I.calendar size={11} /> {window.evalFechaInfo(ev, state).label}{ev.semanaEntrega ? ` · Sem. ${ev.semanaEntrega}` : ''}</span>
         <span className="tag tag-outline">máx {ev.maxPuntos} pts</span>
       </div>
       <div className="progress-row">
@@ -957,7 +958,7 @@ function PdfPreviewModal({ kind, ev, est, ctx, onClose }) {
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
         </div>
         <div className="modal-body" ref={bodyRef}>
-          {kind === 'general' && <PdfGeneral />}
+          {kind === 'general' && <PdfGeneral state={state} />}
           {isStudent && <PdfRubrica ev={ev} est={est} state={state} />}
         </div>
         <div className="modal-foot">
@@ -970,7 +971,7 @@ function PdfPreviewModal({ kind, ev, est, ctx, onClose }) {
   );
 }
 
-function PdfGeneral() {
+function PdfGeneral({ state }) {
   const meta = D.meta || {};
   const grupos = D.GRUPOS || [];
   return (
@@ -988,7 +989,7 @@ function PdfGeneral() {
           {D.EVALUACIONES.filter(e => e.grupo === g.id).map(ev => (
             <div key={ev.id} style={{ marginBottom: 12 }}>
               <strong>{window.evalSigla(ev)}. {ev.titulo}</strong>
-              <div className="muted" style={{ fontSize: 11 }}>{ev.tipo} · {ev.duracion} · Fecha: {fechaFmt(ev.fecha)} · Máx. {ev.maxPuntos} pts</div>
+              <div className="muted" style={{ fontSize: 11 }}>{ev.tipo} · {ev.duracion} · Fecha: {window.evalFechaInfo(ev, state || {}).label} · Máx. {ev.maxPuntos} pts</div>
               <div style={{ fontSize: 11.5, marginTop: 4 }}>{ev.descripcion}</div>
             </div>
           ))}
@@ -1026,7 +1027,7 @@ function PdfRubrica({ ev, est, state }) {
       </div>
       <div className="pdf-section" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, fontSize: 11.5 }}>
         <div><strong>Estudiante:</strong> {est.nombre}<br /><strong>RUT:</strong> {est.rut}</div>
-        <div><strong>Fecha entrega:</strong> {fechaFmt(ev.fecha)}<br /><strong>Profesor:</strong> {prof.nombre || '—'}{prof.titulo ? ' · ' + prof.titulo : ''}</div>
+        <div><strong>Fecha entrega:</strong> {window.evalFechaInfo(ev, state).label}<br /><strong>Profesor:</strong> {prof.nombre || '—'}{prof.titulo ? ' · ' + prof.titulo : ''}</div>
       </div>
       <div className="pdf-section">
         <h3>Rúbrica</h3>

@@ -36,7 +36,7 @@ function MobilePhone({ label, children }) {
 
 // ─── Screen 1: Home ───────────────────────────────────────────
 function MobileHome({ state, primary }) {
-  const proxima = state.evaluaciones.filter(e => e.estado !== 'corregida').sort((a,b) => a.fecha.localeCompare(b.fecha))[0];
+  const proxima = state.evaluaciones.filter(e => e.estado !== 'corregida').sort((a,b) => window.evalFechaInfo(a, state).deadline.localeCompare(window.evalFechaInfo(b, state).deadline))[0];
   const porCalificar = state.evaluaciones.filter(e => e.estado !== 'corregida').length;
   const corregidas  = state.evaluaciones.filter(e => e.estado === 'corregida').length;
   return (
@@ -89,7 +89,7 @@ function MobileHome({ state, primary }) {
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 13, lineHeight: 1.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{proxima.titulo}</div>
-                  <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{fechaFmt(proxima.fecha)} · {proxima.tipo}</div>
+                  <div className="muted" style={{ fontSize: 11, marginTop: 2 }}>{window.evalFechaInfo(proxima, state).label} · {proxima.tipo}</div>
                 </div>
               </div>
               <button className="btn btn-primary btn-sm" style={{ width: '100%', justifyContent: 'center', marginTop: 10 }}>
@@ -159,7 +159,7 @@ function MobileEvalList({ state, primary }) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: 12.5, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--ink-900)' }}>{ev.titulo}</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                <span className="muted" style={{ fontSize: 10.5 }}>{fechaFmt(ev.fecha)}</span>
+                <span className="muted" style={{ fontSize: 10.5 }}>{window.evalFechaInfo(ev, state).label}</span>
                 <span style={{ fontSize: 9, color: 'var(--ink-300)' }}>·</span>
                 <span className="muted" style={{ fontSize: 10.5 }}>{ev.maxPuntos} pts</span>
               </div>
@@ -247,6 +247,7 @@ function MobileEvalDetail({ state, primary }) {
     return r && !r.parcial;
   }).length;
   const pct = total > 0 ? Math.round(completados / total * 100) : 0;
+  const evalDateInfo = window.evalFechaInfo(ev, state);
 
   const sections = [
     { i: 'zap',         l: 'Resultados de aprendizaje', n: (ev.resultadosAprendizaje||[]).length, color: esTeal ? 'var(--teal-50)' : 'var(--orange-50)', fg: esTeal ? 'var(--teal-700)' : 'var(--orange-700)' },
@@ -305,7 +306,7 @@ function MobileEvalDetail({ state, primary }) {
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 0, borderTop: '1px solid var(--border)', paddingTop: 12 }}>
           {[
-            { label: 'Fecha', value: fechaFmt(ev.fecha).split(' ').slice(0,2).join(' ') },
+            { label: 'Fecha', value: evalDateInfo.auto ? `Sem. ${evalDateInfo.semana}` : fechaFmt(ev.fecha).split(' ').slice(0,2).join(' ') },
             { label: 'Puntaje', value: `${ev.maxPuntos} pts` },
             { label: 'Criterios', value: `${ev.criterios.length} crit.` },
           ].map((s, i) => (
@@ -315,6 +316,11 @@ function MobileEvalDetail({ state, primary }) {
             </div>
           ))}
         </div>
+        {evalDateInfo.auto && (
+          <div style={{ fontSize: 10.5, color: 'var(--ink-500)', textAlign: 'center', marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+            {evalDateInfo.label}
+          </div>
+        )}
       </div>
 
       {/* Sections */}

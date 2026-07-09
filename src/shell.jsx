@@ -279,12 +279,7 @@ function formatNota(n) {
   if (n == null) return '—';
   return n.toFixed(1).replace('.', ',');
 }
-function fechaFmt(iso) {
-  if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  return `${parseInt(d, 10)} ${meses[parseInt(m, 10) - 1]} ${y}`;
-}
+// fechaFmt vive ahora en semana-utils.js (compartida con el coordinador), cargado antes que este archivo.
 
 // ─── Ponderación label: derived from current eval titles ────────────
 function shortEvalTitle(ev) {
@@ -316,4 +311,4 @@ function getPonderacionLabel(p, evaluaciones) {
   return `${prefixes.join(' + ')} · ${titles.join(' + ')}`;
 }
 
-Object.assign(window, { Sidebar, Topbar, NotificationsPanel, SettingsMenu, useToast, notaClass, formatNota, fechaFmt, getPonderacionLabel, shortEvalTitle });
+Object.assign(window, { Sidebar, Topbar, NotificationsPanel, SettingsMenu, useToast, notaClass, formatNota, getPonderacionLabel, shortEvalTitle });

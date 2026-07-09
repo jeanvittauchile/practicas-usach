@@ -92,7 +92,7 @@
   const PLANIFICACION = {
     id: 'PLAN', grupo: 'documento', numero: 1, nivelesKey: 'NIVELES_DSI', escalaKey: 'ESCALA_PLANIF',
     titulo: 'Planificación Deportiva (macrociclo)', tipo: 'Excel + Presentación', duracion: 'Temporada · 3 meses',
-    fecha: '2025-09-24', estado: 'corregida', maxPuntos: 36, ponderacion: 0.20,
+    fecha: '2025-09-24', semanaEntrega: 1, estado: 'corregida', maxPuntos: 36, ponderacion: 0.20,
     menciones: ['deportiva', 'ciencias', 'gestion'],
     descripcion: 'Elaboración y presentación de una planificación deportiva de una temporada (macrociclo) para el grupo intervenido, fundamentando las decisiones de diseño con las características del deporte y los/las deportistas.',
     resultadosAprendizaje: [RA],
@@ -137,7 +137,7 @@
   const SESION = {
     id: 'SESION', grupo: 'documento', numero: 2, nivelesKey: 'NIVELES_DSBI', escalaKey: 'ESCALA_SESION',
     titulo: 'Sesión de Entrenamiento (ejecución + ronda de preguntas)', tipo: 'Ejecución en terreno', duracion: 'Sesión completa',
-    fecha: '2025-10-15', estado: 'en-evaluacion', maxPuntos: 32, ponderacion: 0.15,
+    fecha: '2025-10-15', semanaEntrega: 4, estado: 'en-evaluacion', maxPuntos: 32, ponderacion: 0.15,
     menciones: ['deportiva'],
     descripcion: 'Diseño y ejecución de una sesión de entrenamiento completa en el centro de práctica, observada por el/la tutor/a y el/la supervisor/a, seguida de una ronda de preguntas y análisis reflexivo.',
     resultadosAprendizaje: [RA],
@@ -173,7 +173,7 @@
   const MANUAL = {
     id: 'MANUAL', grupo: 'documento', numero: 3, nivelesKey: 'NIVELES_DSBI', escalaKey: 'ESCALA_MANUAL',
     titulo: 'Manual de Ejercicios', tipo: 'Manual (Word/PDF)', duracion: 'Máx. 20 pp.',
-    fecha: '2025-11-12', estado: 'pendiente', maxPuntos: 32, ponderacion: 0.15,
+    fecha: '2025-11-12', semanaEntrega: 8, estado: 'pendiente', maxPuntos: 32, ponderacion: 0.15,
     menciones: ['deportiva'],
     descripcion: 'Manual con ejercicios para mejorar una cualidad física y una cualidad técnica del deporte intervenido (mínimo 10 ejercicios), con descripción técnica y metodológica.',
     resultadosAprendizaje: [RA],
@@ -208,7 +208,7 @@
   const PROYECTO = {
     id: 'PROY', grupo: 'documento', numero: 4, nivelesKey: 'NIVELES_DSI', escalaKey: 'ESCALA_PROYECTO',
     titulo: 'Proyecto de Investigación (propuesta)', tipo: 'Propuesta (Word)', duracion: 'Propuesta',
-    fecha: '2025-11-12', estado: 'pendiente', maxPuntos: 36, ponderacion: 0.20,
+    fecha: '2025-11-12', semanaEntrega: 8, estado: 'pendiente', maxPuntos: 36, ponderacion: 0.20,
     menciones: ['ciencias'],
     descripcion: 'Propuesta de un proyecto de investigación que resuelva una necesidad específica del área de ciencias del deporte en el centro de práctica (sin resultados ni análisis).',
     resultadosAprendizaje: [RA],
@@ -247,7 +247,7 @@
   const PROCESO = {
     id: 'PROC', grupo: 'documento', numero: 5, nivelesKey: 'NIVELES_DSBI', escalaKey: 'ESCALA_PROCESO',
     titulo: 'Proceso en mi Centro de Práctica (rediseño)', tipo: 'Informe (Word)', duracion: 'Máx. 8 pp.',
-    fecha: '2025-11-12', estado: 'pendiente', maxPuntos: 32, ponderacion: 0.20,
+    fecha: '2025-11-12', semanaEntrega: 8, estado: 'pendiente', maxPuntos: 32, ponderacion: 0.20,
     menciones: ['gestion'],
     descripcion: 'Reconoce un proceso de gestión deportiva real del centro, identifica sus dificultades y propone una mejora que contribuya al funcionamiento eficiente de la institución (formato Antes/Después).',
     resultadosAprendizaje: [RA],
@@ -282,7 +282,7 @@
   const ENSAYO = {
     id: 'ENS', grupo: 'documento', numero: 6, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_ENSAYO',
     titulo: 'Ensayo Final y Reflexión', tipo: 'Ensayo + Presentación', duracion: 'Máx. 3 pp. + presentación',
-    fecha: '2025-11-26', estado: 'pendiente', maxPuntos: 51, ponderacion: 0.10,
+    fecha: '2025-11-26', semanaEntrega: 10, estado: 'pendiente', maxPuntos: 51, ponderacion: 0.10,
     menciones: ['deportiva', 'ciencias', 'gestion'],
     descripcion: 'Ensayo argumentativo sobre la intervención en el centro de práctica y una reflexión final sobre la integración de las asignaturas teóricas a la práctica. La nota suma ensayo + presentación final de reflexión.',
     resultadosAprendizaje: [RA],
@@ -334,7 +334,7 @@
   const PORT1 = {
     id: 'PORT1', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT1',
     titulo: 'Portafolio — Evaluación N°1 (Construcción + Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Construcción',
-    fecha: '2025-09-24', estado: 'corregida', maxPuntos: 33, ponderacion: 0,
+    fecha: '2025-09-24', semanaEntrega: 1, estado: 'corregida', maxPuntos: 33, ponderacion: 0,
     menciones: ['deportiva', 'ciencias', 'gestion'],
     descripcion: 'Construcción del portafolio "PRÁCTICA PROFESIONAL II - NOMBRE APELLIDO" en DRIVE con todas las carpetas y registro diario de la bitácora.',
     resultadosAprendizaje: [RA],
@@ -352,7 +352,7 @@
   const PORT2 = {
     id: 'PORT2', grupo: 'portafolio', numero: 2, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT2',
     titulo: 'Portafolio — Evaluación N°2 (Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Aleatoria',
-    fecha: '2025-10-29', estado: 'corregida', maxPuntos: 24, ponderacion: 0,
+    fecha: '2025-10-29', semanaEntrega: 6, estado: 'corregida', maxPuntos: 24, ponderacion: 0,
     menciones: ['deportiva', 'ciencias', 'gestion'],
     descripcion: 'Revisión aleatoria del registro diario de la bitácora en cualquier momento del semestre.',
     resultadosAprendizaje: [RA],
@@ -365,7 +365,7 @@
   const PORT3 = {
     id: 'PORT3', grupo: 'portafolio', numero: 3, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT3',
     titulo: 'Portafolio — Evaluación N°3 (Carga completa + Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Cierre',
-    fecha: '2025-11-26', estado: 'pendiente', maxPuntos: 27, ponderacion: 0,
+    fecha: '2025-11-26', semanaEntrega: 10, estado: 'pendiente', maxPuntos: 27, ponderacion: 0,
     menciones: ['deportiva', 'ciencias', 'gestion'],
     descripcion: 'Carga de la totalidad de los documentos del portafolio y registro completo de la bitácora al cierre del semestre.',
     resultadosAprendizaje: [RA],
@@ -801,6 +801,7 @@
         const base = {
           evaluaciones: EVALUACIONES.map(e => ({ ...e })),
           estudiantes: ESTUDIANTES.map(e => ({ ...e })),
+          inicioPractica: null,
           niveles: {}, atrasos: {}, terreno: {}, tutor: {}, autoeval: {}, semestral: {},
           supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
         };

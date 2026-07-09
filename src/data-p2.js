@@ -55,7 +55,7 @@
   const INFORME = {
     id: 'INF', grupo: 'entrega', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_INFORME',
     titulo: 'Informe: Diagnóstico y Desarrollo de Habilidades Motrices', tipo: 'Informe (Word)', duracion: 'Máx. 7 pp.',
-    fecha: '2025-10-01', estado: 'corregida', maxPuntos: 45, ponderacion: 0.15,
+    fecha: '2025-10-01', semanaEntrega: 1, estado: 'corregida', maxPuntos: 45, ponderacion: 0.15,
     descripcion: 'Informe que revela información general del centro de práctica e indaga en el desarrollo de habilidades motrices.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -98,7 +98,7 @@
   const MANUAL = {
     id: 'MAN', grupo: 'entrega', numero: 2, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_MANUAL',
     titulo: 'Manual Técnico de Psicomotricidad en el Deporte', tipo: 'Manual técnico (PDF)', duracion: 'Digital didáctico',
-    fecha: '2025-11-05', estado: 'en-evaluacion', maxPuntos: 51, ponderacion: 0.20,
+    fecha: '2025-11-05', semanaEntrega: 6, estado: 'en-evaluacion', maxPuntos: 51, ponderacion: 0.20,
     descripcion: 'Manual técnico digital y didáctico sobre el desarrollo de habilidades motrices del deporte del centro de práctica.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -142,7 +142,7 @@
   const PRESENT = {
     id: 'PRE', grupo: 'entrega', numero: 3, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PRESENT',
     titulo: 'Presentación Final', tipo: 'Presentación (15 min)', duracion: '15 min + 5 preguntas',
-    fecha: '2025-11-28', estado: 'pendiente', maxPuntos: 39, ponderacion: 0.15,
+    fecha: '2025-11-28', semanaEntrega: 9, estado: 'pendiente', maxPuntos: 39, ponderacion: 0.15,
     descripcion: 'Presentación que explica la experiencia personal de la intervención y la reflexión sobre la integración teoría-práctica.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -191,7 +191,7 @@
   const PORT1 = {
     id: 'PF1', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT1',
     titulo: 'Portafolio · Evaluación N°1', tipo: 'Portafolio (Drive)', duracion: 'Construcción + Informe + Bitácora',
-    fecha: '2025-10-01', estado: 'corregida', maxPuntos: 39, ponderacion: 0,
+    fecha: '2025-10-01', semanaEntrega: 1, estado: 'corregida', maxPuntos: 39, ponderacion: 0,
     descripcion: 'Primera revisión del portafolio: construcción de la carpeta, carga del informe y bitácora actualizada.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
@@ -218,7 +218,7 @@
   const PORT2 = {
     id: 'PF2', grupo: 'portafolio', numero: 2, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT2',
     titulo: 'Portafolio · Evaluación N°2', tipo: 'Portafolio (Drive)', duracion: 'Bitácora actualizada',
-    fecha: '2025-10-31', estado: 'en-evaluacion', maxPuntos: 27, ponderacion: 0,
+    fecha: '2025-10-31', semanaEntrega: 5, estado: 'en-evaluacion', maxPuntos: 27, ponderacion: 0,
     descripcion: 'Revisión intermedia del portafolio: bitácora de registro al día en cualquier momento del semestre.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: ['Mantener actualizado el registro diario de la práctica en la bitácora.'],
@@ -230,7 +230,7 @@
   const PORT3 = {
     id: 'PF3', grupo: 'portafolio', numero: 3, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT3',
     titulo: 'Portafolio · Evaluación N°3', tipo: 'Portafolio (Drive)', duracion: 'Carga completa + Bitácora',
-    fecha: '2025-11-28', estado: 'pendiente', maxPuntos: 30, ponderacion: 0,
+    fecha: '2025-11-28', semanaEntrega: 9, estado: 'pendiente', maxPuntos: 30, ponderacion: 0,
     descripcion: 'Revisión final del portafolio: carga completa de documentos y bitácora con todas las sesiones.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: ['Cargar la totalidad de los documentos del portafolio.', 'Completar la bitácora con todas las sesiones de la práctica.'],
@@ -545,6 +545,7 @@
           return {
             evaluaciones: EVALUACIONES.map(e => ({ ...e, estado: 'pendiente' })),
             estudiantes: ESTUDIANTES.map(e => ({ ...e })),
+            inicioPractica: null,
             niveles: {}, atrasos: {}, terreno: {}, proceso: {}, autoeval: {}, tutor: {},
             supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
           };
@@ -552,6 +553,7 @@
         return {
           evaluaciones: EVALUACIONES.map(e => ({ ...e })),
           estudiantes: ESTUDIANTES.map(e => ({ ...e })),
+          inicioPractica: null,
           niveles: JSON.parse(JSON.stringify(niveles)),
           atrasos: JSON.parse(JSON.stringify(atrasos)),
           terreno: JSON.parse(JSON.stringify(terreno)),

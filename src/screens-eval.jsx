@@ -13,6 +13,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
   const [tab, setTab] = useState('detalle');
   const [openSec, setOpenSec] = useState(['ra', 'oe']); // open by default
   const [showEdit, setShowEdit] = useState(false);
+  const [showEditFecha, setShowEditFecha] = useState(false);
   const [showInforme, setShowInforme] = useState(false);
 
   if (!ev) return null;
@@ -82,6 +83,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
           {ev.variantes && <VariantToggle ev={ev} ctx={ctx} />}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             {!esPresent && <button className="btn btn-secondary" onClick={() => setShowEdit(true)}><I.edit /> Editar</button>}
+            {esPresent && <button className="btn btn-secondary" onClick={() => setShowEditFecha(true)}><I.edit /> Editar fecha</button>}
             {!esPresent && <button className="btn btn-secondary" onClick={() => setShowInforme(true)}><I.print /> Generar informe</button>}
             {esPresent
               ? <button className="btn btn-primary" onClick={() => ctx.navTo && ctx.navTo('supervisor')}>
@@ -158,6 +160,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
       )}
 
       {showEdit && <EditEvalModal ev={ev} ctx={ctx} onClose={() => setShowEdit(false)} />}
+      {showEditFecha && <EditFechaModal ev={ev} ctx={ctx} onClose={() => setShowEditFecha(false)} />}
       {showInforme && <InformeAcademicoModal ev={ev} ctx={ctx} onClose={() => setShowInforme(false)} />}
 
       {tab === 'rubrica' && <RubricaPreview ev={ev} />}

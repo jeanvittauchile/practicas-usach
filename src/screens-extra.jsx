@@ -189,6 +189,66 @@ function EditEvalModal({ ev, ctx, onClose }) {
   );
 }
 
+// ═════════════════════════════════════════════════════════════
+// EDIT FECHA MODAL — lightweight date-only editor (p. ej. evaluaciones
+// sin rúbrica propia, como Presentación: Salidas a terreno)
+// ═════════════════════════════════════════════════════════════
+
+function EditFechaModal({ ev, ctx, onClose }) {
+  const [fecha, setFecha] = useState(ev.fecha || '');
+  const esTeal = window.grupoEsTeal(ev.grupo);
+
+  const save = () => {
+    ctx.updateEval(ev.id, { fecha });
+    ctx.toast(`Fecha de "${ev.titulo}" actualizada`);
+    onClose();
+  };
+
+  const volverAutomatico = () => {
+    ctx.updateEval(ev.id, { fechaManual: false });
+    ctx.toast(`Fecha de "${ev.titulo}" vuelta a automático`);
+    onClose();
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <span className={`lvl ${esTeal ? 'lvl-E' : 'lvl-B'}`}
+                style={{ background: esTeal ? 'var(--teal-500)' : 'var(--orange-500)', width: 28, height: 28, fontSize: 11 }}>
+            {window.evalSigla(ev)}
+          </span>
+          <h3 className="h3" style={{ margin: 0 }}>Editar fecha de entrega</h3>
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
+        </div>
+        <div className="modal-body" style={{ padding: 22 }}>
+          <Field label="Fecha de entrega">
+            <input className="input" type="date" value={fecha} onChange={e => setFecha(e.target.value)} />
+          </Field>
+          {ev.fechaManual && ctx.state.inicioPractica && ev.semanaEntrega && (
+            <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop: 8, padding: '3px 6px', fontSize: 11 }}
+                    onClick={volverAutomatico}>
+              <I.refresh size={12} /> Fecha fijada manualmente · Volver a automático (Semana {ev.semanaEntrega})
+            </button>
+          )}
+          {!ev.fechaManual && ctx.state.inicioPractica && ev.semanaEntrega && (() => {
+            const r = window.semanaRango(ctx.state.inicioPractica, ev.semanaEntrega);
+            return (
+              <small className="muted" style={{ fontSize: 11, marginTop: 6, display: 'block' }}>
+                Automático: {window.fechaRangoFmt(r.startISO, r.endISO)}
+              </small>
+            );
+          })()}
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" onClick={save}>Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EditableList({ label, items, onChange, onAdd, onRemove, ordered, hint }) {
   return (
     <div>

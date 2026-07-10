@@ -51,7 +51,6 @@
   const ESCALA_PORT = linScale(33);
   const ESCALA_TUTOR = linScale(68);
   const ESCALA_AUTO = linScale(68);
-  const ESCALA_SEMESTRAL = linScale(36);
 
   const RA = 'Integrar equipos multidisciplinarios demostrando dominio de las competencias profesionales del rol de entrenador deportivo en una o varias disciplinas deportivas, desarrollando un proyecto de mejora enfocado en el centro de práctica, asumiendo una postura ética y profesional.';
 
@@ -379,25 +378,6 @@
     ]},
   ];
 
-  // ═══════════════════════════════════════════════════════════
-  // EVALUACIÓN SEMESTRAL SUPERVISOR/A (instrumento adicional, ideal 36)
-  // Disponible como referencia; no pondera en la nota por defecto.
-  // ═══════════════════════════════════════════════════════════
-  const SEMESTRAL_DIMENSIONES = [
-    { id: 's1', label: '1. Criterios formales', indicadores: [
-      { id: 's11', texto: 'Promueve la comunicación y se mantiene en contacto permanente con su profesor/a supervisor/a.' },
-      { id: 's12', texto: 'Asiste a todas las reuniones de prácticas coordinadas con su supervisor/a (presenciales o virtuales).' },
-      { id: 's13', texto: 'Tiene actualizada su bitácora virtual con los objetivos de las sesiones e integra informes/presentaciones en el portafolio.', doble: true },
-      { id: 's14', texto: 'Entrega las consignas (informes, proyecto, entre otras) en el plazo indicado por su supervisor/a.' },
-    ]},
-    { id: 's2', label: '2. Criterios profesionales', indicadores: [
-      { id: 's21', texto: 'Participa de las reuniones de práctica de manera activa, generando feedback de su proceso.' },
-      { id: 's22', texto: 'Demuestra preparación de los contenidos a desarrollar en las reuniones, evitando improvisar.' },
-      { id: 's23', texto: 'Acoge los comentarios y críticas de su supervisor/a de manera respetuosa como oportunidad de desarrollo.' },
-      { id: 's24', texto: 'Demuestra una progresión positiva en sus intervenciones, considerando las observaciones de su supervisor/a.' },
-    ]},
-  ];
-
   // ───────────────────────────────────────────────────────────
   // Estudiantes (con datos de centro de práctica + área)
   // ───────────────────────────────────────────────────────────
@@ -509,7 +489,6 @@
     const terreno = genTerreno();
     const tutor = genInstrumento(TUTOR_DIMENSIONES, NIVELES_FREC, W_FREC, 'tut', 4);
     const autoeval = genInstrumento(AUTOEVAL_DIMENSIONES, NIVELES_FREC, W_FREC, 'aut', 4);
-    const semestral = genInstrumento(SEMESTRAL_DIMENSIONES, NIVELES_APREC, W_APREC, 'sem', 3);
 
     return {
       meta: {
@@ -523,7 +502,7 @@
         terreno: true,
       },
       NIVELES: { NIVELES_EBSD, NIVELES_APREC, NIVELES_FREC, NIVELES_SUPERVISOR: NIVELES_FREC },
-      ESCALAS: { ESCALA_INF_DEP, ESCALA_INF_FUN, ESCALA_PROYECTO, ESCALA_PORT, ESCALA_TUTOR, ESCALA_AUTO, ESCALA_SEMESTRAL },
+      ESCALAS: { ESCALA_INF_DEP, ESCALA_INF_FUN, ESCALA_PROYECTO, ESCALA_PORT, ESCALA_TUTOR, ESCALA_AUTO },
       GRUPOS: [
         { id: 'documento', label: 'Entregas evaluativas', singular: 'Entrega', sigla: 'E', color: 'teal',
           desc: 'Informe (15%) y Proyecto de Mejora + Reflexión (30%) · rúbrica con exigencia 60%' },
@@ -534,11 +513,10 @@
       PONDERACIONES,
       // Instrumentos de proceso
       SUPERVISOR: { kind: 'profesional', areas: AREAS, formales: TERRENO_FORMALES, terrenoCriterios, notaTerrenoVisita,
-                    tutorDimensiones: TUTOR_DIMENSIONES, semestralDimensiones: SEMESTRAL_DIMENSIONES,
+                    tutorDimensiones: TUTOR_DIMENSIONES,
                     nivelesKey: 'NIVELES_APREC' },
       AUTOEVAL: { dimensiones: AUTOEVAL_DIMENSIONES, nivelesKey: 'NIVELES_FREC', escalaKey: 'ESCALA_AUTO', maxPuntos: 68 },
       TUTOR: { dimensiones: TUTOR_DIMENSIONES, nivelesKey: 'NIVELES_FREC', escalaKey: 'ESCALA_TUTOR', maxPuntos: 68 },
-      SEMESTRAL: { dimensiones: SEMESTRAL_DIMENSIONES, nivelesKey: 'NIVELES_APREC', escalaKey: 'ESCALA_SEMESTRAL', maxPuntos: 36 },
       ANEXOS_ADMIN,
       ESTUDIANTES, PROFESORES,
       NOTAS_COLUMNS: [
@@ -561,14 +539,14 @@
       },
       // helpers expuestos a las pantallas PI
       AREAS, areaDef, modosDeArea, modoDef, terrenoCriterios, notaTerrenoVisita, notaSupervisorPI,
-      TUTOR_DIMENSIONES, AUTOEVAL_DIMENSIONES, SEMESTRAL_DIMENSIONES,
+      TUTOR_DIMENSIONES, AUTOEVAL_DIMENSIONES,
       initialState: (estado) => {
         if (estado === 'vacio') {
           return {
             evaluaciones: EVALUACIONES.map(e => ({ ...e, estado: 'pendiente' })),
             estudiantes: ESTUDIANTES.map(e => ({ ...e })),
             inicioPractica: null,
-            niveles: {}, atrasos: {}, terreno: {}, tutor: {}, autoeval: {}, semestral: {},
+            niveles: {}, atrasos: {}, terreno: {}, tutor: {}, autoeval: {},
             supervisor: {}, supervisorComments: {}, autoevalComments: {}, evalFeedback: {}, evalAnexos: {},
           };
         }
@@ -581,7 +559,6 @@
           terreno: JSON.parse(JSON.stringify(terreno)),
           tutor: JSON.parse(JSON.stringify(tutor)),
           autoeval: JSON.parse(JSON.stringify(autoeval)),
-          semestral: JSON.parse(JSON.stringify(semestral)),
           supervisor: {},
           supervisorComments: {
             e1: 'Antonia conduce la sesión con seguridad y mantiene una excelente relación con el equipo. Bitácora al día. Reforzar la fundamentación bibliográfica del informe de diagnóstico.',

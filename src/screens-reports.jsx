@@ -463,7 +463,37 @@ function StudentReportModal({ est, ctx, onClose }) {
 
           {/* Eval. Supervisor + Autoevaluación + Comentarios */}
           <div className="pdf-page">
-            {meta.terreno ? (
+            {meta.terreno && D.SUPERVISOR && D.SUPERVISOR.areas ? (
+              <SectionPdf title="Supervisión en terreno" accent="teal">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, padding: 12, background: 'var(--surface-1)', borderRadius: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Visitas en terreno ({D.areaDef(est.area).label}) + portafolio (promedio)</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-700)', marginTop: 2 }}>
+                      {((ctx.state.terreno && ctx.state.terreno[est.id]) || []).length} visita(s) registrada(s)
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Nota ({Math.round(((Dr.PONDERACIONES.find(p => p.resolver === 'SUP') || {}).peso || 0) * 100)}%)</div>
+                    <div className={`nota nota-lg ${notaClass(supResolver?.nota)}`}>{formatNota(supResolver && !supResolver.parcial ? supResolver.nota : null)}</div>
+                  </div>
+                </div>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                  <tbody>
+                    {((ctx.state.terreno && ctx.state.terreno[est.id]) || []).map((v, i) => {
+                      const md = D.modoDef(est.area, v.modo);
+                      const rv = D.notaTerrenoVisita(est.area, v);
+                      return (
+                        <tr key={v.id} style={{ borderBottom: '1px dashed var(--border)' }}>
+                          <td style={{ padding: '5px 0' }}>Visita {i + 1} · {md.label}</td>
+                          <td style={{ padding: '5px 0', textAlign: 'center', color: 'var(--ink-500)' }} className="tnum">{fechaFmt(v.fecha)}</td>
+                          <td style={{ padding: '5px 0', textAlign: 'right', width: 90 }}><span className={`nota ${notaClass(rv.nota)}`}>{formatNota(rv.nota)}</span></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </SectionPdf>
+            ) : meta.terreno ? (
               <SectionPdf title="Supervisión en terreno y proceso" accent="teal">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, padding: 12, background: 'var(--surface-1)', borderRadius: 8 }}>
                   <div style={{ flex: 1 }}>

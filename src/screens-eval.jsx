@@ -406,9 +406,6 @@ function RubricaBatch({ evalId, ctx, onBack }) {
           </div>
         </div>
         <div className="actions">
-          <button className="btn btn-secondary" onClick={() => ctx.fillSuggested(ev.id)}>
-            <I.zap /> Sugerir niveles
-          </button>
           <button className="btn btn-secondary" onClick={() => ctx.clearEval(ev.id)}>
             Limpiar todo
           </button>

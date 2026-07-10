@@ -221,20 +221,6 @@ function App() {
       tutor[estId] = nota == null ? null : { nota };
       return { ...s, tutor };
     }),
-    fillSuggested: (evId) => setState(s => {
-      const ev = s.evaluaciones.find(e => e.id === evId);
-      const lvSet = window.USACH_CALC.nivelesSetForEval(ev);
-      const ns = { ...s.niveles, [evId]: {} };
-      (s.estudiantes || window.USACH_DATA.ESTUDIANTES).forEach((est, ix) => {
-        ns[evId][est.id] = {};
-        ev.criterios.forEach((cr, ci) => {
-          const idx = (ix + ci) % lvSet.length;
-          ns[evId][est.id][cr.id] = lvSet[Math.min(idx, lvSet.length - 1)].key;
-        });
-      });
-      toastMsg('Niveles sugeridos. Revisa antes de publicar.');
-      return { ...s, niveles: ns };
-    }),
     clearEval: (evId) => setState(s => {
       const ns = { ...s.niveles, [evId]: {} };
       const a  = { ...s.atrasos, [evId]: {} };

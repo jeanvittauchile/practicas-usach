@@ -1,6 +1,6 @@
 // screens-p3.jsx — Pantallas específicas de Práctica Profesional I
 //  · SupervisorPIScreen: supervisión en terreno por área (3 variantes) +
-//    evaluación del entrenador/a tutor/a (instrumento completo) + eval. semestral.
+//    evaluación del entrenador/a tutor/a (instrumento completo).
 // Usa globals: I, USACH_DATA, USACH_CALC, notaClass, formatNota, fechaFmt, SupervisorCommentModal, StudentReportModal
 
 const APREC_COLORS_PI = { L: '#2F9E5E', ML: '#4FA9D9', NL: '#E0A833', I: '#D97840', NO: '#8A94A6' };
@@ -186,14 +186,11 @@ function SupervisorPIScreen({ ctx }) {
           <div className="tabs">
             <button className={tab === 'terreno' ? 'active' : ''} onClick={() => setTab('terreno')}>Visitas en terreno ({visitas.length})</button>
             <button className={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Eval. Entrenador/a Tutor/a</button>
-            <button className={tab === 'semestral' ? 'active' : ''} onClick={() => setTab('semestral')}>Eval. semestral</button>
           </div>
 
           {tab === 'terreno' && <TerrenoTabPI est={est} ctx={ctx} onComment={() => setCommentFor(est)} onReport={() => setReportFor(est)} />}
           {tab === 'tutor' && <InstrumentoTabPI est={est} ctx={ctx} respKey="tutor" cfg={D.TUTOR} colors={FREC_COLORS_PI}
                                                 titulo="Pauta del entrenador/a tutor/a del centro" pondera="25%" />}
-          {tab === 'semestral' && <InstrumentoTabPI est={est} ctx={ctx} respKey="semestral" cfg={D.SEMESTRAL} colors={APREC_COLORS_PI}
-                                                    titulo="Evaluación semestral del/la supervisor/a (referencial)" pondera="no pondera" referencial />}
         </div>
       </div>
 
@@ -349,6 +346,7 @@ function InstrumentoTabPI({ est, ctx, respKey, cfg, colors, titulo, pondera, ref
   const escala = D.ESCALAS[cfg.escalaKey];
   const resp = (ctx.state[respKey] && ctx.state[respKey][est.id]) || {};
   const r = window.USACH_CALC.calcInstrumento(resp, cfg.dimensiones, niveles, escala);
+  const [showReport, setShowReport] = useState(false);
 
   return (
     <div className="col" style={{ gap: 12 }}>
@@ -382,10 +380,15 @@ function InstrumentoTabPI({ est, ctx, respKey, cfg, colors, titulo, pondera, ref
             </div>
           </div>
           {respKey === 'tutor' && (
-            <button className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }}
-                    onClick={() => window.descargarPautaInstrumento({ cfg, niveles, est, titulo: 'Pauta de Evaluación del Entrenador/a Tutor/a' })}>
-              <I.download size={14} /> Descargar pauta
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => setShowReport(true)}>
+                <I.pdf size={14} /> Informe PDF
+              </button>
+              <button className="btn btn-secondary btn-sm"
+                      onClick={() => window.descargarPautaInstrumento({ cfg, niveles, est, titulo: 'Pauta de Evaluación del Entrenador/a Tutor/a' })}>
+                <I.download size={14} /> Descargar pauta
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -433,6 +436,121 @@ function InstrumentoTabPI({ est, ctx, respKey, cfg, colors, titulo, pondera, ref
             </tr>
           </tfoot>
         </table>
+      </div>
+
+      {showReport && <InstrumentoReportModal est={est} ctx={ctx} respKey={respKey} cfg={cfg} niveles={niveles}
+                                              titulo={titulo} pondera={pondera} resp={resp} r={r}
+                                              onClose={() => setShowReport(false)} />}
+    </div>
+  );
+}
+
+// ─── Informe PDF de una evaluación por instrumento ya realizada (tutor / semestral) ───
+function InstrumentoReportModal({ est, ctx, respKey, cfg, niveles, titulo, pondera, resp, r, onClose }) {
+  const D = window.USACH_DATA;
+  const meta = D.meta || {};
+  const prof = window.readProfProfile ? window.readProfProfile() : {};
+  const bodyRef = React.useRef(null);
+  const reportTitle = titulo + ' — ' + est.nombre;
+  const totalIndicadores = cfg.dimensiones.reduce((a, d) => a + d.indicadores.length, 0);
+  const respondidos = cfg.dimensiones.reduce((a, d) => a + d.indicadores.filter(ind => resp[ind.id]).length, 0);
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 900, maxHeight: '94vh' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <I.pdf />
+          <h3 className="h3" style={{ margin: 0 }}>{reportTitle}</h3>
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
+        </div>
+
+        <div className="modal-body" ref={bodyRef}>
+          <div className="pdf-page" style={{ padding: '48px 56px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 30 }}>
+              <div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-500)', fontWeight: 700 }}>Universidad de Santiago de Chile</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-600)', marginTop: 2 }}>{meta.escuela || 'Facultad de Ciencias Médicas · Entrenador Deportivo'}</div>
+              </div>
+              <USACHCrest size={48} />
+            </div>
+
+            <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'var(--teal-700)', fontWeight: 700 }}>
+              {meta.cursoTitulo || meta.nombre || 'Práctica'}
+            </div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)', margin: '8px 0 4px', letterSpacing: '-0.01em' }}>{titulo}</h1>
+            <div style={{ fontSize: 13.5, color: 'var(--ink-600)' }}>{est.nombre} · {est.rut}</div>
+            <div style={{ height: 3, width: 70, background: 'var(--teal-500)', marginTop: 14, marginBottom: 24 }} />
+
+            <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse', marginBottom: 20 }}>
+              <tbody>
+                <CoverRow k="Estudiante" v={est.nombre} />
+                <CoverRow k="Centro de práctica" v={est.centro || '—'} />
+                {respKey === 'tutor' && <CoverRow k="Entrenador/a tutor/a" v={est.tutorCentro || '—'} />}
+                <CoverRow k="Ponderación" v={pondera} />
+                <CoverRow k="Fecha del informe" v={new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })} />
+              </tbody>
+            </table>
+
+            <SectionPdf title={titulo} accent="teal">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-1)' }}>
+                    <th style={{ padding: '6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'left' }}>Indicador</th>
+                    <th style={{ padding: '6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'center', width: 110 }}>Resultado</th>
+                    <th style={{ padding: '6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'right', width: 60 }}>Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cfg.dimensiones.map(dim => (
+                    <React.Fragment key={dim.id}>
+                      <tr><td colSpan={3} style={{ padding: '8px 0 4px', fontWeight: 700, color: 'var(--teal-700)', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{dim.label}</td></tr>
+                      {dim.indicadores.map(ind => {
+                        const k = resp[ind.id];
+                        const ni = niveles.find(n => n.key === k);
+                        const pts = ni ? ni.pts * (ind.doble ? 2 : 1) : null;
+                        return (
+                          <tr key={ind.id} style={{ borderBottom: '1px dashed var(--border)' }}>
+                            <td style={{ padding: '5px 0' }}>{ind.texto}{ind.doble && <span style={{ marginLeft: 6, fontSize: 9, color: 'var(--orange-700)' }}>×2</span>}</td>
+                            <td style={{ padding: '5px 0', textAlign: 'center' }}>{ni ? ni.label : <span className="muted">Sin registrar</span>}</td>
+                            <td style={{ padding: '5px 0', textAlign: 'right', fontWeight: 600 }} className="tnum">{pts ?? '—'}</td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 16, padding: 12, background: 'var(--surface-1)', borderRadius: 8 }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Puntaje obtenido</div>
+                  <div style={{ fontSize: 18, fontWeight: 700 }} className="tnum">{r ? r.puntos : 0} / {cfg.maxPuntos}</div>
+                  <div className="muted" style={{ fontSize: 11 }}>{respondidos}/{totalIndicadores} indicadores respondidos</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Nota</div>
+                  <div className={`nota nota-lg ${notaClass(r?.nota)}`}>{formatNota(r && !r.parcial ? r.nota : null)}</div>
+                  {r && r.parcial && <div className="muted" style={{ fontSize: 10.5, marginTop: 2 }}>Evaluación incompleta</div>}
+                </div>
+              </div>
+            </SectionPdf>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, marginTop: 40, fontSize: 10.5, color: 'var(--ink-600)' }}>
+              <div style={{ borderTop: '1px solid var(--ink-700)', paddingTop: 6, textAlign: 'center' }}>
+                {respKey === 'tutor' ? 'Firma entrenador/a tutor/a' : 'Firma supervisor/a'}
+              </div>
+              <div style={{ borderTop: '1px solid var(--ink-700)', paddingTop: 6, textAlign: 'center' }}>
+                Firma {prof.nombre ? prof.nombre : 'profesor/a supervisor/a'}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
+          <button className="btn btn-secondary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, reportTitle, false); }}><I.print /> Imprimir</button>
+          <button className="btn btn-primary" onClick={function() { if (bodyRef.current) window.openPrintWindow(bodyRef.current, reportTitle, true); }}><I.download /> Descargar PDF</button>
+        </div>
       </div>
     </div>
   );
@@ -530,4 +648,4 @@ function descargarPautaInstrumento({ cfg, niveles, est, titulo }) {
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
 }
 
-Object.assign(window, { SupervisorPIScreen, TerrenoTabPI, VisitaCardPI, InstrumentoTabPI, PiAvatar, PiField, APREC_COLORS_PI, FREC_COLORS_PI, AREA_TAG, descargarPautaInstrumento });
+Object.assign(window, { SupervisorPIScreen, TerrenoTabPI, VisitaCardPI, InstrumentoTabPI, InstrumentoReportModal, PiAvatar, PiField, APREC_COLORS_PI, FREC_COLORS_PI, AREA_TAG, descargarPautaInstrumento });

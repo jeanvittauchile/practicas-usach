@@ -56,9 +56,7 @@
   const ESCALA_PLANIF  = linScale(40);
   const ESCALA_PRESENT = linScale(42);
   const ESCALA_TUTOR   = linScale(44);
-  const ESCALA_PORT1   = linScale(36);
-  const ESCALA_PORT2   = linScale(27);
-  const ESCALA_PORT3   = linScale(30);
+  const ESCALA_PORT    = linScale(39); // 4 criterios de construcción/carga + 9 de bitácora, × 3 pts
   const ESCALA_TERR_PART = linScale(36);
   const ESCALA_TERR_OBS  = linScale(24);
 
@@ -225,8 +223,8 @@
   };
 
   // ═══════════════════════════════════════════════════════════
-  // 4 · PORTAFOLIO — 3 evaluaciones (parte del 20% de supervisión)
-  //     Rúbrica E/B/S/D · ideales 36 / 27 / 30
+  // 4 · PORTAFOLIO — evaluación única (parte del 20% de supervisión)
+  //     Rúbrica E/B/S/D · ideal 39 (Construcción/carga + Bitácora)
   // ═══════════════════════════════════════════════════════════
   const BITACORA_FULL = [
     cr('b1', 'Mantiene la bitácora actualizada.'),
@@ -239,60 +237,38 @@
     cr('b8', 'Mantiene una redacción gramatical coherente y sin faltas de ortografía.'),
     cr('b9', 'Realiza observaciones técnicas con actitud de indagación, usando conocimiento de asignaturas teóricas.'),
   ];
-  const PORT1 = {
-    id: 'PORT1', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT1',
-    titulo: 'Portafolio — Evaluación N°1 (Construcción + Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Construcción',
-    fecha: '2025-10-08', semanaEntrega: 1, estado: 'pendiente', maxPuntos: 36, ponderacion: 0,
-    descripcion: 'Construcción del portafolio en DRIVE con todas las carpetas indicadas y registro diario de la bitácora.',
+  const PORT = {
+    id: 'PORT', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT',
+    titulo: 'Portafolio y Bitácora', tipo: 'Portafolio (Drive)', duracion: 'Semestral',
+    fecha: '2025-11-28', semanaEntrega: 8, estado: 'pendiente', maxPuntos: 39, ponderacion: 0,
+    descripcion: 'Evaluación única del portafolio: construcción y carga de documentos en DRIVE, y una sección dedicada al registro de la bitácora durante todo el semestre.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
       'Construir el portafolio "PRÁCTICA III - NOMBRE APELLIDO" con todas las carpetas indicadas.',
       'Compartir el portafolio al/la supervisor/a con opción de edición.',
+      'Cargar la totalidad de los documentos del portafolio en las fechas estipuladas.',
       'Registrar diariamente las sesiones en la bitácora.',
     ],
     instrucciones: [
       'Crear y compartir la carpeta DRIVE (editable) el miércoles 24-09 con todas las carpetas: Informe, Planificación, Presentación, Bitácora, Evaluaciones, Anexos.',
+      'Cargar la totalidad de los documentos indicados en la consigna en las fechas estipuladas.',
       'Mantener la bitácora (Excel proporcionado) con el registro diario de las acciones del centro.',
     ],
     aspectosFormales: ['Carpeta DRIVE editable con el nombre correcto.', 'Bitácora Excel al día.', 'Atraso: descuento de 0,5 por día.'],
-    pautas: ['Puntaje ideal 36 (Construcción 3 criterios + Bitácora 9 criterios). Se promedia con la supervisión en terreno (20%).'],
+    pautas: ['Puntaje ideal 39: 1) Construcción y carga del portafolio (4 criterios) · 2) Bitácora (9 criterios). Se promedia con la supervisión en terreno (20%).'],
     criterios: [
+      // 1. Construcción y carga del portafolio
       cr('c11', 'Construye el portafolio en la fecha indicada, con el nombre correcto descrito en la consigna.'),
       cr('c12', 'Comparte el portafolio al/la profesor/a supervisor/a en formato editar.'),
       cr('c13', 'Incluye todas las carpetas descritas en la tabla de la consigna de portafolio.'),
+      cr('c14', 'Tiene cargados todos los documentos descritos en la consigna de portafolio y en las fechas estipuladas.'),
+      // 2. Bitácora
       ...BITACORA_FULL,
     ],
   };
-  const PORT2 = {
-    id: 'PORT2', grupo: 'portafolio', numero: 2, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT2',
-    titulo: 'Portafolio — Evaluación N°2 (Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Aleatoria',
-    fecha: '2025-10-22', semanaEntrega: 3, estado: 'pendiente', maxPuntos: 27, ponderacion: 0,
-    descripcion: 'Revisión aleatoria del registro diario de la bitácora durante el semestre.',
-    resultadosAprendizaje: [RA],
-    objetivosEspecificos: ['Mantener actualizado el registro diario de la bitácora en cualquier momento del semestre.'],
-    instrucciones: ['Tener actualizado el archivo Excel con el registro diario de las acciones del centro de práctica.'],
-    aspectosFormales: ['Bitácora Excel al día.', 'Atraso: descuento de 0,5 por día.'],
-    pautas: ['Puntaje ideal 27 (Bitácora, 9 criterios). Se promedia con la supervisión en terreno (20%).'],
-    criterios: [...BITACORA_FULL],
-  };
-  const PORT3 = {
-    id: 'PORT3', grupo: 'portafolio', numero: 3, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT3',
-    titulo: 'Portafolio — Evaluación N°3 (Carga completa + Bitácora)', tipo: 'Portafolio (Drive)', duracion: 'Cierre',
-    fecha: '2025-11-28', semanaEntrega: 8, estado: 'pendiente', maxPuntos: 30, ponderacion: 0,
-    descripcion: 'Carga de la totalidad de documentos del portafolio y registro completo de la bitácora al cierre del semestre.',
-    resultadosAprendizaje: [RA],
-    objetivosEspecificos: ['Cargar todos los documentos en las fechas estipuladas.', 'Completar la bitácora con todas las sesiones realizadas.'],
-    instrucciones: ['Cargar la totalidad de los documentos indicados en la consigna (viernes 28-11, 12:00) y tener el registro completo de la bitácora.'],
-    aspectosFormales: ['Todos los documentos cargados.', 'Bitácora completa.', 'Atraso: descuento de 0,5 por día.'],
-    pautas: ['Puntaje ideal 30 (Carga completa 1 criterio + Bitácora 9 criterios). Se promedia con la supervisión en terreno (20%).'],
-    criterios: [
-      cr('c11', 'Tiene cargados todos los documentos descritos en la consigna de portafolio y en las fechas estipuladas.'),
-      ...BITACORA_FULL,
-    ],
-  };
-  const PORTAFOLIO_EVAL_IDS = ['PORT1', 'PORT2', 'PORT3'];
+  const PORTAFOLIO_EVAL_IDS = ['PORT'];
 
-  const EVALUACIONES = [INFORME, PLANIFICACION, PRESENTACION, PORT1, PORT2, PORT3];
+  const EVALUACIONES = [INFORME, PLANIFICACION, PRESENTACION, PORT];
 
   // ═══════════════════════════════════════════════════════════
   // SUPERVISIÓN EN TERRENO — área única (fitness) · 2 modos
@@ -339,7 +315,7 @@
     return { nota, parcial, puntos: total, ideal: md.ideal };
   }
 
-  // Supervisión (20%) = promedio de las visitas en terreno + las 3 evaluaciones del portafolio.
+  // Supervisión (20%) = promedio de las visitas en terreno + la evaluación del portafolio.
   function notaSupervisorP3(estId, state) {
     const est = (state.estudiantes || ESTUDIANTES).find(e => e.id === estId) || {};
     const area = est.area || 'fitness';
@@ -415,12 +391,12 @@
         areaLabel: 'Fitness / Actividad física',
       },
       NIVELES: { NIVELES_EBSD, NIVELES_PLANIF, NIVELES_APREC, NIVELES_FREC, NIVELES_SUPERVISOR: NIVELES_FREC },
-      ESCALAS: { ESCALA_INFORME, ESCALA_PLANIF, ESCALA_PRESENT, ESCALA_TUTOR, ESCALA_PORT1, ESCALA_PORT2, ESCALA_PORT3, ESCALA_TERR_PART, ESCALA_TERR_OBS },
+      ESCALAS: { ESCALA_INFORME, ESCALA_PLANIF, ESCALA_PRESENT, ESCALA_TUTOR, ESCALA_PORT, ESCALA_TERR_PART, ESCALA_TERR_OBS },
       GRUPOS: [
         { id: 'documento', label: 'Entregas evaluativas', singular: 'Entrega', sigla: 'E', color: 'teal',
           desc: 'Informe (20%), Planificación (20%) y Presentación Final (20%) · rúbrica con exigencia 60%' },
         { id: 'portafolio', label: 'Portafolio', singular: 'Portafolio', sigla: 'P', color: 'orange',
-          desc: 'Tres evaluaciones de portafolio y bitácora · se promedian con la supervisión en terreno (20%)' },
+          desc: 'Evaluación única del portafolio y la bitácora · se promedia con la supervisión en terreno (20%)' },
       ],
       EVALUACIONES,
       PONDERACIONES,

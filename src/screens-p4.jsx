@@ -1,6 +1,6 @@
 // screens-p4.jsx — Pantallas específicas de Práctica III
 //  · SupervisorP3Screen: supervisión en terreno (fitness · participación/observación)
-//    + evaluación del entrenador/a tutor/a (instrumento) + portafolio (3 evals) promediado.
+//    + evaluación del entrenador/a tutor/a (instrumento) + portafolio (evaluación única) promediado.
 // Reutiliza helpers de screens-p3.jsx expuestos en window:
 //   TerrenoTabPI, InstrumentoTabPI, PiAvatar, PiField, FREC_COLORS_PI
 
@@ -22,7 +22,7 @@ function SupervisorP3Screen({ ctx }) {
         <div className="section-head">
           <div>
             <h1>Supervisión en terreno + Portafolio</h1>
-            <div className="subtitle">Visitas al centro (participación/observación) + 3 evaluaciones de portafolio · se promedian y ponderan 20% · incluye la evaluación del/la tutor/a (20%)</div>
+            <div className="subtitle">Visitas al centro (participación/observación) + evaluación de portafolio · se promedian y ponderan 20% · incluye la evaluación del/la tutor/a (20%)</div>
           </div>
         <div className="actions">
           <button className="btn btn-secondary" onClick={() => window.descargarPautaInstrumento({ cfg: D.TUTOR, niveles: D.NIVELES.NIVELES_FREC, est: null, titulo: 'Pauta de Evaluación del Entrenador/a Tutor/a' })}><I.download /> Descargar pauta del tutor/a</button>
@@ -50,7 +50,7 @@ function SupervisorP3Screen({ ctx }) {
   const semestralRes = D.SEMESTRAL ? window.USACH_CALC.calcInstrumento(ctx.state.semestral?.[est.id], D.SEMESTRAL.dimensiones, D.NIVELES.NIVELES_APREC, D.ESCALAS.ESCALA_SEMESTRAL) : null;
   const APREC_COLORS_P4 = { L: '#2F9E5E', ML: '#4FA9D9', NL: '#E0A833', I: '#D97840', NO: '#9e9e9e' };
 
-  // Promedio de las 3 evaluaciones de portafolio
+  // Nota de la evaluación de portafolio
   const portNotas = (D.PORTAFOLIO_EVAL_IDS || []).map(pid => {
     const ev = D.EVALUACIONES.find(e => e.id === pid);
     const r = window.USACH_CALC.calcNotaEvaluacion(ev, ctx.state.niveles[pid]?.[est.id], ctx.state.atrasos[pid]?.[est.id]);
@@ -65,7 +65,7 @@ function SupervisorP3Screen({ ctx }) {
         <div>
           <h1>Supervisión en terreno + Portafolio</h1>
           <div className="subtitle">
-            Visitas al centro (participación/observación) + 3 evaluaciones de portafolio · se promedian y ponderan 20% · incluye la evaluación del/la tutor/a (20%)
+            Visitas al centro (participación/observación) + evaluación de portafolio · se promedian y ponderan 20% · incluye la evaluación del/la tutor/a (20%)
           </div>
         </div>
         <div className="actions">
@@ -118,7 +118,7 @@ function SupervisorP3Screen({ ctx }) {
               <PiField label="Entrenador/a tutor/a" value={est.tutorCentro || '—'} span={2} />
               <PiField label="Días / horario" value={est.dias || '—'} span={2} />
               <PiField label="Visitas en terreno" value={`${visitas.length}`} />
-              <PiField label="Portafolio (3 evals)" value={`${portDone.length}/3 · ${portProm != null ? formatNota(portProm) : '—'}`} />
+              <PiField label="Portafolio" value={portProm != null ? formatNota(portProm) : 'Pendiente'} />
               <PiField label="Nota tutor" value={tutorRes && !tutorRes.parcial ? formatNota(tutorRes.nota) : 'Pendiente'} />
               {D.SEMESTRAL && <PiField label="Eval. Semestral" value={semestralRes && !semestralRes.parcial ? formatNota(semestralRes.nota) : 'Pendiente'} />}
             </div>
@@ -127,7 +127,7 @@ function SupervisorP3Screen({ ctx }) {
           <div className="tabs">
             <button className={tab === 'terreno' ? 'active' : ''} onClick={() => setTab('terreno')}>Visitas en terreno ({visitas.length})</button>
             <button className={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Eval. Entrenador/a Tutor/a</button>
-            <button className={tab === 'portafolio' ? 'active' : ''} onClick={() => setTab('portafolio')}>Portafolio ({portDone.length}/3)</button>
+            <button className={tab === 'portafolio' ? 'active' : ''} onClick={() => setTab('portafolio')}>Portafolio {portDone.length ? '✓' : ''}</button>
             {D.SEMESTRAL && <button className={tab === 'semestral' ? 'active' : ''} onClick={() => setTab('semestral')}>Eval. Semestral</button>}
           </div>
 
@@ -149,14 +149,14 @@ function SupervisorP3Screen({ ctx }) {
   );
 }
 
-// ─── Pestaña: resumen de las 3 evaluaciones de portafolio ─────
+// ─── Pestaña: resumen de la evaluación de portafolio ─────
 function PortafolioTabP3({ est, ctx, onOpenEval }) {
   const D = window.USACH_DATA;
   const evals = (D.PORTAFOLIO_EVAL_IDS || []).map(pid => D.EVALUACIONES.find(e => e.id === pid)).filter(Boolean);
   return (
     <div className="col" style={{ gap: 12 }}>
       <div style={{ padding: '10px 14px', background: 'var(--orange-50)', borderLeft: '3px solid var(--orange-400)', borderRadius: 4, fontSize: 12.5, color: 'var(--orange-800)' }}>
-        Las 3 evaluaciones de portafolio (E/B/S/D) se califican en <strong>Evaluaciones</strong> y se promedian con las visitas en terreno para formar el 20% de supervisión.
+        La evaluación de portafolio (E/B/S/D) se califica en <strong>Evaluaciones</strong> y se promedia con las visitas en terreno para formar el 20% de supervisión.
       </div>
       {evals.map(ev => {
         const r = window.USACH_CALC.calcNotaEvaluacion(ev, ctx.state.niveles[ev.id]?.[est.id], ctx.state.atrasos[ev.id]?.[est.id]);

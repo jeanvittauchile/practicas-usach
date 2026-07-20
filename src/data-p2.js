@@ -37,9 +37,16 @@
   const ESCALA_INFORME = EF([1,1.1,1.2,1.3,1.4,1.6,1.7,1.8,1.9,2,2.1,2.2,2.3,2.4,2.6,2.7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.6,3.7,3.8,3.9,4,4.2,4.3,4.5,4.7,4.8,5,5.2,5.3,5.5,5.7,5.8,6,6.2,6.3,6.5,6.7,6.8,7]); // 0..45
   const ESCALA_MANUAL = EF([1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.1,2.2,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.5,3.5,3.6,3.7,3.8,3.9,4.1,4.2,4.4,4.5,4.6,4.8,4.9,5.1,5.2,5.4,5.5,5.7,5.8,6,6.1,6.3,6.4,6.6,6.7,6.9,7]); // 0..51
   const ESCALA_PRESENT = EF([1,1.1,1.3,1.4,1.5,1.6,1.8,1.9,2,2.2,2.3,2.4,2.5,2.7,2.8,2.9,3.1,3.2,3.3,3.4,3.6,3.7,3.8,3.9,4.1,4.3,4.5,4.7,4.9,5.1,5.3,5.5,5.7,5.8,6,6.2,6.4,6.6,6.8,7]); // 0..39
-  const ESCALA_PORT1 = ESCALA_PRESENT; // ideal 39, misma tabla
-  const ESCALA_PORT2 = EF([1,1.2,1.4,1.6,1.7,1.9,2.1,2.3,2.5,2.7,2.9,3,3.2,3.4,3.6,3.8,4,4.2,4.5,4.8,5.1,5.3,5.6,5.9,6.2,6.4,6.7,7]); // 0..27
-  const ESCALA_PORT3 = EF([1,1.2,1.3,1.5,1.7,1.8,2,2.2,2.3,2.5,2.7,2.8,3,3.2,3.3,3.5,3.7,3.8,4,4.3,4.5,4.8,5,5.3,5.5,5.8,6,6.3,6.5,6.8,7]); // 0..30
+  // Escala lineal 60% de exigencia (misma fórmula que reproduce las tablas oficiales EF anteriores).
+  function linScale(ideal) {
+    const o = {}; const corte = 0.6 * ideal;
+    for (let p = 0; p <= ideal; p++) {
+      const nota = p <= corte ? 1 + (p / corte) * 3 : 4 + ((p - corte) / (ideal - corte)) * 3;
+      o[p] = Math.round(nota * 10) / 10;
+    }
+    return o;
+  }
+  const ESCALA_PORT = linScale(42); // 14 criterios (5 construcción/carga + 9 bitácora) × 3 pts
   const ESCALA_AUTOEVAL = EF([1,1.1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,2.1,2.3,2.4,2.5,2.6,2.7,2.8,2.9,3,3.1,3.2,3.3,3.4,3.5,3.6,3.7,3.8,3.9,4,4.2,4.3,4.5,4.7,4.8,5,5.1,5.3,5.4,5.6,5.8,5.9,6.1,6.2,6.4,6.5,6.7,6.8,7]); // 0..48
   const ESCALA_TERRENO_PART = EF([1,1.2,1.3,1.5,1.6,1.8,1.9,2.1,2.3,2.4,2.6,2.7,2.9,3,3.2,3.3,3.5,3.7,3.8,4,4.2,4.4,4.7,4.9,5.1,5.4,5.6,5.8,6.1,6.3,6.5,6.8,7]); // 0..32
   const ESCALA_TERRENO_OBS = EF([1,1.2,1.4,1.6,1.8,2,2.3,2.5,2.7,2.9,3.1,3.3,3.5,3.7,3.9,4.2,4.5,4.8,5.1,5.4,5.8,6.1,6.4,6.7,7]); // 0..24
@@ -188,70 +195,39 @@
     cr(p + '9', 'Realiza observaciones de carácter técnico con actitud de indagación, usando conocimiento de asignaturas teóricas.'),
   ]);
 
-  const PORT1 = {
-    id: 'PF1', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT1',
-    titulo: 'Portafolio · Evaluación N°1', tipo: 'Portafolio (Drive)', duracion: 'Construcción + Informe + Bitácora',
-    fecha: '2025-10-01', semanaEntrega: 1, estado: 'corregida', maxPuntos: 39, ponderacion: 0,
-    descripcion: 'Primera revisión del portafolio: construcción de la carpeta, carga del informe y bitácora actualizada.',
+  const PORT = {
+    id: 'PORT', grupo: 'portafolio', numero: 1, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT',
+    titulo: 'Portafolio y Bitácora', tipo: 'Portafolio (Drive)', duracion: 'Semestral',
+    fecha: '2025-11-28', semanaEntrega: 9, estado: 'pendiente', maxPuntos: 42, ponderacion: 0.10,
+    descripcion: 'Evaluación única del portafolio: construcción y carga de documentos en DRIVE, y una sección dedicada al registro de la bitácora durante todo el semestre.',
     resultadosAprendizaje: [RA],
     objetivosEspecificos: [
-      'Construir el portafolio en DRIVE con las carpetas indicadas.',
-      'Cargar el informe de diagnóstico en la fecha estipulada.',
+      'Construir el portafolio en DRIVE con las carpetas indicadas y compartirlo con el/la supervisor/a.',
+      'Cargar la totalidad de los documentos del portafolio en las fechas estipuladas.',
       'Registrar diariamente las sesiones en la bitácora.',
     ],
     instrucciones: [
       'Carpeta "PRÁCTICA II - NOMBRE APELLIDO" compartida al supervisor/a con opción de edición.',
       'Incluir todas las carpetas: Informe, Manual Técnico, Presentación, Bitácora, Evaluaciones y Anexos.',
-      'Cargar el informe "Diagnóstico del centro de práctica" en formato Word.',
-      'Mantener la bitácora de registro diario actualizada.',
+      'Cargar el informe "Diagnóstico del centro de práctica" y el resto de los documentos en las fechas estipuladas.',
+      'Mantener la bitácora de registro diario actualizada durante todo el semestre.',
     ],
     aspectosFormales: ['Carpeta DRIVE editable, nombre correcto.', 'Bitácora en archivo Excel proporcionado por los docentes.', 'Atraso: descuento de 0,5 por día.'],
+    pautas: ['Puntaje ideal 42: 1) Construcción y carga del portafolio (5 criterios) · 2) Bitácora (9 criterios).'],
     criterios: [
+      // 1. Construcción y carga del portafolio
       cr('c11', 'Construye el portafolio en la fecha indicada, con el nombre correcto descrito en la consigna.'),
       cr('c12', 'Comparte el portafolio al/la profesor/a supervisor/a en formato editar.'),
       cr('c13', 'Incluye todas las carpetas descritas en la tabla de la consigna de portafolio.'),
-      cr('c21', 'Carga el informe "Diagnóstico del centro de práctica" en formato Word editable, en la fecha descrita.'),
+      cr('c14', 'Carga el informe "Diagnóstico del centro de práctica" en formato Word editable, en la fecha descrita.'),
+      cr('c15', 'Tiene cargados todos los documentos descritos en la consigna y en las fechas estipuladas.'),
+      // 2. Bitácora
       ...bitacora('b'),
     ],
   };
 
-  const PORT2 = {
-    id: 'PF2', grupo: 'portafolio', numero: 2, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT2',
-    titulo: 'Portafolio · Evaluación N°2', tipo: 'Portafolio (Drive)', duracion: 'Bitácora actualizada',
-    fecha: '2025-10-31', semanaEntrega: 5, estado: 'en-evaluacion', maxPuntos: 27, ponderacion: 0,
-    descripcion: 'Revisión intermedia del portafolio: bitácora de registro al día en cualquier momento del semestre.',
-    resultadosAprendizaje: [RA],
-    objetivosEspecificos: ['Mantener actualizado el registro diario de la práctica en la bitácora.'],
-    instrucciones: ['Tener actualizado el archivo Excel con el registro diario de las acciones en el centro de práctica.'],
-    aspectosFormales: ['Bitácora Excel al día.', 'Atraso: descuento de 0,5 por día.'],
-    criterios: [...bitacora('b')],
-  };
-
-  const PORT3 = {
-    id: 'PF3', grupo: 'portafolio', numero: 3, nivelesKey: 'NIVELES_EBSD', escalaKey: 'ESCALA_PORT3',
-    titulo: 'Portafolio · Evaluación N°3', tipo: 'Portafolio (Drive)', duracion: 'Carga completa + Bitácora',
-    fecha: '2025-11-28', semanaEntrega: 9, estado: 'pendiente', maxPuntos: 30, ponderacion: 0,
-    descripcion: 'Revisión final del portafolio: carga completa de documentos y bitácora con todas las sesiones.',
-    resultadosAprendizaje: [RA],
-    objetivosEspecificos: ['Cargar la totalidad de los documentos del portafolio.', 'Completar la bitácora con todas las sesiones de la práctica.'],
-    instrucciones: ['Cargar todos los documentos indicados en la consigna en las fechas estipuladas.', 'Completar la bitácora con todas las sesiones realizadas.'],
-    aspectosFormales: ['Documentos completos al 28-11-2025.', 'Atraso: descuento de 0,5 por día.'],
-    criterios: [
-      cr('c11', 'Tiene cargados todos los documentos descritos en la consigna y en las fechas estipuladas.'),
-      cr('b1', 'Completa la bitácora con todas las sesiones realizadas en la práctica.'),
-      cr('b2', 'Anota el día, hora de inicio y término de cada sesión.'),
-      cr('b3', 'Identifica los objetivos metodológicos de cada sesión.'),
-      cr('b4', 'Describe las actividades de cada sesión en orden lógico (inicio, desarrollo, final).'),
-      cr('b5', 'Se identifican las actividades realizadas por el/la estudiante.'),
-      cr('b6', 'Utiliza lenguaje técnico para describir el objetivo y la sesión.'),
-      cr('b7', 'Utiliza un lenguaje inclusivo y de equidad de género en su redacción.'),
-      cr('b8', 'Mantiene una redacción gramatical coherente y sin faltas de ortografía.'),
-      cr('b9', 'Realiza observaciones de carácter técnico con actitud de indagación.'),
-    ],
-  };
-
   const ENTREGAS = [INFORME, MANUAL, PRESENT];
-  const PORTAFOLIOS = [PORT1, PORT2, PORT3];
+  const PORTAFOLIOS = [PORT];
   const EVALUACIONES = [...ENTREGAS, ...PORTAFOLIOS];
 
   // ───────────────────────────────────────────────────────────
@@ -399,7 +375,7 @@
     { id: 'q1', label: 'Informe de diagnóstico',          componentes: ['INF'], peso: 0.15 },
     { id: 'q2', label: 'Manual técnico',                  componentes: ['MAN'], peso: 0.20 },
     { id: 'q3', label: 'Presentación final',              componentes: ['PRE'], peso: 0.15 },
-    { id: 'q4', label: 'Portafolio (Ev. 1·2·3)',          componentes: ['PF1', 'PF2', 'PF3'], peso: 0.10 },
+    { id: 'q4', label: 'Portafolio (Construcción + Bitácora)', componentes: ['PORT'], peso: 0.10 },
     { id: 'q5', label: 'Eval. Profesor/a Tutor/a (centro)', resolver: 'TUTOR', peso: 0.20 },
     { id: 'q6', label: 'Supervisión (terreno + proceso)', resolver: 'SUP', peso: 0.15 },
     { id: 'q7', label: 'Autoevaluación',                  resolver: 'AUTO', peso: 0.05 },
@@ -497,14 +473,14 @@
       },
       NIVELES: { NIVELES_EBSD, NIVELES_APREC, NIVELES_AUTO, NIVELES_SUPERVISOR: NIVELES_AUTO },
       ESCALAS: {
-        ESCALA_INFORME, ESCALA_MANUAL, ESCALA_PRESENT, ESCALA_PORT1, ESCALA_PORT2, ESCALA_PORT3,
+        ESCALA_INFORME, ESCALA_MANUAL, ESCALA_PRESENT, ESCALA_PORT,
         ESCALA_AUTOEVAL, ESCALA_TERRENO_PART, ESCALA_TERRENO_OBS, ESCALA_PROCESO,
       },
       GRUPOS: [
         { id: 'entrega', label: 'Entregas', singular: 'Entrega', sigla: 'E', color: 'teal',
           desc: 'Informe, Manual Técnico y Presentación Final · rúbrica E/B/S/D · exigencia 60%' },
         { id: 'portafolio', label: 'Portafolio', singular: 'Portafolio', sigla: 'P', color: 'orange',
-          desc: '3 revisiones del portafolio y bitácora durante el semestre · pondera 10%' },
+          desc: 'Evaluación única del portafolio y la bitácora durante el semestre · pondera 10%' },
       ],
       ENTREGAS, PORTAFOLIOS,
       EVALUACIONES,
@@ -571,7 +547,7 @@
             INF: [{ id: 'inf-1', titulo: 'Consigna Informe — Práctica II', tipo: 'Pauta de la evaluación', tamano: '0.4 MB', subido: '15 sep 2025', por: 'Andrés Tapia' }],
             MAN: [{ id: 'man-1', titulo: 'Consigna Manual Técnico — Práctica II', tipo: 'Pauta de la evaluación', tamano: '0.4 MB', subido: '15 oct 2025', por: 'Andrés Tapia' },
                   { id: 'man-2', titulo: 'Plantilla de ficha de actividad', tipo: 'Material complementario', tamano: '0.2 MB', subido: '15 oct 2025', por: 'Andrés Tapia' }],
-            PF1: [{ id: 'pf1-1', titulo: 'Formato de Bitácora (Excel)', tipo: 'Material complementario', tamano: '0.3 MB', subido: '10 sep 2025', por: 'Andrés Tapia' }],
+            PORT: [{ id: 'port-1', titulo: 'Formato de Bitácora (Excel)', tipo: 'Material complementario', tamano: '0.3 MB', subido: '10 sep 2025', por: 'Andrés Tapia' }],
           },
         };
       },

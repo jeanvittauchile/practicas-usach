@@ -19,7 +19,7 @@ function notaColumnaCoord(col, estId, state, D, Cr) {
     });
     return { nota: notas.length ? Math.round(notas.reduce((a, b) => a + b, 0) / notas.length * 10) / 10 : null };
   }
-  const key = col.kind === 'sup' ? 'SUP' : col.kind === 'auto' ? 'AUTO' : col.kind === 'tutor' ? 'TUTOR' : null;
+  const key = col.kind === 'sup' ? 'SUP' : col.kind === 'auto' ? 'AUTO' : col.kind === 'tutor' ? 'TUTOR' : col.kind === 'semestral' ? 'SEMESTRAL' : null;
   const fn = key && (D.RESOLVERS || {})[key];
   if (fn) { const r = fn(estId, state); return { nota: r && !r.parcial ? r.nota : null }; }
   return { nota: null };

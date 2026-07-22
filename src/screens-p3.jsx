@@ -1,6 +1,6 @@
 // screens-p3.jsx — Pantallas específicas de Práctica Profesional I
 //  · SupervisorPIScreen: supervisión en terreno por área (3 variantes) +
-//    evaluación del entrenador/a tutor/a (instrumento completo).
+//    evaluación del entrenador/a tutor/a (instrumento completo) + eval. semestral.
 // Usa globals: I, USACH_DATA, USACH_CALC, notaClass, formatNota, fechaFmt, SupervisorCommentModal, StudentReportModal
 
 const APREC_COLORS_PI = { L: '#2F9E5E', ML: '#4FA9D9', NL: '#E0A833', I: '#D97840', NO: '#8A94A6' };
@@ -186,11 +186,14 @@ function SupervisorPIScreen({ ctx }) {
           <div className="tabs">
             <button className={tab === 'terreno' ? 'active' : ''} onClick={() => setTab('terreno')}>Visitas en terreno ({visitas.length})</button>
             <button className={tab === 'tutor' ? 'active' : ''} onClick={() => setTab('tutor')}>Eval. Entrenador/a Tutor/a</button>
+            <button className={tab === 'semestral' ? 'active' : ''} onClick={() => setTab('semestral')}>Eval. semestral</button>
           </div>
 
           {tab === 'terreno' && <TerrenoTabPI est={est} ctx={ctx} onComment={() => setCommentFor(est)} onReport={() => setReportFor(est)} />}
           {tab === 'tutor' && <InstrumentoTabPI est={est} ctx={ctx} respKey="tutor" cfg={D.TUTOR} colors={FREC_COLORS_PI}
                                                 titulo="Pauta del entrenador/a tutor/a del centro" pondera="25%" />}
+          {tab === 'semestral' && <InstrumentoTabPI est={est} ctx={ctx} respKey="semestral" cfg={D.SEMESTRAL} colors={APREC_COLORS_PI}
+                                                    titulo="Evaluación semestral del/la supervisor/a" pondera="incl. en Superv. 25%" />}
         </div>
       </div>
 

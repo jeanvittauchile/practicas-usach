@@ -485,7 +485,7 @@ function notaColumna(col, estId, state) {
     pfs.forEach(ev => { const er = C.calcNotaEvaluacion(ev, state.niveles[ev.id]?.[estId], state.atrasos[ev.id]?.[estId]); if (er && !er.parcial) notas.push(er.notaFinal); else parcial = true; });
     return { nota: notas.length ? Math.round(notas.reduce((a, b) => a + b, 0) / notas.length * 10) / 10 : null, parcial };
   }
-  const key = col.kind === 'sup' ? 'SUP' : col.kind === 'auto' ? 'AUTO' : col.kind === 'tutor' ? 'TUTOR' : null;
+  const key = col.kind === 'sup' ? 'SUP' : col.kind === 'auto' ? 'AUTO' : col.kind === 'tutor' ? 'TUTOR' : col.kind === 'semestral' ? 'SEMESTRAL' : null;
   const fn = key && (D.RESOLVERS || {})[key];
   if (fn) { const r = fn(estId, state); return { nota: r?.parcial ? null : r?.nota, parcial: !r || r.parcial }; }
   return { nota: null, parcial: true };

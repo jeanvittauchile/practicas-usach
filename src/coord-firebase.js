@@ -191,9 +191,15 @@
     deleteStudent(id) { write(K.students, this.getStudents().filter(s => s.id !== id)); },
     importStudents(rows, profesorId, practica) {
       // rows: [{nombre, rut, email, cohorte, ...}]
+      // profesorId/practica son solo el respaldo cuando la fila no trae uno propio.
       const list = this.getStudents();
       rows.forEach(r => {
-        list.push({ ...r, id: 's_' + Date.now() + Math.random(), profesorId, practica });
+        list.push({
+          ...r,
+          id: 's_' + Date.now() + Math.random(),
+          profesorId: r.profesorId || profesorId || '',
+          practica: r.practica || practica || 'I',
+        });
       });
       write(K.students, list);
     },

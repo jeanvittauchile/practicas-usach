@@ -63,11 +63,11 @@ function EstudiantesCoordScreen({ ctx }) {
         telefono:r.telefono || r.tel || '',
         cohorte: parseInt(r.cohorte || r.año || r.year) || new Date().getFullYear(),
         practica:r.practica || fPrac || 'I',
-        profesorId: r.profesorid || r.profesor || fProf || profs[0]?.id || '',
+        profesorId: r.profesorid || r.profesor || fProf || '',
         area:    r.area || null,
         centro:  r.centro || r.institucion || '',
       })).filter(r => r.nombre);
-      importStudents(normalized, fProf || profs[0]?.id, fPrac || 'I');
+      importStudents(normalized, fProf || '', fPrac || 'I');
       toast(`${normalized.length} estudiante${normalized.length!==1?'s':''} importados desde CSV`);
       e.target.value = '';
     };

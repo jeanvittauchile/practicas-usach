@@ -195,11 +195,54 @@ function generarCartaMasivaPDF(payload) {
   });
 }
 
+// Lee las evaluaciones "vivas" de una práctica: el estado real que guardó el
+// profesor/a (con datos ya editados, y semanaEntrega rellenado si faltaba)
+// si existe, o si no el catálogo vigente de esa práctica.
+function liveEvaluacionesFor(codigo) {
+  let evaluaciones = null;
+  let parsedState = null;
+  try {
+    const raw = localStorage.getItem(`usach_state_v1_${codigo}_demo`);
+    parsedState = raw ? JSON.parse(raw) : null;
+    if (parsedState && Array.isArray(parsedState.evaluaciones) && parsedState.evaluaciones.length) evaluaciones = parsedState.evaluaciones;
+  } catch (e) { /* localStorage corrupto o inaccesible: usar catálogo */ }
+  if (window.activatePractica) window.activatePractica(codigo);
+  const evalCatalog = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
+  return { parsedState, evaluaciones: window.backfillSemanaEntrega(evaluaciones || evalCatalog, evalCatalog) };
+}
+
 // ─── Catálogo PDF ────────────────────────────────────────────────
+// window.EVAL_CATALOG trae solo el material curricular fijo (RA, ponderaciones,
+// notas); título/tipo/duración/puntaje/descripción de cada evaluación se pisan
+// aquí con lo que el profesor/a tiene realmente guardado, para que una edición
+// (ej. cambiar "15 min" por "3 min") se refleje en el reporte del coordinador.
 function generarCatalogoPDF(practicaCodigo) {
-  const full = window.EVAL_CATALOG || [];
+  const full = (window.EVAL_CATALOG || []).map(p => {
+    const { parsedState, evaluaciones: liveEvals } = liveEvaluacionesFor(p.codigo);
+    const liveById = new Map(liveEvals.map(e => [e.id, e]));
+    return {
+      ...p,
+      inicioPractica: (parsedState && parsedState.inicioPractica) || null,
+      evaluaciones: (p.evaluaciones || []).map(ev => {
+        const live = liveById.get(ev.id);
+        if (!live) return ev; // instrumentos sin objeto propio (SUP/AUTO/TUTOR): se deja el texto curricular
+        return {
+          ...ev,
+          titulo: live.titulo || ev.titulo,
+          tipo: live.duracion ? `${live.tipo} (${live.duracion})` : (live.tipo || ev.tipo),
+          // conserva textos compuestos curados a mano (ej. "66 (indiv.) / 63 (col.)")
+          puntos: (typeof ev.puntos === 'number' && live.maxPuntos != null) ? live.maxPuntos : ev.puntos,
+          descripcion: live.descripcion || ev.descripcion,
+        };
+      }),
+    };
+  });
   const catalog = practicaCodigo ? full.filter(p => p.codigo === practicaCodigo) : full;
   const scopeTitle = practicaCodigo ? (catalog[0] ? catalog[0].nombre.replace(/—.*/, '').trim() : practicaCodigo) : 'Todas las Prácticas';
+  // Semestre: se deriva de la fecha de inicio configurada en Notas. Con varias
+  // prácticas en el reporte, se usa la primera que tenga fecha configurada.
+  const inicioParaSemestre = (catalog.find(p => p.inicioPractica) || {}).inicioPractica;
+  const semestre = window.semestreLabel(inicioParaSemestre, 'Semestre 2025-2');
   const fecha = new Date().toLocaleDateString('es-CL');
   const col = (ev) => `<tr>
     <td class="ev-id">${ev.id}</td>
@@ -248,7 +291,7 @@ body{font-family:Arial,sans-serif;font-size:9pt;color:#111;line-height:1.45}
   <button onclick="window.print()">🖨 Guardar como PDF</button></div>
 <div class="dhead"><h1>Catálogo de Evaluaciones — ${_esc(scopeTitle)}</h1>
   <p>Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; Carrera de Entrenador Deportivo</p>
-  <p>Escala de exigencia 60% en evaluaciones con rúbrica &middot; Semestre 2025-2</p></div>
+  <p>Escala de exigencia 60% en evaluaciones con rúbrica &middot; ${_esc(semestre)}</p></div>
 <div class="meta">Generado el ${fecha} &middot; ${catalog.length} práctica${catalog.length!==1?'s':''} documentada${catalog.length!==1?'s':''}</div>
 ${catalog.map(sec).join('')}
 <div class="pie">Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; www.usach.cl</div>
@@ -268,16 +311,7 @@ function buildFechasEntrega() {
   const catalog = window.EVAL_CATALOG || [];
   return codigos.map(codigo => {
     const meta = catalog.find(c => c.codigo === codigo) || {};
-    let evaluaciones = null;
-    let parsedState = null;
-    try {
-      const raw = localStorage.getItem(`usach_state_v1_${codigo}_demo`);
-      parsedState = raw ? JSON.parse(raw) : null;
-      if (parsedState && Array.isArray(parsedState.evaluaciones) && parsedState.evaluaciones.length) evaluaciones = parsedState.evaluaciones;
-    } catch (e) { /* localStorage corrupto o inaccesible: usar respaldo */ }
-    if (window.activatePractica) window.activatePractica(codigo);
-    const evalCatalog = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
-    evaluaciones = window.backfillSemanaEntrega(evaluaciones || evalCatalog, evalCatalog);
+    const { parsedState, evaluaciones } = liveEvaluacionesFor(codigo);
     return {
       codigo,
       nombre: meta.nombre || codigo,

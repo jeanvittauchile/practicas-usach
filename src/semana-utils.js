@@ -81,6 +81,16 @@ function backfillSemanaEntrega(evaluaciones, catalogo) {
     : { ...e, semanaEntrega: porId.get(e.id) });
 }
 
+// Deriva la etiqueta de semestre ("Semestre 2026-1") desde la fecha de inicio
+// de Semana 1: marzo–julio = 1, agosto–febrero = 2. Cae al texto fijo del
+// catálogo (fallback) si la práctica todavía no tiene inicioPractica configurado.
+function semestreLabel(inicioISO, fallback) {
+  if (!inicioISO) return fallback || '';
+  const [y, m] = inicioISO.split('-').map(Number);
+  if (m >= 3 && m <= 7) return `Semestre ${y}-1`;
+  return `Semestre ${m === 1 || m === 2 ? y - 1 : y}-2`;
+}
+
 Object.assign(window, {
-  fechaFmt, addDiasISO, semanaRango, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega,
+  fechaFmt, addDiasISO, semanaRango, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega, semestreLabel,
 });

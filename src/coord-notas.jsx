@@ -38,10 +38,11 @@ function openPrintWindow(contentEl, title, autoClose) {
   setTimeout(() => w.print(), 600);
 }
 
-function NotasExportModal({ practica, D, cols, filas, onClose }) {
+function NotasExportModal({ practica, D, state, cols, filas, onClose }) {
   const meta = D.meta || {};
   const bodyRef = React.useRef(null);
   const title = 'Tabla de notas — ' + (meta.breadcrumb || practica);
+  const semestre = window.semestreLabel(state && state.inicioPractica, meta.semestre);
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={e => e.stopPropagation()}>
@@ -55,7 +56,7 @@ function NotasExportModal({ practica, D, cols, filas, onClose }) {
             <div className="pdf-head">
               <div>
                 <h1>{title}</h1>
-                <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {meta.semestre || ''}</div>
+                <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {semestre}</div>
               </div>
               <USACHCrest size={48} />
             </div>
@@ -224,7 +225,7 @@ function NotasCoordScreen({ ctx }) {
         </>
       )}
 
-      {exportOpen && <NotasExportModal practica={practica} D={D} cols={cols} filas={filas} onClose={() => setExportOpen(false)} />}
+      {exportOpen && <NotasExportModal practica={practica} D={D} state={state} cols={cols} filas={filas} onClose={() => setExportOpen(false)} />}
       {configOpen && (
         <ConfigurarInicioModal codigo={practica} D={D} state={state}
           onSaved={() => { setConfigOpen(false); ctx.toast && ctx.toast(`Semana 1 de ${practica} configurada`); }}

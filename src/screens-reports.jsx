@@ -211,7 +211,7 @@ function NotasReportModal({ ctx, onClose }) {
             <div className="pdf-head">
               <div>
                 <h1>Tabla de notas — {meta.cursoTitulo || 'Práctica'}</h1>
-                <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {meta.semestre || ''}</div>
+                <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {window.semestreLabel(ctx.state.inicioPractica, meta.semestre)}</div>
               </div>
               <USACHCrest size={48} />
             </div>
@@ -306,7 +306,7 @@ function StudentReportModal({ est, ctx, onClose }) {
               Informe individual de prácticas
             </div>
             <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--ink-900)', margin: '8px 0 8px', letterSpacing: '-0.01em' }}>{est.nombre}</h1>
-            <div style={{ fontSize: 14, color: 'var(--ink-600)' }}>{meta.cursoTitulo || 'Práctica'} · {meta.semestre || ''}</div>
+            <div style={{ fontSize: 14, color: 'var(--ink-600)' }}>{meta.cursoTitulo || 'Práctica'} · {window.semestreLabel(ctx.state.inicioPractica, meta.semestre)}</div>
             <div style={{ height: 3, width: 80, background: 'var(--teal-500)', marginTop: 18, marginBottom: 32 }} />
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>

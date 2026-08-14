@@ -49,7 +49,7 @@ function Dashboard({ ctx, onNav }) {
       <div className="section-head">
         <div>
           <h1>{meta.cursoTitulo || 'Práctica'}</h1>
-          <div className="subtitle">{meta.semestre || ''} · {estudiantes.length} estudiantes · {D.PROFESORES.length} profesores supervisores</div>
+          <div className="subtitle">{window.semestreLabel(ctx.state.inicioPractica, meta.semestre)} · {estudiantes.length} estudiantes · {D.PROFESORES.length} profesores supervisores</div>
         </div>
         <div className="actions">
           <a className="btn btn-secondary" href={ctx.driveUrl || 'https://drive.google.com'} target="_blank" rel="noopener noreferrer" title="Abrir Google Drive del curso">
@@ -620,7 +620,7 @@ function NotasPublishModal({ ctx, mode, onClose }) {
               <div className="pdf-head">
                 <div>
                   <h1>Tabla de notas — {meta.cursoTitulo || 'Práctica'}</h1>
-                  <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {meta.semestre || ''}</div>
+                  <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {window.semestreLabel(ctx.state.inicioPractica, meta.semestre)}</div>
                   {scope !== 'todos' && <div className="muted" style={{ fontSize: 11 }}>Estudiante: {scopeLabel}</div>}
                 </div>
                 <USACHCrest size={48} />
@@ -1079,7 +1079,7 @@ function PdfGeneral({ state }) {
       <div className="pdf-head">
         <div>
           <h1>{meta.cursoTitulo || 'Práctica'}</h1>
-          <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {meta.semestre || ''}</div>
+          <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {window.semestreLabel(state && state.inicioPractica, meta.semestre)}</div>
         </div>
         <USACHCrest size={48} />
       </div>

@@ -26,7 +26,7 @@ function DashboardScreen({ ctx }) {
       <div className="section-head">
         <div>
           <h1>Dashboard del Coordinador</h1>
-          <div className="subtitle">Semestre 2025‑2 · Vista consolidada de todas las prácticas</div>
+          <div className="subtitle">{window.semestreGlobalLabel('Semestre 2025-2')} · Vista consolidada de todas las prácticas</div>
         </div>
         <div className="actions">
           <a href="App Prácticas USACH.html" className="btn btn-secondary btn-sm">↗ Entrar a las prácticas</a>

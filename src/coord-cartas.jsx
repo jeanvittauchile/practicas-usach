@@ -422,7 +422,7 @@ tr:nth-child(even) td{background:#fafcfe}
 <div class="topbar">🕒 Disponibilidad horaria de profesores
   <button onclick="window.print()">🖨 Guardar como PDF</button></div>
 <div class="dhead"><h1>Disponibilidad horaria de profesores</h1>
-  <p>Universidad de Santiago de Chile &middot; Carrera de Entrenador Deportivo &middot; Semestre 2025-2</p></div>
+  <p>Universidad de Santiago de Chile &middot; Carrera de Entrenador Deportivo &middot; ${_esc(window.semestreGlobalLabel('Semestre 2025-2'))}</p></div>
 <div class="meta"><span>Generado el <b>${fecha}</b></span><span><b>${profs.length}</b> profesores</span><span><b>${conDispo}</b> con disponibilidad registrada</span><span><b>${totalHoras} h</b> asignadas en total</span></div>
 <table><thead><tr><th>Profesor/a</th><th>Prácticas</th><th>Horas sem.</th><th>Bloques de disponibilidad</th></tr></thead>
 <tbody>${rows}</tbody></table>

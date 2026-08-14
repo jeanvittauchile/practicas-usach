@@ -345,7 +345,7 @@ function CalendarModal({ ctx, onClose }) {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid var(--teal-500)', paddingBottom: 14, marginBottom: 16 }}>
               <div>
                 <h1 style={{ fontSize: 18, margin: '0 0 4px', color: 'var(--ink-900)' }}>{title}</h1>
-                <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {meta.semestre || ''}</div>
+                <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {window.semestreLabel(ctx.state.inicioPractica, meta.semestre)}</div>
               </div>
               <USACHCrest size={44} />
             </div>
@@ -519,7 +519,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
               <tbody>
                 <CoverRow k="Profesor evaluador" v="Andrés Tapia Vergara" />
                 <CoverRow k="Email institucional" v="andres.tapia@usach.cl" />
-                <CoverRow k="Semestre" v="2025 — Segundo semestre" />
+                <CoverRow k="Semestre" v={window.semestreLabel(ctx.state.inicioPractica, meta.semestre)} />
                 <CoverRow k="Fecha de entrega" v={window.evalFechaInfo(ev, ctx.state).label} />
                 <CoverRow k="Tipo de evaluación" v={ev.tipo} />
                 <CoverRow k="Duración / extensión" v={ev.duracion} />

@@ -91,6 +91,22 @@ function semestreLabel(inicioISO, fallback) {
   return `Semestre ${m === 1 || m === 2 ? y - 1 : y}-2`;
 }
 
+// Semestre "global" del panel del coordinador (spans todas las prácticas):
+// usa la primera fecha de inicio configurada, en cualquier práctica, como
+// referencia. Cae al texto fijo si ninguna práctica tiene fecha configurada.
+function semestreGlobalLabel(fallback) {
+  const codigos = window.PRACTICES || ['I', 'II', 'III', 'IV', 'PI', 'PII'];
+  for (const codigo of codigos) {
+    try {
+      const raw = localStorage.getItem(`usach_state_v1_${codigo}_demo`);
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (parsed && parsed.inicioPractica) return semestreLabel(parsed.inicioPractica, fallback);
+    } catch (e) { /* localStorage corrupto o inaccesible: seguir con la próxima práctica */ }
+  }
+  return fallback || '';
+}
+
 Object.assign(window, {
-  fechaFmt, addDiasISO, semanaRango, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega, semestreLabel,
+  fechaFmt, addDiasISO, semanaRango, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega,
+  semestreLabel, semestreGlobalLabel,
 });

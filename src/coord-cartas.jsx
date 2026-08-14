@@ -275,10 +275,9 @@ function buildFechasEntrega() {
       parsedState = raw ? JSON.parse(raw) : null;
       if (parsedState && Array.isArray(parsedState.evaluaciones) && parsedState.evaluaciones.length) evaluaciones = parsedState.evaluaciones;
     } catch (e) { /* localStorage corrupto o inaccesible: usar respaldo */ }
-    if (!evaluaciones) {
-      if (window.activatePractica) window.activatePractica(codigo);
-      evaluaciones = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
-    }
+    if (window.activatePractica) window.activatePractica(codigo);
+    const catalog = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
+    evaluaciones = window.backfillSemanaEntrega(evaluaciones || catalog, catalog);
     return {
       codigo,
       nombre: meta.nombre || codigo,

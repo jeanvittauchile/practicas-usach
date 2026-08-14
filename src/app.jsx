@@ -436,6 +436,8 @@ function loadState(practica, kind) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object' && Array.isArray(parsed.evaluaciones)) {
+        const catalog = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
+        parsed.evaluaciones = window.backfillSemanaEntrega(parsed.evaluaciones, catalog);
         if (!coordStudents.length) return parsed;
         // Coordinator students are authoritative; keep professor-added extras (id starts with 'e_')
         const coordIds = new Set(coordStudents.map(function(s) { return s.id; }));

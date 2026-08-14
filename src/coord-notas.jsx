@@ -255,7 +255,11 @@ function setInicioPracticaFor(codigo, iso) {
 function ConfigurarInicioModal({ codigo, D, state, onSaved, onClose }) {
   const { useState } = React;
   const [iso, setIso] = useState((state && state.inicioPractica) || '');
-  const evals = (state && state.evaluaciones && state.evaluaciones.length) ? state.evaluaciones : (D.EVALUACIONES || []);
+  const catalog = D.EVALUACIONES || [];
+  const evals = window.backfillSemanaEntrega(
+    (state && state.evaluaciones && state.evaluaciones.length) ? state.evaluaciones : catalog,
+    catalog
+  );
   const earliest = evals.reduce((min, e) => (e.fecha && (!min || e.fecha < min)) ? e.fecha : min, null);
   const preview = iso
     ? evals

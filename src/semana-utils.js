@@ -69,6 +69,18 @@ function evalFechaInfo(ev, state) {
   return { label: fechaRangoFmt(r.startISO, r.endISO), deadline: r.endISO, semana: semanaN, startISO: r.startISO, endISO: r.endISO, auto: true };
 }
 
+// Rellena semanaEntrega en evaluaciones guardadas (localStorage/Firestore) que
+// se persistieron antes de que este campo existiera, usando el catálogo actual
+// como fuente (match por id). Sin esto, un estado antiguo no muestra semanas
+// aunque el coordinador configure la fecha de inicio.
+function backfillSemanaEntrega(evaluaciones, catalogo) {
+  if (!Array.isArray(evaluaciones) || !Array.isArray(catalogo) || !catalogo.length) return evaluaciones;
+  const porId = new Map(catalogo.map(e => [e.id, e.semanaEntrega]));
+  return evaluaciones.map(e => (e.semanaEntrega != null || !porId.has(e.id))
+    ? e
+    : { ...e, semanaEntrega: porId.get(e.id) });
+}
+
 Object.assign(window, {
-  fechaFmt, addDiasISO, semanaRango, fechaRangoFmt, fechaRangoCorto, evalFechaInfo,
+  fechaFmt, addDiasISO, semanaRango, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega,
 });

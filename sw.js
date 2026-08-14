@@ -1,7 +1,10 @@
 // Service Worker — Prácticas USACH
-// Estrategia: cache-first para assets locales, network-first para CDN.
+// Estrategia: network-first para código fuente local (html/js/jsx/css) para
+// que un deploy nuevo se vea de inmediato; cache-first para el resto de
+// assets locales (imágenes/íconos, que casi no cambian); network-first
+// para CDN.
 
-const CACHE = 'practicas-usach-v1';
+const CACHE = 'practicas-usach-v2';
 
 const LOCAL_ASSETS = [
   './Login.html',
@@ -63,7 +66,21 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Assets locales → cache-first, luego actualiza en background
+  // Código fuente local (HTML/JS/JSX/CSS) → network-first: siempre trae la
+  // versión más nueva cuando hay conexión; cae a caché solo si falla la red
+  // (offline). Evita quedar pegado a una versión vieja tras cada deploy.
+  const isSource = /\.(html|jsx?|css)$/i.test(url.pathname) || url.pathname === '/' || url.pathname.endsWith('/');
+  if (isSource) {
+    e.respondWith(
+      fetch(request).then(response => {
+        if (response.ok) caches.open(CACHE).then(cache => cache.put(request, response.clone()));
+        return response;
+      }).catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Resto de assets locales (imágenes, íconos) → cache-first, luego actualiza en background
   e.respondWith(
     caches.open(CACHE).then(async (cache) => {
       const cached = await cache.match(request);

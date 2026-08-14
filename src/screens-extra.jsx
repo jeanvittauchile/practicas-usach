@@ -287,6 +287,10 @@ function CalendarModal({ ctx, onClose }) {
     : [7, 8, 9, 10, 11].map(m => ({ y: year, m })); // Ago, Sep, Oct, Nov, Dic
   const [editing, setEditing] = useState(null);
   const [dragOver, setDragOver] = useState(null);
+  const bodyRef = useRef(null);
+  const meta = De.meta || {};
+  const semestreLabel = semester === 's1' ? '1er semestre · marzo–julio' : '2do semestre · agosto–diciembre';
+  const title = `Calendario de Evaluaciones — ${semestreLabel} ${year}`;
 
   const evals = ctx.state.evaluaciones;
 
@@ -337,21 +341,31 @@ function CalendarModal({ ctx, onClose }) {
             </div>
           </div>
 
-          <div className="cal-months-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-            {months.map(m => (
-              <MonthGrid key={`${m.y}-${m.m}`} year={m.y} month={m.m}
-                         evals={evals} onDateClick={(iso) => {/* allow click to pick */}}
-                         dragging={editing} dragOver={dragOver}
-                         onDragStartEval={setEditing}
-                         onDragOverDate={setDragOver}
-                         onDropDate={onDrop}
-                         onCellClick={(iso) => {
-                           // if an eval is "selected" via click, move it
-                           if (editing) {
-                             onDrop(iso);
-                           }
-                         }} />
-            ))}
+          <div ref={bodyRef} style={{ background: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid var(--teal-500)', paddingBottom: 14, marginBottom: 16 }}>
+              <div>
+                <h1 style={{ fontSize: 18, margin: '0 0 4px', color: 'var(--ink-900)' }}>{title}</h1>
+                <div className="muted" style={{ fontSize: 11 }}>USACH · {meta.escuela || 'Entrenador Deportivo'} · {meta.semestre || ''}</div>
+              </div>
+              <USACHCrest size={44} />
+            </div>
+
+            <div className="cal-months-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              {months.map(m => (
+                <MonthGrid key={`${m.y}-${m.m}`} year={m.y} month={m.m}
+                           evals={evals} onDateClick={(iso) => {/* allow click to pick */}}
+                           dragging={editing} dragOver={dragOver}
+                           onDragStartEval={setEditing}
+                           onDragOverDate={setDragOver}
+                           onDropDate={onDrop}
+                           onCellClick={(iso) => {
+                             // if an eval is "selected" via click, move it
+                             if (editing) {
+                               onDrop(iso);
+                             }
+                           }} />
+              ))}
+            </div>
           </div>
 
           <div style={{ marginTop: 18, padding: 14, background: 'var(--surface-1)', borderRadius: 8, fontSize: 12.5, color: 'var(--ink-700)', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
@@ -368,7 +382,7 @@ function CalendarModal({ ctx, onClose }) {
             Moviendo: <strong>{editing.titulo}</strong>
             <button className="btn btn-ghost btn-sm" style={{ marginLeft: 8 }} onClick={() => setEditing(null)}>Cancelar</button>
           </span>}
-          <button className="btn btn-secondary"><I.download /> Exportar calendario (.ics)</button>
+          <button className="btn btn-secondary" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, true)}><I.download /> Exportar calendario (PDF)</button>
           <button className="btn btn-primary" onClick={onClose}>Listo</button>
         </div>
       </div>

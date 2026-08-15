@@ -34,10 +34,20 @@ function DashboardScreen({ ctx }) {
       </div>
 
       <div className="coord-stats">
-        <div className="stat-card accent">
+        <div className="stat-card accent has-pop">
           <div className="stat-lbl">Profesores registrados</div>
           <div className="stat-val">{profs.length}</div>
           <div className="stat-sub">{assignedProfs} con práctica asignada</div>
+          <div className="stat-pop">
+            <div className="stat-pop-head">Profesores ({profs.length})</div>
+            {profs.length === 0 && <div className="stat-pop-empty">Sin profesores registrados.</div>}
+            {[...profs].sort((a, b) => a.nombre.localeCompare(b.nombre)).map(p => (
+              <div key={p.id} className="stat-pop-row">
+                <span className="stat-pop-name" title={p.nombre}>{p.nombre}</span>
+                <span className="stat-pop-meta">{(p.practicasAsignadas || []).join(', ') || 'sin asignar'}</span>
+              </div>
+            ))}
+          </div>
         </div>
         <div className="stat-card">
           <div className="stat-lbl">Centros deportivos</div>

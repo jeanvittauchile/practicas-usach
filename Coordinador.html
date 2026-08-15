@@ -36,6 +36,10 @@
       transition: opacity .12s, transform .12s, visibility .12s;
     }
     .stat-card.has-pop:hover .stat-pop { opacity: 1; visibility: visible; transform: translateY(0); }
+    /* Variante controlada por JS (posición calculada del mouse), para popovers
+       dentro de contenedores con overflow-x:auto (ej. tablas responsive) donde
+       el hover CSS puro quedaría recortado por el scroll del contenedor. */
+    .stat-pop.is-fixed { position: fixed; top: 0; left: 0; opacity: 1; visibility: visible; transform: none; }
     .stat-pop-head { padding: 6px 14px 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-500); border-bottom: 1px solid var(--border); margin-bottom: 4px; }
     .stat-pop-row { padding: 6px 14px; font-size: 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .stat-pop-row:hover { background: var(--surface-1); }

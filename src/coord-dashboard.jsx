@@ -1,9 +1,11 @@
 // coord-dashboard.jsx — Dashboard del Coordinador
 
 function DashboardScreen({ ctx }) {
+  const { useState } = React;
   const { profs, students, cartas, centros, onNav } = ctx;
   const PRACS = window.PRACTICES || ['I','II','III','IV','PI','PII'];
   const PNAMES = window.PRACTICE_NAMES || {};
+  const [hoverPrac, setHoverPrac] = useState(null); // { code, x, y } | null
 
   const assignedProfs = profs.filter(p => (p.practicasAsignadas||[]).length > 0).length;
   const emitidas = cartas.filter(c => c.estado === 'emitida').length;
@@ -90,7 +92,13 @@ function DashboardScreen({ ctx }) {
                     <span className={`practice-chip chip-${p.code}`}>{p.code}</span>
                     <span style={{ marginLeft:10, fontSize:13, fontWeight:500 }}>{p.name}</span>
                   </td>
-                  <td style={{ padding:'12px 20px', textAlign:'right', fontSize:14, fontWeight:600 }}>
+                  <td style={{ padding:'12px 20px', textAlign:'right', fontSize:14, fontWeight:600, cursor: p.profCount > 0 ? 'default' : undefined }}
+                      onMouseEnter={e => {
+                        if (p.profCount === 0) return;
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setHoverPrac({ code: p.code, x: r.right, y: r.bottom + 6 });
+                      }}
+                      onMouseLeave={() => setHoverPrac(h => (h && h.code === p.code ? null : h))}>
                     {p.profCount}
                     {p.profCount === 0 && <span style={{ marginLeft:6, fontSize:11, color:'#b45309', fontWeight:700 }}>⚠ sin asignar</span>}
                   </td>
@@ -104,6 +112,20 @@ function DashboardScreen({ ctx }) {
             </tbody>
           </table>
         </div>
+        {hoverPrac && (() => {
+          const list = profs.filter(pr => (pr.practicasAsignadas || []).includes(hoverPrac.code));
+          return (
+            <div className="stat-pop is-fixed" style={{ top: hoverPrac.y, left: Math.max(8, hoverPrac.x - 240) }}>
+              <div className="stat-pop-head">Profesores en {hoverPrac.code} ({list.length})</div>
+              {list.length === 0 && <div className="stat-pop-empty">Sin profesores asignados.</div>}
+              {list.map(pr => (
+                <div key={pr.id} className="stat-pop-row">
+                  <span className="stat-pop-name" title={pr.nombre}>{pr.nombre}</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
       </div>
 
       <div className="card" style={{ marginBottom: 20 }}>

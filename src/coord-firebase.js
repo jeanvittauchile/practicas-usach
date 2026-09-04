@@ -122,14 +122,19 @@
     { id:'ct05', nombre:'Club Atlético', direccion:'Irarrázaval 4200', comuna:'Ñuñoa', area:'Atletismo',
       encargado:{ nombre:'Héctor Miranda Cea', cargo:'Presidente del club' },
       tutor:{ nombre:'Andrés Lillo Faúndez', email:'alillo@clubatletico.cl', telefono:'+56 9 5567 8810' },
-      horarios:[ { dia:'Mar', desde:'13:00', hasta:'14:00', practicas:['I','II'], cupos:2 }, { dia:'Mar', desde:'15:00', hasta:'16:00', practicas:['IV'], cupos:1 } ] },
+      horarios:[
+        { dia:'Mar', desde:'13:00', hasta:'14:00', disciplina:'Boxeo juvenil mixto', practicas:['I','II'], cupos:2 },
+        { dia:'Mar', desde:'15:00', hasta:'16:00', disciplina:'Escalada infantil mixto', practicas:['IV'], cupos:1 },
+        { dia:'Jue', desde:'16:00', hasta:'17:00', disciplina:'Básquetbol juvenil mixto', practicas:['III'], cupos:2 },
+      ] },
   ];
 
   // Solapamiento de bloques horarios (mismo día, rangos que se intersectan)
   function overlap(a, b) { return a.dia === b.dia && a.desde < b.hasta && b.desde < a.hasta; }
   function fmtBlock(b) {
     const base = `${b.dia} ${b.desde}–${b.hasta}`;
-    return (b.practicas && b.practicas.length) ? `${b.practicas.join('/')} · ${base}` : base;
+    const conPractica = (b.practicas && b.practicas.length) ? `${b.practicas.join('/')} · ${base}` : base;
+    return b.disciplina ? `${b.disciplina} · ${conPractica}` : conPractica;
   }
   // Devuelve los cruces disponibilidad-profesor ↔ horario-centro
   // Si el bloque del centro trae práctica(s) asignadas, solo cruza con profes que dicten alguna de ellas.

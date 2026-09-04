@@ -6,7 +6,7 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
   const PRACTICES = window.PRACTICES || ['I','II','III','IV','PI','PII'];
   const list = blocks || [];
   const upd = (i, k, v) => onChange(list.map((b, idx) => idx === i ? { ...b, [k]: v } : b));
-  const add = () => onChange([...list, { dia:'Lun', desde:'09:00', hasta:'13:00', ...(showPracticas ? { practicas: [], cupos: 1 } : {}) }]);
+  const add = () => onChange([...list, { dia:'Lun', desde:'09:00', hasta:'13:00', ...(showPracticas ? { disciplina:'', practicas: [], cupos: 1 } : {}) }]);
   const rm  = (i) => onChange(list.filter((_, idx) => idx !== i));
   const togglePractica = (i, code) => {
     const cur = list[i].practicas || [];
@@ -18,6 +18,11 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
       {list.length === 0 && <div className="muted" style={{ fontSize:12.5 }}>Sin bloques horarios. Agrega el primero ↓</div>}
       {list.map((b, i) => (
         <div key={i} style={showPracticas ? { border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', display:'flex', flexDirection:'column', gap:7 } : undefined}>
+          {showPracticas && (
+            <input type="text" value={b.disciplina || ''} onChange={e => upd(i, 'disciplina', e.target.value)}
+                   placeholder="Disciplina (ej: Boxeo juvenil mixto)"
+                   style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit', fontWeight:600 }} />
+          )}
           <div className="sched-row">
             <select value={b.dia} onChange={e => upd(i, 'dia', e.target.value)}>
               {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
@@ -85,6 +90,7 @@ function CentrosScreen({ ctx }) {
   const selCentro = centros.find(c => c.id === sel) || null;
 
   const assignedStudents = selCentro ? students.filter(s => s.centro === selCentro.nombre) : [];
+  const disciplinas = selCentro ? [...new Set((selCentro.horarios || []).map(h => h.disciplina).filter(Boolean))] : [];
   const capTotal = selCentro ? (SCHED.centroCapacidad ? SCHED.centroCapacidad(selCentro) : 0) : 0;
   const ocupTotal = selCentro ? (SCHED.centroOcupados ? SCHED.centroOcupados(selCentro, students) : assignedStudents.length) : 0;
   const compatProfs = selCentro
@@ -155,6 +161,11 @@ function CentrosScreen({ ctx }) {
                 <div style={{ flex:1, minWidth:0 }}>
                   <h2 style={{ color:'#fff', fontSize:18, margin:0 }}>{selCentro.nombre}</h2>
                   <div style={{ fontSize:12.5, opacity:.85 }}>{selCentro.direccion || '—'}{selCentro.comuna ? ` · ${selCentro.comuna}` : ''}</div>
+                  {disciplinas.length > 0 && (
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:7 }}>
+                      {disciplinas.map(d => <span key={d} className="tag" style={{ background:'rgba(255,255,255,.16)', color:'#fff', fontSize:11 }}>{d}</span>)}
+                    </div>
+                  )}
                 </div>
                 <div style={{ display:'flex', gap:8 }}>
                   {selCentro.area && <span className="tag" style={{ background:'rgba(255,255,255,.16)', color:'#fff' }}>{selCentro.area}</span>}

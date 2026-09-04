@@ -1,7 +1,7 @@
 // coord-estudiantes.jsx — Gestión de estudiantes + CSV import
 
 function EstudiantesCoordScreen({ ctx }) {
-  const { profs, students, saveStudent, deleteStudent, importStudents, toast } = ctx;
+  const { profs, students, centros, saveStudent, deleteStudent, importStudents, toast } = ctx;
   const [q, setQ] = useState('');
   const [fPrac, setFPrac] = useState('');
   const [fProf, setFProf] = useState('');
@@ -180,7 +180,7 @@ function EstudiantesCoordScreen({ ctx }) {
       )}
 
       {showAdd && (
-        <StudentModal initial={editSt} profs={profs}
+        <StudentModal initial={editSt} profs={profs} centros={centros} students={students}
           onSave={s => { saveStudent(s); toast(editSt?'Estudiante actualizado':'Estudiante agregado'); setShowAdd(false); setEditSt(null); }}
           onClose={() => { setShowAdd(false); setEditSt(null); }}
         />
@@ -195,10 +195,17 @@ function EstudiantesCoordScreen({ ctx }) {
   );
 }
 
-function StudentModal({ initial, profs, onSave, onClose }) {
+function StudentModal({ initial, profs, centros, students, onSave, onClose }) {
   const PRACS = window.PRACTICES || ['I','II','III','IV','PI','PII'];
+  const SCHED = window.SCHED || {};
   const [f, setF] = useState(initial || { nombre:'', rut:'', email:'', telefono:'', cohorte:2024, practica:'I', profesorId: profs[0]?.id||'', area:null, centro:'' });
   const set = (k,v) => setF(p=>({...p,[k]:v}));
+
+  const centrosList = centros || [];
+  const otrosStudents = (students || []).filter(s => s.id !== initial?.id);
+  const centroActualConocido = !f.centro || centrosList.some(c => c.nombre === f.centro);
+  const [centroManual, setCentroManual] = useState(!centroActualConocido);
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e=>e.stopPropagation()}>
@@ -220,7 +227,27 @@ function StudentModal({ initial, profs, onSave, onClose }) {
                 {profs.filter(p=>(p.practicasAsignadas||[]).includes(f.practica)).length===0 && profs.map(p=><option key={p.id} value={p.id}>{p.nombre.replace('Prof. ','')}</option>)}
               </select>
             </div>
-            <div className="form-field" style={{ gridColumn:'1/-1' }}><label>Centro de práctica</label><input value={f.centro||''} onChange={e=>set('centro',e.target.value)} placeholder="Nombre del centro"/></div>
+            <div className="form-field" style={{ gridColumn:'1/-1' }}>
+              <label>Centro de práctica</label>
+              {centroManual || centrosList.length === 0 ? (
+                <input value={f.centro||''} onChange={e=>set('centro',e.target.value)} placeholder="Nombre del centro"/>
+              ) : (
+                <select value={f.centro||''} onChange={e => { if (e.target.value === '__otro__') { setCentroManual(true); set('centro',''); } else set('centro', e.target.value); }}>
+                  <option value="">— Selecciona un centro —</option>
+                  {centrosList.map(c => {
+                    const cap = SCHED.centroCapacidad ? SCHED.centroCapacidad(c, f.practica) : 0;
+                    const ocup = cap > 0 && SCHED.centroOcupados ? SCHED.centroOcupados(c, otrosStudents, f.practica) : 0;
+                    const lleno = cap > 0 && ocup >= cap;
+                    const info = cap > 0 ? ` — ${ocup}/${cap} cupos${lleno ? ' · LLENO' : ''}` : '';
+                    return <option key={c.id} value={c.nombre} disabled={lleno && c.nombre !== f.centro}>{c.nombre}{info}</option>;
+                  })}
+                  <option value="__otro__">✎ Otro centro (escribir nombre)</option>
+                </select>
+              )}
+              {centroManual && centrosList.length > 0 && (
+                <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop:6 }} onClick={() => setCentroManual(false)}>← Elegir de la lista de centros</button>
+              )}
+            </div>
           </div>
         </div>
         <div className="modal-foot">

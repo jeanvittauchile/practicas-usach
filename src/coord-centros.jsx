@@ -1,25 +1,56 @@
 // coord-centros.jsx — Centros de práctica + editor de horarios reutilizable
 
-// ─── ScheduleEditor: edición de bloques {dia, desde, hasta} ────────────────
-function ScheduleEditor({ blocks, onChange, accent }) {
+// ─── ScheduleEditor: edición de bloques {dia, desde, hasta, practicas?} ────
+function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
   const DIAS = (window.SCHED && window.SCHED.DIAS) || ['Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const PRACTICES = window.PRACTICES || ['I','II','III','IV','PI','PII'];
   const list = blocks || [];
   const upd = (i, k, v) => onChange(list.map((b, idx) => idx === i ? { ...b, [k]: v } : b));
-  const add = () => onChange([...list, { dia:'Lun', desde:'09:00', hasta:'13:00' }]);
+  const add = () => onChange([...list, { dia:'Lun', desde:'09:00', hasta:'13:00', ...(showPracticas ? { practicas: [], cupos: 1 } : {}) }]);
   const rm  = (i) => onChange(list.filter((_, idx) => idx !== i));
+  const togglePractica = (i, code) => {
+    const cur = list[i].practicas || [];
+    upd(i, 'practicas', cur.includes(code) ? cur.filter(c => c !== code) : [...cur, code]);
+  };
   const col = accent || 'var(--teal-500)';
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
       {list.length === 0 && <div className="muted" style={{ fontSize:12.5 }}>Sin bloques horarios. Agrega el primero ↓</div>}
       {list.map((b, i) => (
-        <div key={i} className="sched-row">
-          <select value={b.dia} onChange={e => upd(i, 'dia', e.target.value)}>
-            {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <input type="time" value={b.desde} onChange={e => upd(i, 'desde', e.target.value)} />
-          <span className="sched-dash">→</span>
-          <input type="time" value={b.hasta} onChange={e => upd(i, 'hasta', e.target.value)} />
-          <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)', marginLeft:'auto' }} onClick={() => rm(i)}>✕</button>
+        <div key={i} style={showPracticas ? { border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', display:'flex', flexDirection:'column', gap:7 } : undefined}>
+          <div className="sched-row">
+            <select value={b.dia} onChange={e => upd(i, 'dia', e.target.value)}>
+              {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+            <input type="time" value={b.desde} onChange={e => upd(i, 'desde', e.target.value)} />
+            <span className="sched-dash">→</span>
+            <input type="time" value={b.hasta} onChange={e => upd(i, 'hasta', e.target.value)} />
+            {showPracticas && (
+              <label style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, color:'var(--ink-500)', marginLeft:6 }}>
+                Cupos
+                <input type="number" min="0" value={b.cupos ?? 1} onChange={e => upd(i, 'cupos', Math.max(0, parseInt(e.target.value) || 0))}
+                       style={{ width:52, padding:'5px 6px', border:'1.5px solid var(--border)', borderRadius:6, fontSize:13 }} />
+              </label>
+            )}
+            <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)', marginLeft: showPracticas ? 0 : 'auto' }} onClick={() => rm(i)}>✕</button>
+          </div>
+          {showPracticas && (
+            <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+              {PRACTICES.map(code => {
+                const active = (b.practicas || []).includes(code);
+                return (
+                  <button key={code} type="button" onClick={() => togglePractica(i, code)}
+                          className={`practice-chip chip-${code}`}
+                          style={{ cursor:'pointer', fontFamily:'inherit',
+                                   border: active ? '1.5px solid currentColor' : '1.5px solid transparent',
+                                   opacity: active ? 1 : .35 }}>
+                    {code}
+                  </button>
+                );
+              })}
+              {(b.practicas || []).length === 0 && <span className="muted" style={{ fontSize:11 }}>Sin práctica asignada · aplica a todas</span>}
+            </div>
+          )}
         </div>
       ))}
       <button type="button" className="btn btn-secondary btn-sm" style={{ alignSelf:'flex-start', borderColor:col, color:col }} onClick={add}>+ Agregar bloque</button>
@@ -54,6 +85,8 @@ function CentrosScreen({ ctx }) {
   const selCentro = centros.find(c => c.id === sel) || null;
 
   const assignedStudents = selCentro ? students.filter(s => s.centro === selCentro.nombre) : [];
+  const capTotal = selCentro ? (SCHED.centroCapacidad ? SCHED.centroCapacidad(selCentro) : 0) : 0;
+  const ocupTotal = selCentro ? (SCHED.centroOcupados ? SCHED.centroOcupados(selCentro, students) : assignedStudents.length) : 0;
   const compatProfs = selCentro
     ? profs.map(p => ({ p, matches: SCHED.profMatchCentro ? SCHED.profMatchCentro(p, selCentro) : [] }))
         .filter(x => x.matches.length > 0)
@@ -85,6 +118,7 @@ function CentrosScreen({ ctx }) {
             {filtered.length === 0 && <div className="muted" style={{ padding:24, textAlign:'center', fontSize:13 }}>Sin resultados</div>}
             {filtered.map(c => {
               const nSt = students.filter(s => s.centro === c.nombre).length;
+              const cap = SCHED.centroCapacidad ? SCHED.centroCapacidad(c) : 0;
               const active = c.id === sel;
               return (
                 <button key={c.id} onClick={() => setSel(c.id)}
@@ -95,7 +129,7 @@ function CentrosScreen({ ctx }) {
                   <div className="centro-ic">{(c.nombre||'?')[0]}</div>
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:13, fontWeight: active ? 700 : 500, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', color:'var(--ink-900)' }}>{c.nombre}</div>
-                    <div className="muted" style={{ fontSize:11 }}>{c.comuna || '—'} · {nSt} est.</div>
+                    <div className="muted" style={{ fontSize:11 }}>{c.comuna || '—'} · {cap > 0 ? `${nSt}/${cap} cupos` : `${nSt} est.`}</div>
                   </div>
                 </button>
               );
@@ -149,10 +183,39 @@ function CentrosScreen({ ctx }) {
               </div>
             </div>
 
-            {/* Horarios */}
+            {/* Horarios + cupos */}
             <div className="card" style={{ padding:'16px 20px' }}>
-              <div className="centro-block-lbl" style={{ marginBottom:10 }}>Horarios de atención / disponibilidad</div>
-              <SchedChips blocks={selCentro.horarios} tone="orange" />
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+                <div className="centro-block-lbl" style={{ margin:0 }}>Horarios de atención / disponibilidad</div>
+                {capTotal > 0 && (
+                  <span className="tag" style={{ color: ocupTotal >= capTotal ? 'var(--err)' : 'var(--teal-700)' }}>
+                    {ocupTotal}/{capTotal} cupos
+                  </span>
+                )}
+              </div>
+              {(!selCentro.horarios || selCentro.horarios.length === 0) ? (
+                <span className="muted" style={{ fontSize:12.5 }}>—</span>
+              ) : (
+                <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
+                  {selCentro.horarios.map((h, i) => {
+                    const cap = h.cupos != null ? Number(h.cupos) : null;
+                    const ocup = cap != null
+                      ? assignedStudents.filter(s => !h.practicas?.length || h.practicas.includes(s.practica)).length
+                      : null;
+                    const lleno = cap != null && cap > 0 && ocup >= cap;
+                    return (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                        <span className="sched-chip sched-chip-orange">{SCHED.fmtBlock ? SCHED.fmtBlock(h) : `${h.dia} ${h.desde}–${h.hasta}`}</span>
+                        {cap != null && (
+                          <span style={{ fontSize:11.5, fontWeight:700, color: lleno ? 'var(--err)' : 'var(--teal-700)' }}>
+                            {ocup}/{cap} cupos{lleno ? ' · LLENO' : ''}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Profesores compatibles */}
@@ -255,7 +318,8 @@ function CentroModal({ initial, onSave, onClose }) {
           </div>
 
           <div className="form-divider">Horarios de atención / disponibilidad</div>
-          <ScheduleEditor blocks={f.horarios} onChange={v => set('horarios', v)} accent="var(--orange-600)" />
+          <div className="muted" style={{ fontSize:12, marginTop:-6, marginBottom:2 }}>Marca en cada bloque a qué práctica(s) corresponde (ej: I y II de 13 a 14, IV de 15 a 16).</div>
+          <ScheduleEditor blocks={f.horarios} onChange={v => set('horarios', v)} accent="var(--orange-600)" showPracticas />
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>

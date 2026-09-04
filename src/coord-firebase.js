@@ -106,35 +106,59 @@
     { id:'ct01', nombre:'Club Deportivo Santiago', direccion:'Av. Matucana 1020', comuna:'Santiago Centro', area:'Deportiva',
       encargado:{ nombre:'Patricio Salas Mena', cargo:'Director deportivo' },
       tutor:{ nombre:'Camilo Reyes Ortiz', email:'creyes@cdsantiago.cl', telefono:'+56 9 8431 2290' },
-      horarios:[ { dia:'Lun', desde:'16:00', hasta:'20:00' }, { dia:'Mié', desde:'16:00', hasta:'20:00' } ] },
+      horarios:[ { dia:'Lun', desde:'16:00', hasta:'20:00', practicas:['I','II'], cupos:2 }, { dia:'Mié', desde:'16:00', hasta:'20:00', practicas:['I','II'], cupos:2 } ] },
     { id:'ct02', nombre:'Escuela Municipal Deportes', direccion:'Pajaritos 2530', comuna:'Estación Central', area:'Formativa',
       encargado:{ nombre:'Verónica Aguilar Pino', cargo:'Coordinadora de talleres' },
       tutor:{ nombre:'Daniela Soto Maldonado', email:'dsoto@emdeportes.cl', telefono:'+56 9 7712 0584' },
-      horarios:[ { dia:'Mar', desde:'09:00', hasta:'13:00' }, { dia:'Jue', desde:'09:00', hasta:'13:00' } ] },
+      horarios:[ { dia:'Mar', desde:'09:00', hasta:'13:00', practicas:['II'], cupos:3 }, { dia:'Jue', desde:'09:00', hasta:'13:00', practicas:['II'], cupos:3 } ] },
     { id:'ct03', nombre:'Corp. Municipal Maipú', direccion:'Av. 5 de Abril 0260', comuna:'Maipú', area:'Gestión / Comunitaria',
       encargado:{ nombre:'Rodrigo Fuenzalida Vera', cargo:'Jefe de deportes municipal' },
       tutor:{ nombre:'Marcela Tapia Riquelme', email:'mtapia@maipu.cl', telefono:'+56 9 6320 1147' },
-      horarios:[ { dia:'Lun', desde:'08:30', hasta:'13:30' }, { dia:'Mié', desde:'14:00', hasta:'18:00' } ] },
+      horarios:[ { dia:'Lun', desde:'08:30', hasta:'13:30', practicas:['PI','PII'], cupos:2 }, { dia:'Mié', desde:'14:00', hasta:'18:00', practicas:['PI','PII'], cupos:2 } ] },
     { id:'ct04', nombre:'USACH Rendimiento', direccion:'Av. L. B. O\u2019Higgins 3363', comuna:'Estación Central', area:'Ciencias del Deporte',
       encargado:{ nombre:'Ignacio Bravo León', cargo:'Encargado laboratorio rendimiento' },
       tutor:{ nombre:'Paula Cárcamo Vidal', email:'paula.carcamo@usach.cl', telefono:'+56 9 9045 7723' },
-      horarios:[ { dia:'Mié', desde:'14:00', hasta:'19:00' }, { dia:'Vie', desde:'15:00', hasta:'19:00' } ] },
+      horarios:[ { dia:'Mié', desde:'14:00', hasta:'19:00', practicas:['III'], cupos:1 }, { dia:'Vie', desde:'15:00', hasta:'19:00', practicas:['III'], cupos:1 } ] },
     { id:'ct05', nombre:'Club Atlético', direccion:'Irarrázaval 4200', comuna:'Ñuñoa', area:'Atletismo',
       encargado:{ nombre:'Héctor Miranda Cea', cargo:'Presidente del club' },
       tutor:{ nombre:'Andrés Lillo Faúndez', email:'alillo@clubatletico.cl', telefono:'+56 9 5567 8810' },
-      horarios:[ { dia:'Mar', desde:'09:00', hasta:'13:00' }, { dia:'Jue', desde:'16:00', hasta:'20:00' } ] },
+      horarios:[ { dia:'Mar', desde:'13:00', hasta:'14:00', practicas:['I','II'], cupos:2 }, { dia:'Mar', desde:'15:00', hasta:'16:00', practicas:['IV'], cupos:1 } ] },
   ];
 
   // Solapamiento de bloques horarios (mismo día, rangos que se intersectan)
   function overlap(a, b) { return a.dia === b.dia && a.desde < b.hasta && b.desde < a.hasta; }
-  function fmtBlock(b) { return `${b.dia} ${b.desde}–${b.hasta}`; }
+  function fmtBlock(b) {
+    const base = `${b.dia} ${b.desde}–${b.hasta}`;
+    return (b.practicas && b.practicas.length) ? `${b.practicas.join('/')} · ${base}` : base;
+  }
   // Devuelve los cruces disponibilidad-profesor ↔ horario-centro
+  // Si el bloque del centro trae práctica(s) asignadas, solo cruza con profes que dicten alguna de ellas.
   function profMatchCentro(prof, centro) {
     const matches = [];
     (centro.horarios || []).forEach(h => {
+      if (h.practicas && h.practicas.length && !h.practicas.some(pr => (prof.practicasAsignadas || []).includes(pr))) return;
       (prof.disponibilidad || []).forEach(d => { if (overlap(d, h)) matches.push({ centro:h, prof:d }); });
     });
     return matches;
+  }
+  // Cupos: capacidad total del centro (o de una práctica puntual dentro de él), sumando
+  // los cupos de cada bloque horario. Así un mismo centro puede aceptar varios estudiantes
+  // sin necesidad de duplicar el registro del centro.
+  function centroCapacidad(centro, practica) {
+    return (centro.horarios || [])
+      .filter(h => !practica || (h.practicas && h.practicas.includes(practica)))
+      .reduce((sum, h) => sum + (Number(h.cupos) || 0), 0);
+  }
+  function centroOcupados(centro, students, practica) {
+    const propios = (students || []).filter(s => s.centro === centro.nombre);
+    if (!practica) return propios.length;
+    // Los bloques que agrupan varias prácticas (ej. I y II juntas de 13 a 14) comparten el mismo cupo:
+    // un estudiante de II también ocupa el cupo que ve un estudiante de I en ese bloque.
+    const bloques = (centro.horarios || []).filter(h => h.practicas && h.practicas.includes(practica));
+    if (bloques.length === 0) return propios.filter(s => s.practica === practica).length;
+    const compartidas = new Set();
+    bloques.forEach(h => h.practicas.forEach(p => compartidas.add(p)));
+    return propios.filter(s => compartidas.has(s.practica)).length;
   }
 
   // ─── localStorage keys ────────────────────────────────────────────────────
@@ -230,7 +254,7 @@
   };
 
   window.DB = DB;
-  window.SCHED = { DIAS, overlap, fmtBlock, profMatchCentro };
+  window.SCHED = { DIAS, overlap, fmtBlock, profMatchCentro, centroCapacidad, centroOcupados };
   window.PRACTICE_NAMES = PRACTICE_NAMES;
   window.PRACTICES = PRACTICES;
 

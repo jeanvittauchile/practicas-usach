@@ -105,34 +105,54 @@
   const DEMO_CENTROS = [
     { id:'ct01', nombre:'Club Deportivo Santiago', direccion:'Av. Matucana 1020', comuna:'Santiago Centro', area:'Deportiva',
       encargado:{ nombre:'Patricio Salas Mena', cargo:'Director deportivo' },
-      tutor:{ nombre:'Camilo Reyes Ortiz', email:'creyes@cdsantiago.cl', telefono:'+56 9 8431 2290' },
-      horarios:[ { dia:'Lun', desde:'16:00', hasta:'20:00', practicas:['I','II'], cupos:2 }, { dia:'Mié', desde:'16:00', hasta:'20:00', practicas:['I','II'], cupos:2 } ] },
+      tutores:[ { nombre:'Camilo Reyes Ortiz', disciplina:'Fútbol formativo', email:'creyes@cdsantiago.cl', telefono:'+56 9 8431 2290' } ],
+      horarios:[ { dias:['Lun','Mié'], desde:'16:00', hasta:'20:00', practicas:['I','II'], cupos:2 } ] },
     { id:'ct02', nombre:'Escuela Municipal Deportes', direccion:'Pajaritos 2530', comuna:'Estación Central', area:'Formativa',
       encargado:{ nombre:'Verónica Aguilar Pino', cargo:'Coordinadora de talleres' },
-      tutor:{ nombre:'Daniela Soto Maldonado', email:'dsoto@emdeportes.cl', telefono:'+56 9 7712 0584' },
-      horarios:[ { dia:'Mar', desde:'09:00', hasta:'13:00', practicas:['II'], cupos:3 }, { dia:'Jue', desde:'09:00', hasta:'13:00', practicas:['II'], cupos:3 } ] },
+      tutores:[ { nombre:'Daniela Soto Maldonado', disciplina:'Talleres formativos', email:'dsoto@emdeportes.cl', telefono:'+56 9 7712 0584' } ],
+      horarios:[ { dias:['Mar','Jue'], desde:'09:00', hasta:'13:00', practicas:['II'], cupos:3 } ] },
     { id:'ct03', nombre:'Corp. Municipal Maipú', direccion:'Av. 5 de Abril 0260', comuna:'Maipú', area:'Gestión / Comunitaria',
       encargado:{ nombre:'Rodrigo Fuenzalida Vera', cargo:'Jefe de deportes municipal' },
-      tutor:{ nombre:'Marcela Tapia Riquelme', email:'mtapia@maipu.cl', telefono:'+56 9 6320 1147' },
-      horarios:[ { dia:'Lun', desde:'08:30', hasta:'13:30', practicas:['PI','PII'], cupos:2 }, { dia:'Mié', desde:'14:00', hasta:'18:00', practicas:['PI','PII'], cupos:2 } ] },
+      tutores:[ { nombre:'Marcela Tapia Riquelme', disciplina:'Gestión comunitaria', email:'mtapia@maipu.cl', telefono:'+56 9 6320 1147' } ],
+      horarios:[ { dias:['Lun'], desde:'08:30', hasta:'13:30', practicas:['PI','PII'], cupos:2 }, { dias:['Mié'], desde:'14:00', hasta:'18:00', practicas:['PI','PII'], cupos:2 } ] },
     { id:'ct04', nombre:'USACH Rendimiento', direccion:'Av. L. B. O\u2019Higgins 3363', comuna:'Estación Central', area:'Ciencias del Deporte',
       encargado:{ nombre:'Ignacio Bravo León', cargo:'Encargado laboratorio rendimiento' },
-      tutor:{ nombre:'Paula Cárcamo Vidal', email:'paula.carcamo@usach.cl', telefono:'+56 9 9045 7723' },
-      horarios:[ { dia:'Mié', desde:'14:00', hasta:'19:00', practicas:['III'], cupos:1 }, { dia:'Vie', desde:'15:00', hasta:'19:00', practicas:['III'], cupos:1 } ] },
+      tutores:[ { nombre:'Paula Cárcamo Vidal', disciplina:'Ciencias del deporte', email:'paula.carcamo@usach.cl', telefono:'+56 9 9045 7723' } ],
+      horarios:[ { dias:['Mié','Vie'], desde:'14:00', hasta:'19:00', practicas:['III'], cupos:1 } ] },
     { id:'ct05', nombre:'Club Atlético', direccion:'Irarrázaval 4200', comuna:'Ñuñoa', area:'Atletismo',
       encargado:{ nombre:'Héctor Miranda Cea', cargo:'Presidente del club' },
-      tutor:{ nombre:'Andrés Lillo Faúndez', email:'alillo@clubatletico.cl', telefono:'+56 9 5567 8810' },
+      tutores:[
+        { nombre:'Andrés Lillo Faúndez', disciplina:'Boxeo', email:'alillo@clubatletico.cl', telefono:'+56 9 5567 8810' },
+        { nombre:'Fernanda Bustos Concha', disciplina:'Escalada', email:'fbustos@clubatletico.cl', telefono:'+56 9 4423 7761' },
+        { nombre:'Ismael Varas Poblete', disciplina:'Básquetbol', email:'ivaras@clubatletico.cl', telefono:'+56 9 3390 1128' },
+      ],
       horarios:[
-        { dia:'Mar', desde:'13:00', hasta:'14:00', disciplina:'Boxeo juvenil mixto', practicas:['I','II'], cupos:2 },
-        { dia:'Mar', desde:'15:00', hasta:'16:00', disciplina:'Escalada infantil mixto', practicas:['IV'], cupos:1 },
-        { dia:'Jue', desde:'16:00', hasta:'17:00', disciplina:'Básquetbol juvenil mixto', practicas:['III'], cupos:2 },
+        { dias:['Mar','Jue'], desde:'13:00', hasta:'14:00', disciplina:'Boxeo juvenil mixto', practicas:['I','II'], cupos:2 },
+        { dias:['Mar'], desde:'15:00', hasta:'16:00', disciplina:'Escalada infantil mixto', practicas:['IV'], cupos:1 },
+        { dias:['Lun','Mié','Vie'], desde:'19:00', hasta:'20:00', disciplina:'Natación infantil', practicas:['III'], cupos:2 },
+        { dias:['Jue'], desde:'16:00', hasta:'17:00', disciplina:'Básquetbol juvenil mixto', practicas:['III'], cupos:2 },
       ] },
   ];
 
-  // Solapamiento de bloques horarios (mismo día, rangos que se intersectan)
-  function overlap(a, b) { return a.dia === b.dia && a.desde < b.hasta && b.desde < a.hasta; }
+  // Días de un bloque horario, con compatibilidad hacia atrás para bloques
+  // antiguos guardados con un solo día en `dia` en vez del arreglo `dias`.
+  function blockDias(b) {
+    if (b.dias && b.dias.length) return b.dias;
+    return b.dia ? [b.dia] : [];
+  }
+  // Solapamiento de bloques horarios (comparten al menos un día y los rangos se intersectan)
+  function overlap(a, b) {
+    const da = blockDias(a), db = blockDias(b);
+    if (!da.some(d => db.includes(d))) return false;
+    return a.desde < b.hasta && b.desde < a.hasta;
+  }
+  function fmtDias(dias) {
+    if (dias.length <= 1) return dias[0] || '';
+    if (dias.length === 2) return dias.join(' y ');
+    return dias.slice(0, -1).join(', ') + ' y ' + dias[dias.length - 1];
+  }
   function fmtBlock(b) {
-    const base = `${b.dia} ${b.desde}–${b.hasta}`;
+    const base = `${fmtDias(blockDias(b))} ${b.desde}–${b.hasta}`;
     const conPractica = (b.practicas && b.practicas.length) ? `${b.practicas.join('/')} · ${base}` : base;
     return b.disciplina ? `${b.disciplina} · ${conPractica}` : conPractica;
   }
@@ -259,7 +279,7 @@
   };
 
   window.DB = DB;
-  window.SCHED = { DIAS, overlap, fmtBlock, profMatchCentro, centroCapacidad, centroOcupados };
+  window.SCHED = { DIAS, overlap, fmtBlock, blockDias, profMatchCentro, centroCapacidad, centroOcupados };
   window.PRACTICE_NAMES = PRACTICE_NAMES;
   window.PRACTICES = PRACTICES;
 

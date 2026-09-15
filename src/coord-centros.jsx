@@ -1,32 +1,50 @@
 // coord-centros.jsx — Centros de práctica + editor de horarios reutilizable
 
-// ─── ScheduleEditor: edición de bloques {dia, desde, hasta, practicas?} ────
+// ─── ScheduleEditor: edición de bloques {dias, desde, hasta, practicas?} ───
 function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
   const DIAS = (window.SCHED && window.SCHED.DIAS) || ['Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const blockDias = (window.SCHED && window.SCHED.blockDias) || (b => b.dias && b.dias.length ? b.dias : (b.dia ? [b.dia] : []));
   const PRACTICES = window.PRACTICES || ['I','II','III','IV','PI','PII'];
   const list = blocks || [];
   const upd = (i, k, v) => onChange(list.map((b, idx) => idx === i ? { ...b, [k]: v } : b));
-  const add = () => onChange([...list, { dia:'Lun', desde:'09:00', hasta:'13:00', ...(showPracticas ? { disciplina:'', practicas: [], cupos: 1 } : {}) }]);
+  const add = () => onChange([...list, { dias:['Lun'], desde:'09:00', hasta:'13:00', ...(showPracticas ? { disciplina:'', practicas: [], cupos: 1 } : {}) }]);
   const rm  = (i) => onChange(list.filter((_, idx) => idx !== i));
   const togglePractica = (i, code) => {
     const cur = list[i].practicas || [];
     upd(i, 'practicas', cur.includes(code) ? cur.filter(c => c !== code) : [...cur, code]);
+  };
+  const toggleDia = (i, dia) => {
+    const cur = blockDias(list[i]);
+    const next = cur.includes(dia) ? cur.filter(d => d !== dia) : DIAS.filter(d => cur.includes(d) || d === dia);
+    if (next.length === 0) return;
+    onChange(list.map((b, idx) => idx === i ? { ...b, dias: next, dia: undefined } : b));
   };
   const col = accent || 'var(--teal-500)';
   return (
     <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
       {list.length === 0 && <div className="muted" style={{ fontSize:12.5 }}>Sin bloques horarios. Agrega el primero ↓</div>}
       {list.map((b, i) => (
-        <div key={i} style={showPracticas ? { border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', display:'flex', flexDirection:'column', gap:7 } : undefined}>
+        <div key={i} style={{ border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', display:'flex', flexDirection:'column', gap:7 }}>
           {showPracticas && (
             <input type="text" value={b.disciplina || ''} onChange={e => upd(i, 'disciplina', e.target.value)}
                    placeholder="Disciplina (ej: Boxeo juvenil mixto)"
                    style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit', fontWeight:600 }} />
           )}
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+            {DIAS.map(d => {
+              const active = blockDias(b).includes(d);
+              return (
+                <button key={d} type="button" onClick={() => toggleDia(i, d)}
+                        className="day-chip"
+                        style={{ cursor:'pointer', fontFamily:'inherit',
+                                 border: active ? '1.5px solid currentColor' : '1.5px solid transparent',
+                                 opacity: active ? 1 : .35 }}>
+                  {d}
+                </button>
+              );
+            })}
+          </div>
           <div className="sched-row">
-            <select value={b.dia} onChange={e => upd(i, 'dia', e.target.value)}>
-              {DIAS.map(d => <option key={d} value={d}>{d}</option>)}
-            </select>
             <input type="time" value={b.desde} onChange={e => upd(i, 'desde', e.target.value)} />
             <span className="sched-dash">→</span>
             <input type="time" value={b.hasta} onChange={e => upd(i, 'hasta', e.target.value)} />
@@ -66,13 +84,20 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
 // Vista de chips de horario (solo lectura)
 function SchedChips({ blocks, tone }) {
   const SCHED = window.SCHED || {};
-  const fmt = SCHED.fmtBlock || (b => `${b.dia} ${b.desde}–${b.hasta}`);
+  const fmt = SCHED.fmtBlock || (b => `${(b.dias||[b.dia]).join(', ')} ${b.desde}–${b.hasta}`);
   if (!blocks || blocks.length === 0) return <span className="muted" style={{ fontSize:12.5 }}>—</span>;
   return (
     <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
       {blocks.map((b, i) => <span key={i} className={`sched-chip ${tone === 'orange' ? 'sched-chip-orange' : ''}`}>{fmt(b)}</span>)}
     </div>
   );
+}
+
+// Tutores de práctica de un centro, con compatibilidad hacia atrás para
+// centros antiguos guardados con un solo `tutor` en vez del arreglo `tutores`.
+function centroTutores(c) {
+  if (c.tutores && c.tutores.length) return c.tutores;
+  return c.tutor && (c.tutor.nombre || c.tutor.email || c.tutor.telefono) ? [c.tutor] : [];
 }
 
 // ─── CentrosScreen ─────────────────────────────────────────────────────────
@@ -91,6 +116,7 @@ function CentrosScreen({ ctx }) {
 
   const assignedStudents = selCentro ? students.filter(s => s.centro === selCentro.nombre) : [];
   const disciplinas = selCentro ? [...new Set((selCentro.horarios || []).map(h => h.disciplina).filter(Boolean))] : [];
+  const tutores = selCentro ? centroTutores(selCentro) : [];
   const capTotal = selCentro ? (SCHED.centroCapacidad ? SCHED.centroCapacidad(selCentro) : 0) : 0;
   const ocupTotal = selCentro ? (SCHED.centroOcupados ? SCHED.centroOcupados(selCentro, students) : assignedStudents.length) : 0;
   const compatProfs = selCentro
@@ -185,12 +211,28 @@ function CentrosScreen({ ctx }) {
                 <div className="muted" style={{ fontSize:12.5 }}>{selCentro.encargado?.cargo || ''}</div>
               </div>
               <div className="card" style={{ padding:'16px 20px' }}>
-                <div className="centro-block-lbl">Tutor/a de práctica</div>
-                <div style={{ fontWeight:700, fontSize:14.5, marginTop:4 }}>{selCentro.tutor?.nombre || '—'}</div>
-                <div style={{ display:'flex', flexDirection:'column', gap:2, marginTop:4 }}>
-                  {selCentro.tutor?.email && <a href={`mailto:${selCentro.tutor.email}`} style={{ fontSize:12.5 }}>✉ {selCentro.tutor.email}</a>}
-                  {selCentro.tutor?.telefono && <span className="muted" style={{ fontSize:12.5 }}>☎ {selCentro.tutor.telefono}</span>}
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div className="centro-block-lbl">Tutores/as de práctica</div>
+                  {tutores.length > 0 && <span className="tag tag-teal">{tutores.length}</span>}
                 </div>
+                {tutores.length === 0 ? (
+                  <div className="muted" style={{ fontSize:12.5, marginTop:4 }}>—</div>
+                ) : (
+                  <div style={{ display:'flex', flexDirection:'column', gap:10, marginTop:6 }}>
+                    {tutores.map((t, i) => (
+                      <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none', paddingTop: i > 0 ? 8 : 0 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
+                          <span style={{ fontWeight:700, fontSize:14 }}>{t.nombre || '—'}</span>
+                          {t.disciplina && <span className="tag" style={{ fontSize:10.5 }}>{t.disciplina}</span>}
+                        </div>
+                        <div style={{ display:'flex', flexDirection:'column', gap:2, marginTop:2 }}>
+                          {t.email && <a href={`mailto:${t.email}`} style={{ fontSize:12.5 }}>✉ {t.email}</a>}
+                          {t.telefono && <span className="muted" style={{ fontSize:12.5 }}>☎ {t.telefono}</span>}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -216,7 +258,7 @@ function CentrosScreen({ ctx }) {
                     const lleno = cap != null && cap > 0 && ocup >= cap;
                     return (
                       <div key={i} style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-                        <span className="sched-chip sched-chip-orange">{SCHED.fmtBlock ? SCHED.fmtBlock(h) : `${h.dia} ${h.desde}–${h.hasta}`}</span>
+                        <span className="sched-chip sched-chip-orange">{SCHED.fmtBlock ? SCHED.fmtBlock(h) : `${(h.dias||[h.dia]).join(', ')} ${h.desde}–${h.hasta}`}</span>
                         {cap != null && (
                           <span style={{ fontSize:11.5, fontWeight:700, color: lleno ? 'var(--err)' : 'var(--teal-700)' }}>
                             {ocup}/{cap} cupos{lleno ? ' · LLENO' : ''}
@@ -297,12 +339,16 @@ function CentrosScreen({ ctx }) {
 
 // ─── CentroModal ───────────────────────────────────────────────────────────
 function CentroModal({ initial, onSave, onClose }) {
-  const [f, setF] = useState(initial || {
-    nombre:'', direccion:'', comuna:'', area:'',
-    encargado:{ nombre:'', cargo:'' }, tutor:{ nombre:'', email:'', telefono:'' }, horarios:[],
+  const [f, setF] = useState(() => {
+    if (!initial) return { nombre:'', direccion:'', comuna:'', area:'', encargado:{ nombre:'', cargo:'' }, tutores:[], horarios:[] };
+    const { tutor, ...rest } = initial;
+    return { ...rest, tutores: centroTutores(initial) };
   });
   const set = (k, v) => setF(p => ({ ...p, [k]: v }));
   const setNested = (group, k, v) => setF(p => ({ ...p, [group]: { ...(p[group]||{}), [k]: v } }));
+  const updTutor = (i, k, v) => set('tutores', (f.tutores||[]).map((t, idx) => idx === i ? { ...t, [k]: v } : t));
+  const addTutor = () => set('tutores', [...(f.tutores||[]), { nombre:'', disciplina:'', email:'', telefono:'' }]);
+  const rmTutor  = (i) => set('tutores', (f.tutores||[]).filter((_, idx) => idx !== i));
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -321,11 +367,28 @@ function CentroModal({ initial, onSave, onClose }) {
             <div className="form-field"><label>Cargo</label><input value={f.encargado?.cargo||''} onChange={e=>setNested('encargado','cargo',e.target.value)} placeholder="Cargo"/></div>
           </div>
 
-          <div className="form-divider">Tutor/a de práctica</div>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
-            <div className="form-field" style={{ gridColumn:'1/-1' }}><label>Nombre</label><input value={f.tutor?.nombre||''} onChange={e=>setNested('tutor','nombre',e.target.value)} placeholder="Nombre del tutor/a"/></div>
-            <div className="form-field"><label>Correo</label><input type="email" value={f.tutor?.email||''} onChange={e=>setNested('tutor','email',e.target.value)} placeholder="correo@centro.cl"/></div>
-            <div className="form-field"><label>Teléfono</label><input value={f.tutor?.telefono||''} onChange={e=>setNested('tutor','telefono',e.target.value)} placeholder="+56 9 ..."/></div>
+          <div className="form-divider">Tutores/as de práctica</div>
+          <div className="muted" style={{ fontSize:12, marginTop:-6, marginBottom:2 }}>Agrega un tutor/a por cada disciplina o deporte que se dicte en el centro (ej: Natación, Boxeo, Básquetbol).</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+            {(f.tutores||[]).length === 0 && <div className="muted" style={{ fontSize:12.5 }}>Sin tutores registrados. Agrega el primero ↓</div>}
+            {(f.tutores||[]).map((t, i) => (
+              <div key={i} style={{ border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', display:'flex', flexDirection:'column', gap:7 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                  <input value={t.nombre||''} onChange={e=>updTutor(i,'nombre',e.target.value)} placeholder="Nombre del tutor/a"
+                         style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit', fontWeight:600 }} />
+                  <input value={t.disciplina||''} onChange={e=>updTutor(i,'disciplina',e.target.value)} placeholder="Disciplina (ej: Natación infantil)"
+                         style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+                </div>
+                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                  <input type="email" value={t.email||''} onChange={e=>updTutor(i,'email',e.target.value)} placeholder="correo@centro.cl"
+                         style={{ flex:1, padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+                  <input value={t.telefono||''} onChange={e=>updTutor(i,'telefono',e.target.value)} placeholder="+56 9 ..."
+                         style={{ flex:1, padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+                  <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)' }} onClick={() => rmTutor(i)}>✕</button>
+                </div>
+              </div>
+            ))}
+            <button type="button" className="btn btn-secondary btn-sm" style={{ alignSelf:'flex-start', borderColor:'var(--orange-600)', color:'var(--orange-600)' }} onClick={addTutor}>+ Agregar tutor/a</button>
           </div>
 
           <div className="form-divider">Horarios de atención / disponibilidad</div>

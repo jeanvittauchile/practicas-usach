@@ -382,8 +382,10 @@ tr:nth-child(even) td{background:#fafcfe}
 function generarDisponibilidadPDF(profs) {
   const fmt = (window.SCHED && window.SCHED.fmtBlock) || (b => `${b.dia} ${b.desde}–${b.hasta}`);
   const DIAS = (window.SCHED && window.SCHED.DIAS) || ['Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const blockDias = (window.SCHED && window.SCHED.blockDias) || (b => b.dias && b.dias.length ? b.dias : (b.dia ? [b.dia] : []));
   const fecha = new Date().toLocaleDateString('es-CL');
-  const orden = arr => [...(arr||[])].sort((a,b) => (DIAS.indexOf(a.dia)-DIAS.indexOf(b.dia)) || a.desde.localeCompare(b.desde));
+  const primerDiaIdx = b => Math.min(...blockDias(b).map(d => DIAS.indexOf(d)).filter(i => i >= 0), DIAS.length);
+  const orden = arr => [...(arr||[])].sort((a,b) => (primerDiaIdx(a)-primerDiaIdx(b)) || a.desde.localeCompare(b.desde));
   const totalHoras = profs.reduce((a,p) => a + (p.horasAsignadas||0), 0);
   const conDispo = profs.filter(p => (p.disponibilidad||[]).length > 0).length;
   const rows = profs.map(p => {

@@ -678,7 +678,7 @@ function SupervisorScreen({ ctx, kind = 'supervisor' }) {
             <div>
               <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--orange-800)', marginBottom: 3 }}>Presentación: Salidas a terreno (dim. 7)</div>
               <div className="muted" style={{ fontSize: 12, lineHeight: 1.5 }}>
-                Exposición reflexiva sobre las salidas a terreno en la comuna y las federaciones deportivas observadas. Evalúa estructura, análisis crítico y dominio del contenido.
+                Exposición reflexiva sobre las salidas a terreno en la comuna, las federaciones deportivas y el Laboratorio de Ciencias del Deporte observados. Evalúa estructura, análisis crítico y dominio del contenido.
               </div>
             </div>
           </div>

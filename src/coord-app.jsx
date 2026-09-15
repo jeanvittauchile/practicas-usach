@@ -12,6 +12,7 @@ const CI = {
   chart:    () => <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>,
   logout:   () => <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>,
   building: () => <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18"/><path d="M5 21V5a2 2 0 012-2h7a2 2 0 012 2v16"/><path d="M16 21V9h3a2 2 0 012 2v10"/><line x1="9" y1="7" x2="12" y2="7"/><line x1="9" y1="11" x2="12" y2="11"/><line x1="9" y1="15" x2="12" y2="15"/></svg>,
+  edit:     () => <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4z"/></svg>,
   camera:   () => <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>,
   phone:    () => <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><rect x="5" y="2" width="14" height="20" rx="3"/><circle cx="12" cy="18" r="1" fill="currentColor" stroke="none"/></svg>,
   notas:    () => <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 2h6a2 2 0 012 2v16a2 2 0 01-2 2H9a2 2 0 01-2-2V4a2 2 0 012-2z"/><path d="M9 9l2 2 4-4"/><line x1="8" y1="16" x2="16" y2="16"/></svg>,
@@ -41,6 +42,8 @@ function CoordApp() {
   const [cartas, setCartas] = useState([]);
   const [centros, setCentros] = useState([]);
   const [toasts, setToasts] = useState([]);
+  const [userName, setUserName] = useState(user && user.nombre || '');
+  const [showEditName, setShowEditName] = useState(false);
 
   const nav = (s, params = {}) => { setNavParams(params); setScreen(s); setSidebarOpen(false); };
 
@@ -66,6 +69,19 @@ function CoordApp() {
   const logout = () => {
     localStorage.removeItem('usach_auth_v2');
     window.location.replace('Login.html');
+  };
+
+  const saveNombre = (nombre) => {
+    const nuevo = nombre.trim();
+    if (!nuevo || !user) return;
+    (window.CLOUD ? window.CLOUD.updateUsuarioNombre(user.uid, nuevo) : Promise.resolve())
+      .then(() => {
+        setAuthUser({ ...user, nombre: nuevo });
+        setUserName(nuevo);
+        setShowEditName(false);
+        toast('Nombre actualizado');
+      })
+      .catch(err => toast('Error: ' + err.message, 'error'));
   };
 
   const ctx = {
@@ -131,14 +147,22 @@ function CoordApp() {
             <button className="nav-item" onClick={logout} style={{ color:'rgba(255,255,255,.65)' }}>{CI.logout()} Cerrar sesión</button>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 14px' }}>
-            <div className="avatar-sm" style={{ width:30, height:30, fontSize:11, background:'var(--teal-600)', flexShrink:0 }}>{avatar(user.nombre)}</div>
-            <div style={{ minWidth:0 }}>
-              <div style={{ fontSize:12.5, fontWeight:600, color:'rgba(255,255,255,.9)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:154 }}>{user.nombre}</div>
+            <div className="avatar-sm" style={{ width:30, height:30, fontSize:11, background:'var(--teal-600)', flexShrink:0 }}>{avatar(userName)}</div>
+            <div style={{ minWidth:0, flex:1 }}>
+              <div style={{ fontSize:12.5, fontWeight:600, color:'rgba(255,255,255,.9)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:154 }}>{userName}</div>
               <div style={{ fontSize:10.5, color:'rgba(255,255,255,.45)' }}>Coordinador/a</div>
             </div>
+            <button title="Editar nombre" onClick={() => setShowEditName(true)}
+                    style={{ background:'none', border:'none', color:'rgba(255,255,255,.5)', cursor:'pointer', padding:4, flexShrink:0 }}>
+              {CI.edit()}
+            </button>
           </div>
         </div>
       </aside>
+
+      {showEditName && (
+        <EditNombreModal current={userName} onClose={() => setShowEditName(false)} onSave={saveNombre} />
+      )}
 
       {/* Main */}
       <main className="main">
@@ -179,6 +203,33 @@ function CoordApp() {
             {t.type==='error' ? '✕' : '✓'} {t.msg}
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── EditNombreModal ────────────────────────────────────────────────────────
+function EditNombreModal({ current, onClose, onSave }) {
+  const [nombre, setNombre] = useState(current || '');
+  const submit = () => { if (nombre.trim()) onSave(nombre); };
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-box" style={{ maxWidth:400 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <h2>Editar nombre</h2>
+          <button className="btn btn-ghost btn-sm" onClick={onClose}>X</button>
+        </div>
+        <div className="modal-body">
+          <div className="form-field">
+            <label>Nombre completo</label>
+            <input value={nombre} onChange={e => setNombre(e.target.value)} autoFocus
+                   onKeyDown={e => { if (e.key === 'Enter') submit(); }} />
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn btn-primary" disabled={!nombre.trim()} onClick={submit}>Guardar</button>
+        </div>
       </div>
     </div>
   );

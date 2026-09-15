@@ -533,7 +533,7 @@ function StudentReportModal({ est, ctx, onClose }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, padding: 12, background: 'var(--surface-1)', borderRadius: 8 }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Puntaje obtenido</div>
-                    <div style={{ fontSize: 18, fontWeight: 700 }} className="tnum">{Cr.calcSupervisor(supervisor[est.id])?.puntos ?? '—'} / 48</div>
+                    <div style={{ fontSize: 18, fontWeight: 700 }} className="tnum">{Cr.calcSupervisor(supervisor[est.id])?.puntos ?? '—'} / {Cr.idealDeDimensiones(Dr.SUPERVISOR_DIMENSIONES || [], (Dr.NIVELES_SUPERVISOR || [])[0]?.pts || 0)}</div>
                   </div>
                   <div>
                     <div style={{ fontSize: 11, color: 'var(--ink-500)' }}>Nota</div>

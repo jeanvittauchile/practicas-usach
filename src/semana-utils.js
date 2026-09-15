@@ -31,6 +31,18 @@ function semanaRango(inicioISO, semanaN) {
   return { startISO, endISO };
 }
 
+// Inversa de semanaRango: a qué Semana N (1-based) pertenece una fecha ISO,
+// dado el inicio ISO de la Semana 1. Puede devolver <1 si la fecha es anterior.
+function semanaDeFecha(inicioISO, iso) {
+  if (!inicioISO || !iso) return null;
+  const [y1, m1, d1] = inicioISO.split('-').map(Number);
+  const [y2, m2, d2] = iso.split('-').map(Number);
+  const start = Date.UTC(y1, m1 - 1, d1);
+  const target = Date.UTC(y2, m2 - 1, d2);
+  const diffDias = Math.round((target - start) / 86400000);
+  return Math.floor(diffDias / 7) + 1;
+}
+
 // "07 al 13 de septiembre de 2026" / "28 de septiembre al 04 de octubre de 2026"
 // / "28 de diciembre de 2026 al 03 de enero de 2027" (cruce de año).
 function fechaRangoFmt(startISO, endISO) {
@@ -107,6 +119,6 @@ function semestreGlobalLabel(fallback) {
 }
 
 Object.assign(window, {
-  fechaFmt, addDiasISO, semanaRango, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega,
+  fechaFmt, addDiasISO, semanaRango, semanaDeFecha, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega,
   semestreLabel, semestreGlobalLabel,
 });

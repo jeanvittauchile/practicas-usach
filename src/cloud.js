@@ -157,12 +157,23 @@
   }
   function readUsuarios() { try { return JSON.parse(localStorage.getItem('usach_usuarios') || '[]') || []; } catch { return []; } }
 
+  // Actualiza el nombre de un usuario (usado por el propio usuario para editar su perfil).
+  async function updateUsuarioNombre(uid, nombre) {
+    if (!isFirebase) {
+      const list = readUsuarios();
+      const idx = list.findIndex(u => u.uid === uid);
+      if (idx >= 0) { list[idx] = { ...list[idx], nombre }; localStorage.setItem('usach_usuarios', JSON.stringify(list)); }
+      return;
+    }
+    await fs.collection('usuarios').doc(uid).set({ nombre }, { merge: true });
+  }
+
   window.CLOUD = {
     mode: isFirebase ? 'firebase' : 'demo',
     isFirebase,
     ready,
     get user() { return authUser; },
-    createUser, listUsuarios, deleteUsuarioDoc, sendReset,
+    createUser, listUsuarios, deleteUsuarioDoc, sendReset, updateUsuarioNombre,
     // Fuerza un pull manual (p.ej. tras login en otra pestaña)
     refresh: pullAll,
   };

@@ -12,9 +12,19 @@ function EditEvalModal({ ev, ctx, onClose }) {
   // Local working copy
   const [draft, setDraft] = useState(() => JSON.parse(JSON.stringify(ev)));
   const [tab, setTab] = useState('basico');
+  const [semanaInput, setSemanaInput] = useState(ev.semanaEntrega || '');
   const esTeal = window.grupoEsTeal(ev.grupo);
   const grupo = window.grupoDef(ev.grupo);
   const nivelesSetEv = Ce.nivelesSetForEval(ev);
+
+  const fijarSemana = () => {
+    const n = parseInt(semanaInput, 10);
+    if (!n || n < 1) { ctx.toast('Ingresa un número de semana válido', 'error'); return; }
+    ctx.setEvalSemana(ev.id, n);
+    const r = ctx.state.inicioPractica ? window.semanaRango(ctx.state.inicioPractica, n) : null;
+    setDraft(d => ({ ...d, semanaEntrega: n, fechaManual: false, ...(r ? { fecha: r.endISO } : {}) }));
+    ctx.toast(`Fijada en la Semana ${n}`);
+  };
 
   const set = (key, val) => setDraft(d => ({ ...d, [key]: val }));
   const setListItem = (key, i, val) => setDraft(d => {
@@ -75,7 +85,7 @@ function EditEvalModal({ ev, ctx, onClose }) {
                   <textarea className="input" style={{ minHeight: 80, resize: 'vertical', fontFamily: 'inherit', padding: 10 }}
                             value={draft.descripcion} onChange={e => set('descripcion', e.target.value)} />
                 </Field>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 12 }}>
                   <Field label="Tipo">
                     <select className="input" value={draft.tipo} onChange={e => set('tipo', e.target.value)}>
                       <option>Audiovisual</option>
@@ -101,6 +111,21 @@ function EditEvalModal({ ev, ctx, onClose }) {
                       return (
                         <small className="muted" style={{ fontSize: 11, marginTop: 4, display: 'block' }}>
                           Automático: {window.fechaRangoFmt(r.startISO, r.endISO)}
+                        </small>
+                      );
+                    })()}
+                  </Field>
+                  <Field label="Semana de entrega (manual)">
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input className="input" type="number" min={1} style={{ width: '100%' }}
+                             value={semanaInput} onChange={e => setSemanaInput(e.target.value)} />
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={fijarSemana}>Fijar</button>
+                    </div>
+                    {ctx.state.inicioPractica && parseInt(semanaInput, 10) > 0 && (() => {
+                      const r = window.semanaRango(ctx.state.inicioPractica, parseInt(semanaInput, 10));
+                      return r && (
+                        <small className="muted" style={{ fontSize: 11, marginTop: 4, display: 'block' }}>
+                          {window.fechaRangoFmt(r.startISO, r.endISO)}
                         </small>
                       );
                     })()}
@@ -196,11 +221,20 @@ function EditEvalModal({ ev, ctx, onClose }) {
 
 function EditFechaModal({ ev, ctx, onClose }) {
   const [fecha, setFecha] = useState(ev.fecha || '');
+  const [semana, setSemana] = useState(ev.semanaEntrega || '');
   const esTeal = window.grupoEsTeal(ev.grupo);
+  const semanaN = parseInt(semana, 10);
 
   const save = () => {
     ctx.updateEval(ev.id, { fecha });
     ctx.toast(`Fecha de "${ev.titulo}" actualizada`);
+    onClose();
+  };
+
+  const guardarSemana = () => {
+    if (!semanaN || semanaN < 1) { ctx.toast('Ingresa un número de semana válido', 'error'); return; }
+    ctx.setEvalSemana(ev.id, semanaN);
+    ctx.toast(`"${ev.titulo}" fijada en la Semana ${semanaN}`);
     onClose();
   };
 
@@ -222,7 +256,27 @@ function EditFechaModal({ ev, ctx, onClose }) {
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
         </div>
         <div className="modal-body" style={{ padding: 22 }}>
-          <Field label="Fecha de entrega">
+          <Field label="Semana de entrega (manual)">
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input className="input" type="number" min={1} style={{ width: 90 }}
+                     value={semana} onChange={e => setSemana(e.target.value)} />
+              <button type="button" className="btn btn-secondary btn-sm" onClick={guardarSemana}>Fijar semana</button>
+            </div>
+            {ctx.state.inicioPractica && semanaN > 0 && (() => {
+              const r = window.semanaRango(ctx.state.inicioPractica, semanaN);
+              return r && (
+                <small className="muted" style={{ fontSize: 11, marginTop: 6, display: 'block' }}>
+                  {window.fechaRangoFmt(r.startISO, r.endISO)}
+                </small>
+              );
+            })()}
+            {!ctx.state.inicioPractica && (
+              <small className="muted" style={{ fontSize: 11, marginTop: 6, display: 'block' }}>
+                Configura la fecha de inicio de la práctica para calcular el rango de la semana.
+              </small>
+            )}
+          </Field>
+          <Field label="Fecha de entrega exacta">
             <input className="input" type="date" value={fecha} onChange={e => setFecha(e.target.value)} />
           </Field>
           {ev.fechaManual && ctx.state.inicioPractica && ev.semanaEntrega && (
@@ -242,7 +296,7 @@ function EditFechaModal({ ev, ctx, onClose }) {
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primary" onClick={save}>Guardar cambios</button>
+          <button className="btn btn-primary" onClick={save}>Guardar fecha exacta</button>
         </div>
       </div>
     </div>

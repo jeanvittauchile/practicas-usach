@@ -235,6 +235,7 @@ const SUPERVISOR_DIMENSIONES_P1 = [
     { id: 'p2', texto: 'Reflexiona críticamente sobre las experiencias vividas en las salidas a terreno en su comuna, identificando aprendizajes y áreas de mejora.' },
     { id: 'p3', texto: 'Describe y analiza las federaciones deportivas observadas, reconociendo su estructura, funciones y relevancia en el deporte local.' },
     { id: 'p4', texto: 'Demuestra dominio del contenido expuesto, respondiendo con fundamento las preguntas del/la supervisor/a.' },
+    { id: 'p5', texto: 'Describe y analiza la salida a terreno realizada al Laboratorio de Ciencias del Deporte, reconociendo su equipamiento, funciones y aporte al proceso de evaluación y preparación del deportista.' },
   ]},
 ];
 
@@ -246,9 +247,9 @@ const PRESENTACION_TERRENO_P1 = {
   titulo: 'Presentación: Salidas a terreno',
   tipo: 'Exposición oral', duracion: '10–15 min + 5 min preguntas',
   fecha: '2025-11-05', semanaEntrega: 12, estado: 'pendiente',
-  maxPuntos: 16, ponderacion: 0,
+  maxPuntos: 20, ponderacion: 0,
   vinculado: 'supervisor-d7',
-  descripcion: 'Exposición oral y reflexiva sobre las experiencias vividas en las salidas a terreno en la comuna y las federaciones deportivas observadas durante el semestre. Se evalúa mediante la Dimensión 7 del instrumento del Supervisor.',
+  descripcion: 'Exposición oral y reflexiva sobre las experiencias vividas en las salidas a terreno en la comuna, las federaciones deportivas observadas y la visita al Laboratorio de Ciencias del Deporte durante el semestre. Se evalúa mediante la Dimensión 7 del instrumento del Supervisor.',
   resultadosAprendizaje: [
     'Reflexionar críticamente sobre el campo laboral del entrenador deportivo a partir de la observación directa de organizaciones e instituciones del deporte en la comunidad.',
     'Comunicar aprendizajes y conclusiones con claridad, lenguaje técnico y fundamento profesional.',
@@ -256,12 +257,13 @@ const PRESENTACION_TERRENO_P1 = {
   objetivosEspecificos: [
     'Describir el contexto institucional de cada salida a terreno (organismo visitado, funciones, estructura y relevancia deportiva local).',
     'Reflexionar sobre las federaciones deportivas observadas: su rol en el desarrollo del deporte, la relación con el entrenador y los desafíos del sistema deportivo en Chile.',
+    'Describir y analizar la salida a terreno al Laboratorio de Ciencias del Deporte, reconociendo su equipamiento, funciones y aporte a la evaluación y preparación del deportista.',
     'Identificar aprendizajes significativos de las salidas a terreno relacionándolos con los contenidos del curso.',
     'Comunicar la experiencia con estructura clara, lenguaje técnico y soporte visual de calidad.',
   ],
   instrucciones: [
-    'Preparar una exposición oral de 10 a 15 min sobre las salidas a terreno realizadas en la comuna durante el semestre.',
-    'Incluir en la presentación: (a) contexto de cada visita (lugar, fecha, organismo/federación visitada); (b) descripción de la institución u organización observada (estructura, funciones, programas); (c) análisis crítico de lo observado (fortalezas, debilidades, relevancia para el deporte local); (d) reflexión personal sobre aprendizajes y su conexión con el rol del entrenador.',
+    'Preparar una exposición oral de 10 a 15 min sobre las salidas a terreno realizadas en la comuna durante el semestre, incluyendo la visita al Laboratorio de Ciencias del Deporte.',
+    'Incluir en la presentación: (a) contexto de cada visita (lugar, fecha, organismo/federación/laboratorio visitado); (b) descripción de la institución u organización observada (estructura, funciones, programas); (c) análisis crítico de lo observado (fortalezas, debilidades, relevancia para el deporte local); (d) reflexión personal sobre aprendizajes y su conexión con el rol del entrenador.',
     'Utilizar soporte visual obligatorio (PPT, Canva o Prezi), mínimo 8 diapositivas, con imágenes ilustrativas y texto síntesis.',
     'Responder 5 preguntas del/la supervisor/a al finalizar la exposición.',
   ],
@@ -273,8 +275,8 @@ const PRESENTACION_TERRENO_P1 = {
     'Reflexiona con profundidad: ¿qué aprendiste? ¿qué te sorprendió? ¿cómo aporta esto a tu formación como entrenador/a?',
   ],
   pautas: [
-    'La nota se registra en la Dimensión 7 del instrumento del Supervisor (4 indicadores, escala S/CS/O/CN/N, ideal 16 pts).',
-    'Evalúe estructura y claridad expositiva, profundidad de la reflexión, calidad del análisis de las federaciones y dominio al responder preguntas.',
+    'La nota se registra en la Dimensión 7 del instrumento del Supervisor (5 indicadores, escala S/CS/O/CN/N, ideal 20 pts).',
+    'Evalúe estructura y claridad expositiva, profundidad de la reflexión, calidad del análisis de las federaciones, del Laboratorio de Ciencias del Deporte y dominio al responder preguntas.',
     'Considere la coherencia entre lo observado en terreno y los aprendizajes declarados.',
     'Penalice la lectura literal de las diapositivas o la ausencia de reflexión crítica.',
   ],
@@ -651,7 +653,7 @@ function buildPracticaI() {
       { id: 'taller', label: 'Talleres', singular: 'Taller', sigla: 'T', color: 'orange',
         desc: 'Evaluaciones con consignas distintas (6 criterios × 3 niveles) · máx. 18 pts' },
       { id: 'presentacion', label: 'Presentaciones', singular: 'Presentación', sigla: 'P', color: 'teal',
-        desc: 'Exposición oral reflexiva sobre las salidas a terreno en la comuna y las federaciones deportivas observadas · evaluada en Eval. Supervisor (Dim. 7)' },
+        desc: 'Exposición oral reflexiva sobre las salidas a terreno en la comuna, las federaciones deportivas y el Laboratorio de Ciencias del Deporte observados · evaluada en Eval. Supervisor (Dim. 7)' },
     ],
     SOLEMNES: SOLEMNES_P1, TALLERES: TALLERES_P1,
     EVALUACIONES: [...EVALUACIONES_P1, PRESENTACION_TERRENO_P1],

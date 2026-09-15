@@ -291,7 +291,12 @@ function App() {
       evaluaciones: s.evaluaciones.map(e => {
         if (e.id !== evId) return e;
         const next = { ...e, ...draft };
-        if (draft.fecha !== undefined && draft.fecha !== e.fecha) next.fechaManual = true;
+        if (draft.fecha !== undefined && draft.fecha !== e.fecha) {
+          next.fechaManual = true;
+          // Mantiene la Semana mostrada en las tarjetas sincronizada con la nueva fecha.
+          const semanaN = s.inicioPractica ? window.semanaDeFecha(s.inicioPractica, draft.fecha) : null;
+          if (semanaN != null && semanaN >= 1) next.semanaEntrega = semanaN;
+        }
         return next;
       }),
     })),
@@ -306,7 +311,23 @@ function App() {
     })),
     setEvalDate: (evId, iso) => setState(s => ({
       ...s,
-      evaluaciones: s.evaluaciones.map(e => e.id === evId ? { ...e, fecha: iso, fechaManual: true } : e),
+      evaluaciones: s.evaluaciones.map(e => {
+        if (e.id !== evId) return e;
+        const semanaN = s.inicioPractica ? window.semanaDeFecha(s.inicioPractica, iso) : null;
+        return { ...e, fecha: iso, fechaManual: true, ...(semanaN != null && semanaN >= 1 ? { semanaEntrega: semanaN } : {}) };
+      }),
+    })),
+    // Fija la evaluación a una Semana N: recalcula la fecha desde inicioPractica
+    // y la deja en modo automático (vuelve a moverse si inicioPractica cambia).
+    setEvalSemana: (evId, semanaN) => setState(s => ({
+      ...s,
+      evaluaciones: s.evaluaciones.map(e => {
+        if (e.id !== evId) return e;
+        const n = parseInt(semanaN, 10);
+        if (!n || n < 1) return e;
+        const r = s.inicioPractica ? window.semanaRango(s.inicioPractica, n) : null;
+        return { ...e, semanaEntrega: n, fechaManual: false, ...(r ? { fecha: r.endISO } : {}) };
+      }),
     })),
   }), [state, nav, toastMsg, t.driveUrl]);
 

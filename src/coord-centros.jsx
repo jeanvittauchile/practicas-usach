@@ -404,4 +404,4 @@ function CentroModal({ initial, onSave, onClose }) {
   );
 }
 
-Object.assign(window, { CentrosScreen, CentroModal, ScheduleEditor, SchedChips });
+Object.assign(window, { CentrosScreen, CentroModal, ScheduleEditor, SchedChips, centroTutores });

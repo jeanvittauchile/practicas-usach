@@ -435,6 +435,109 @@ tr:nth-child(even) td{background:#fafcfe}
   w.document.write(html); w.document.close();
 }
 
+// ─── Reporte: Centros de práctica (general o por centro) ───────────────
+function generarCentrosPDF(centros, students, profs, centroId) {
+  const SCHED = window.SCHED || {};
+  const fmtBlock = SCHED.fmtBlock || (b => `${(b.dias||[b.dia]).join(', ')} ${b.desde}–${b.hasta}`);
+  const tutoresOf = window.centroTutores || (c => (c.tutores && c.tutores.length) ? c.tutores
+    : (c.tutor && (c.tutor.nombre || c.tutor.email || c.tutor.telefono) ? [c.tutor] : []));
+  const capTotal = c => SCHED.centroCapacidad ? SCHED.centroCapacidad(c) : 0;
+  const ocupTotal = c => SCHED.centroOcupados ? SCHED.centroOcupados(c, students) : students.filter(s => s.centro === c.nombre).length;
+  const compatCount = c => profs.filter(p => ((SCHED.profMatchCentro ? SCHED.profMatchCentro(p, c) : [])).length > 0).length;
+
+  const list = centroId ? (centros || []).filter(c => c.id === centroId) : (centros || []);
+  const scopeTitle = centroId ? (list[0] ? list[0].nombre : centroId) : 'Todos los Centros';
+  const fecha = new Date().toLocaleDateString('es-CL');
+
+  const totalCupos = list.reduce((a, c) => a + capTotal(c), 0);
+  const totalOcup = list.reduce((a, c) => a + ocupTotal(c), 0);
+  const totalEst = list.reduce((a, c) => a + students.filter(s => s.centro === c.nombre).length, 0);
+
+  const tutorRow = t => `<div class="tut"><b>${_esc(t.nombre || '—')}</b>${t.disciplina ? ` <span class="disc">${_esc(t.disciplina)}</span>` : ''}
+    ${(t.email || t.telefono) ? `<div class="ct">${t.email ? `✉ ${_esc(t.email)}` : ''}${t.email && t.telefono ? ' &middot; ' : ''}${t.telefono ? `☎ ${_esc(t.telefono)}` : ''}</div>` : ''}</div>`;
+
+  const centroSection = c => {
+    const assigned = students.filter(s => s.centro === c.nombre);
+    const tutores = tutoresOf(c);
+    const horarios = c.horarios || [];
+    const cap = capTotal(c);
+    const ocup = ocupTotal(c);
+    const horariosHtml = horarios.length
+      ? horarios.map(h => {
+          const hcap = h.cupos != null ? Number(h.cupos) : null;
+          const hocup = hcap != null ? assigned.filter(s => !h.practicas?.length || h.practicas.includes(s.practica)).length : null;
+          return `<span class="sch">${_esc(fmtBlock(h))}${hcap != null ? ` <b>${hocup}/${hcap}</b>` : ''}</span>`;
+        }).join('')
+      : '<span class="na">Sin horarios registrados</span>';
+    const tutoresHtml = tutores.length ? tutores.map(tutorRow).join('') : '<span class="na">Sin tutores registrados</span>';
+    const estudiantesHtml = assigned.length
+      ? `<table class="et"><thead><tr><th>Estudiante</th><th>Práctica</th><th>Profesor/a</th></tr></thead><tbody>${
+          assigned.map(s => {
+            const prof = profs.find(p => p.id === s.profesorId);
+            return `<tr><td>${_esc(s.nombre)}</td><td class="c"><span class="pr">${_esc(s.practica)}</span></td><td>${_esc(prof ? prof.nombre.replace('Prof. ', '') : '—')}</td></tr>`;
+          }).join('')
+        }</tbody></table>`
+      : '<div class="na">Sin estudiantes asignados</div>';
+    return `<div class="blk">
+      <div class="ch">
+        <div><div class="cn">${_esc(c.nombre)}</div><div class="cd">${_esc(c.direccion || '—')}${c.comuna ? ` &middot; ${_esc(c.comuna)}` : ''}${c.area ? ` &middot; ${_esc(c.area)}` : ''}</div></div>
+        <div class="cc">${ocup}/${cap || '—'} cupos &middot; ${compatCount(c)} prof. compatibles</div>
+      </div>
+      <div class="row2">
+        <div class="col"><div class="lbl">Encargado del centro</div><div>${_esc(c.encargado?.nombre || '—')}</div><div class="ct">${_esc(c.encargado?.cargo || '')}</div></div>
+        <div class="col"><div class="lbl">Tutores/as de práctica</div>${tutoresHtml}</div>
+      </div>
+      <div class="lbl">Horarios de atención / disponibilidad</div>
+      <div class="scw">${horariosHtml}</div>
+      <div class="lbl">Estudiantes asignados (${assigned.length})</div>
+      ${estudiantesHtml}
+    </div>`;
+  };
+
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"/>
+<title>Centros de Práctica — ${_esc(scopeTitle)}</title>
+<style>@page{size:letter;margin:16mm}*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:9pt;color:#111;line-height:1.45}
+.topbar{background:#003366;color:#fff;padding:9px 16px;display:flex;align-items:center;gap:10px;font-size:9pt}
+.topbar button{margin-left:auto;background:#fff;color:#003366;border:none;padding:6px 16px;border-radius:3px;font-weight:700;cursor:pointer}
+.dhead{border-bottom:2.5px solid #003366;padding-bottom:10px;margin:14px 0 6px}
+.dhead h1{font-size:13pt;color:#003366;margin-bottom:2px}.dhead p{font-size:8pt;color:#555}
+.meta{font-size:8pt;color:#888;margin:8px 0 16px;display:flex;gap:18px;border-bottom:1px solid #e0e0e0;padding-bottom:6px}
+.meta b{color:#003366}
+.blk{margin-bottom:20px;break-inside:avoid;page-break-inside:avoid;border:1px solid #ddd;border-radius:5px;overflow:hidden}
+.ch{background:#f5f5f5;padding:9px 13px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;border-bottom:1px solid #ddd}
+.cn{font-size:11pt;font-weight:700;color:#003366}.cd{font-size:8pt;color:#555;margin-top:2px}
+.cc{font-size:8pt;font-weight:700;color:#00695C;white-space:nowrap}
+.row2{display:flex;gap:14px;padding:10px 13px;border-bottom:1px solid #eee}
+.col{flex:1;min-width:0}
+.lbl{font-size:7pt;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#888;padding:8px 13px 3px}
+.row2 .lbl{padding:0 0 3px}
+.tut{font-size:8.5pt;margin-bottom:6px}.tut:last-child{margin-bottom:0}
+.disc{background:#e0f2f1;color:#00695C;font-size:7.5pt;font-weight:700;padding:1px 6px;border-radius:8px}
+.ct{font-size:7.5pt;color:#666}
+.scw{padding:0 13px 9px;display:flex;flex-wrap:wrap;gap:6px}
+.sch{display:inline-block;background:#fff3e0;color:#9a5b00;font-size:7.8pt;font-weight:600;padding:3px 9px;border-radius:10px}
+.et{width:calc(100% - 26px);margin:0 13px 10px;border-collapse:collapse;font-size:8pt}
+.et thead tr{background:#fafafa}.et th{padding:4px 7px;text-align:left;font-size:7pt;text-transform:uppercase;letter-spacing:.04em;color:#555;border:1px solid #e5e5e5}
+.et td{padding:4px 7px;border:1px solid #e5e5e5}
+.pr{background:#e3f2fd;color:#1565C0;font-weight:700;font-size:7.5pt;padding:1px 6px;border-radius:8px}
+.c{text-align:center}
+.na{padding:0 13px 10px;font-size:8pt;color:#b00;font-style:italic}
+.pie{margin-top:18px;border-top:1px solid #ddd;padding-top:5px;font-size:7.5pt;color:#999;text-align:center}
+@media print{.topbar{display:none}}</style></head><body>
+<div class="topbar">🏢 Centros de Práctica — ${_esc(scopeTitle)}
+  <button onclick="window.print()">🖨 Guardar como PDF</button></div>
+<div class="dhead"><h1>Centros de Práctica — ${_esc(scopeTitle)}</h1>
+  <p>Universidad de Santiago de Chile &middot; Carrera de Entrenador Deportivo &middot; ${_esc(window.semestreGlobalLabel('Semestre 2025-2'))}</p></div>
+<div class="meta"><span>Generado el <b>${fecha}</b></span><span><b>${list.length}</b> centro${list.length !== 1 ? 's' : ''}</span><span><b>${totalOcup}/${totalCupos || '—'}</b> cupos ocupados</span><span><b>${totalEst}</b> estudiantes asignados</span></div>
+${list.length ? list.map(centroSection).join('') : '<div class="na">Sin centros registrados.</div>'}
+<div class="pie">Universidad de Santiago de Chile &middot; Facultad de Ciencias Médicas &middot; www.usach.cl</div>
+</body></html>`;
+  const w = window.open('', '_blank', 'width=1100,height=720');
+  if (!w) { alert('Habilita las ventanas emergentes para generar el PDF.'); return; }
+  w.document.write(html); w.document.close();
+}
+
 // ─── CartasScreen ─────────────────────────────────────────────────────────
 function CartasScreen({ ctx }) {
   const { profs, students, cartas, saveCarta, deleteCarta, toast } = ctx;
@@ -859,7 +962,7 @@ function CartaMasivaModal({ profs, students, onRegister, onClose }) {
 
 // ─── ReportesScreen ───────────────────────────────────────────────────────
 function ReportesScreen({ ctx }) {
-  const { profs, students, cartas, toast } = ctx;
+  const { profs, students, cartas, centros, toast } = ctx;
   const PNAMES = window.PRACTICE_NAMES || {};
 
   const exportNomina = () => {
@@ -896,6 +999,7 @@ function ReportesScreen({ ctx }) {
   };
 
   const [selProf, setSelProf] = useState(profs[0]?.id||'');
+  const [centrosScope, setCentrosScope] = useState('');
   const [catalogScope, setCatalogScope] = useState('');
   const catalog = window.EVAL_CATALOG || [];
   const [fechasScope, setFechasScope] = useState('');
@@ -955,6 +1059,21 @@ function ReportesScreen({ ctx }) {
           <div className="muted" style={{ fontSize:13, marginTop:3 }}>Reporte imprimible con los bloques horarios disponibles de cada profesor/a, sus prácticas y carga horaria. Los horarios que cada profesor/a registra en su propia plataforma se reflejan aquí.</div>
         </div>
         <button className="btn btn-orange" onClick={() => generarDisponibilidadPDF(profs)}>🕒 Generar PDF</button>
+      </div>
+
+      <div className="report-card" style={{ borderLeft:'3px solid var(--teal-500)' }}>
+        <div className="report-icon" style={{ background:'var(--teal-50)' }}>🏢</div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontWeight:700, fontSize:15 }}>Centros de práctica</div>
+          <div className="muted" style={{ fontSize:13, marginTop:3 }}>Ficha de cada centro: encargado, tutores/as por disciplina, horarios y cupos, y estudiantes asignados. Elige el reporte general (todos los centros) o uno individual.</div>
+          <div style={{ marginTop:10 }}>
+            <select value={centrosScope} onChange={e=>setCentrosScope(e.target.value)} style={{ padding:'7px 12px', border:'1.5px solid var(--border)', borderRadius:8, fontSize:13, fontFamily:'inherit' }}>
+              <option value="">Reporte general (todos los centros)</option>
+              {centros.map(c => <option key={c.id} value={c.id}>Solo {c.nombre}</option>)}
+            </select>
+          </div>
+        </div>
+        <button className="btn btn-primary" disabled={centros.length===0} onClick={() => generarCentrosPDF(centros, students, profs, centrosScope)}>🏢 Generar PDF</button>
       </div>
 
       <div className="report-card">

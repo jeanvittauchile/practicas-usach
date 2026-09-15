@@ -351,7 +351,9 @@ function CalendarModal({ ctx, onClose }) {
   const onDrop = (iso) => {
     if (editing) {
       ctx.setEvalDate(editing.id, iso);
-      ctx.toast(`"${editing.titulo}" reprogramada manualmente para ${fechaFmt(iso)}`);
+      const semanaN = ctx.state.inicioPractica ? window.semanaDeFecha(ctx.state.inicioPractica, iso) : null;
+      const semanaTxt = semanaN != null && semanaN >= 1 ? ` (Semana ${semanaN})` : '';
+      ctx.toast(`"${editing.titulo}" reprogramada para ${fechaFmt(iso)}${semanaTxt}`);
       setEditing(null);
       setDragOver(null);
     }
@@ -499,7 +501,7 @@ function MonthGrid({ year, month, evals, onCellClick, dragging, dragOver, onDrag
                        draggable
                        onDragStart={() => onDragStartEval(ev)}
                        onClick={(e) => { e.stopPropagation(); onDragStartEval(dragging?.id === ev.id ? null : ev); }}
-                       title={ev.titulo + ' — arrastra o haz clic para reprogramar'}
+                       title={ev.titulo + (ev.semanaEntrega ? ` · Semana ${ev.semanaEntrega}` : '') + ' — arrastra o haz clic para reprogramar'}
                        style={{
                          padding: '3px 6px',
                          fontSize: 10.5, fontWeight: 600,

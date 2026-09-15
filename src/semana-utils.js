@@ -2,6 +2,15 @@
 // Script plano (no JSX), cargado después de data.js…data-p6.js y antes de icons.jsx/shell.jsx/coord-*.jsx
 // en los dos HTML de entrada, para que esté disponible en ambos sin duplicar lógica.
 
+// Fecha de hoy en formato ISO (yyyy-mm-dd), en hora local (no UTC).
+function todayISO() {
+  const d = new Date();
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yy}-${mm}-${dd}`;
+}
+
 function fechaFmt(iso) {
   if (!iso) return '';
   const [y, m, d] = iso.split('-');
@@ -120,5 +129,5 @@ function semestreGlobalLabel(fallback) {
 
 Object.assign(window, {
   fechaFmt, addDiasISO, semanaRango, semanaDeFecha, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega,
-  semestreLabel, semestreGlobalLabel,
+  semestreLabel, semestreGlobalLabel, todayISO,
 });

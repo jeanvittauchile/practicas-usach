@@ -397,6 +397,23 @@ function CalendarModal({ ctx, onClose }) {
             </div>
           </div>
 
+          {ctx.state.inicioPractica ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14, fontSize: 11.5, color: 'var(--ink-500)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span className="tnum" style={{ fontSize: 9, fontWeight: 700, color: '#fff', background: 'var(--teal-500)', borderRadius: 3, padding: '1px 4px' }}>S1</span>
+                Semana de práctica, desde el inicio configurado en Notas ({fechaFmt(ctx.state.inicioPractica)})
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--teal-500)', display: 'inline-block' }} />
+                Hoy
+              </span>
+            </div>
+          ) : (
+            <div style={{ marginBottom: 14, fontSize: 11.5, color: 'var(--orange-700)', background: 'var(--orange-50)', border: '1px solid var(--orange-200)', borderRadius: 8, padding: '8px 12px' }}>
+              Configura la <strong>fecha de inicio de la práctica</strong> en Notas para ver la guía de semanas en el calendario.
+            </div>
+          )}
+
           <div ref={bodyRef} style={{ background: '#fff' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '2px solid var(--teal-500)', paddingBottom: 14, marginBottom: 16 }}>
               <div>
@@ -409,7 +426,7 @@ function CalendarModal({ ctx, onClose }) {
             <div className="cal-months-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
               {months.map(m => (
                 <MonthGrid key={`${m.y}-${m.m}`} year={m.y} month={m.m}
-                           evals={evals} onDateClick={(iso) => {/* allow click to pick */}}
+                           evals={evals} inicioPractica={ctx.state.inicioPractica} onDateClick={(iso) => {/* allow click to pick */}}
                            dragging={editing} dragOver={dragOver}
                            onDragStartEval={setEditing}
                            onDragOverDate={setDragOver}
@@ -446,7 +463,7 @@ function CalendarModal({ ctx, onClose }) {
   );
 }
 
-function MonthGrid({ year, month, evals, onCellClick, dragging, dragOver, onDragStartEval, onDragOverDate, onDropDate }) {
+function MonthGrid({ year, month, evals, inicioPractica, onCellClick, dragging, dragOver, onDragStartEval, onDragOverDate, onDropDate }) {
   const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const dias = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
   const first = new Date(year, month, 1);
@@ -476,7 +493,8 @@ function MonthGrid({ year, month, evals, onCellClick, dragging, dragOver, onDrag
           const iso = isoOf(d);
           const evHere = evals.filter(e => e.fecha === iso);
           const isOver = dragOver === iso;
-          const isToday = iso === '2025-09-15';
+          const isToday = iso === window.todayISO();
+          const semanaN = inicioPractica ? window.semanaDeFecha(inicioPractica, iso) : null;
           return (
             <div key={i}
                  onDragOver={e => { e.preventDefault(); onDragOverDate(iso); }}
@@ -487,13 +505,26 @@ function MonthGrid({ year, month, evals, onCellClick, dragging, dragOver, onDrag
                    minHeight: 76, padding: 4,
                    borderRight: '1px solid var(--border)',
                    borderBottom: '1px solid var(--border)',
-                   background: isOver ? 'var(--teal-50)' : isToday ? 'rgba(0,150,136,0.04)' : 'var(--bg)',
+                   background: isOver ? 'var(--teal-50)' : isToday ? 'rgba(0,150,136,0.08)' : 'var(--bg)',
+                   boxShadow: isToday ? 'inset 0 0 0 1.5px var(--teal-500)' : 'none',
                    cursor: dragging ? 'copy' : 'default',
                    transition: 'background 0.1s',
                    position: 'relative',
                  }}>
-              <div style={{ fontSize: 11, fontWeight: isToday ? 700 : 500, color: isToday ? 'var(--teal-700)' : 'var(--ink-700)', padding: '2px 4px' }}>
-                {d}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 4px' }}>
+                <span style={isToday ? {
+                         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                         width: 17, height: 17, borderRadius: '50%', background: 'var(--teal-500)',
+                         color: '#fff', fontSize: 10.5, fontWeight: 700,
+                       } : { fontSize: 11, fontWeight: 500, color: 'var(--ink-700)' }}>
+                  {d}
+                </span>
+                {semanaN != null && semanaN >= 1 && (
+                  <span className="tnum" title={`Semana ${semanaN}`}
+                        style={{ fontSize: 9, fontWeight: 700, color: 'var(--ink-500)', background: 'var(--surface-1)', border: '1px solid var(--border)', borderRadius: 3, padding: '0 3px', lineHeight: '13px' }}>
+                    S{semanaN}
+                  </span>
+                )}
               </div>
               <div className="col" style={{ gap: 2 }}>
                 {evHere.map(ev => (

@@ -4,6 +4,7 @@ function AsignacionesScreen({ ctx }) {
   const { profs, students, saveProf, deleteProf, saveStudent, onNav, toast } = ctx;
   const [sel, setSel] = useState(profs[0]?.id || null);
   const [search, setSearch] = useState('');
+  const [fPrac, setFPrac] = useState('');
   const [showAdd, setShowAdd] = useState(false);
   const [editProf, setEditProf] = useState(null);
   const [dragStudent, setDragStudent] = useState(null);
@@ -45,7 +46,8 @@ function AsignacionesScreen({ ctx }) {
   const PNAMES = window.PRACTICE_NAMES || {};
 
   const filtered = profs.filter(p =>
-    !search || p.nombre.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase())
+    (!search || p.nombre.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase())) &&
+    (!fPrac || (p.practicasAsignadas||[]).includes(fPrac))
   );
 
   const selProf = profs.find(p => p.id === sel) || null;
@@ -72,10 +74,15 @@ function AsignacionesScreen({ ctx }) {
       <div className="detail-panel">
         {/* Lista de profesores */}
         <div>
-          <div className="card" style={{ padding:'10px 12px', marginBottom:10 }}>
-            <input className="filter-bar" style={{ width:'100%', margin:0, padding:'8px 12px', fontSize:13 }}
+          <div className="card" style={{ padding:'10px 12px', marginBottom:10, display:'flex', gap:8 }}>
+            <input className="filter-bar" style={{ flex:1, margin:0, padding:'8px 12px', fontSize:13 }}
                    placeholder="Buscar por nombre o correo…"
                    value={search} onChange={e => setSearch(e.target.value)} />
+            <select className="filter-bar" style={{ margin:0, padding:'8px 12px', fontSize:13 }}
+                    value={fPrac} onChange={e => setFPrac(e.target.value)}>
+              <option value="">Todas las prácticas</option>
+              {PRACS.map(c => <option key={c} value={c}>Práctica {c}</option>)}
+            </select>
           </div>
           {active && <div className="drag-hint"><strong>{active.nombre}</strong> · Práctica {active.practica} — haz clic en (o arrastra hacia) un/a profesor/a que imparta esa práctica{picked ? <button className="btn btn-ghost btn-sm" style={{ marginLeft:8, padding:'1px 8px' }} onClick={() => setPicked(null)}>cancelar</button> : null}</div>}
           <div className="card" style={{ padding:0, overflow:'hidden' }}>

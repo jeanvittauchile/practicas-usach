@@ -74,11 +74,11 @@ function AsignacionesScreen({ ctx }) {
       <div className="detail-panel">
         {/* Lista de profesores */}
         <div>
-          <div className="card" style={{ padding:'10px 12px', marginBottom:10, display:'flex', gap:8 }}>
-            <input className="filter-bar" style={{ flex:1, margin:0, padding:'8px 12px', fontSize:13 }}
+          <div className="card" style={{ padding:'10px 12px', marginBottom:10, display:'flex', flexDirection:'column', gap:8 }}>
+            <input style={{ width:'100%', margin:0, padding:'8px 12px', fontSize:13, boxSizing:'border-box' }}
                    placeholder="Buscar por nombre o correo…"
                    value={search} onChange={e => setSearch(e.target.value)} />
-            <select className="filter-bar" style={{ margin:0, padding:'8px 12px', fontSize:13 }}
+            <select style={{ width:'100%', margin:0, padding:'8px 12px', fontSize:13, boxSizing:'border-box' }}
                     value={fPrac} onChange={e => setFPrac(e.target.value)}>
               <option value="">Todas las prácticas</option>
               {PRACS.map(c => <option key={c} value={c}>Práctica {c}</option>)}

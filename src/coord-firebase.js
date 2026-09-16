@@ -135,34 +135,59 @@
   ];
 
   // Días de un bloque horario, con compatibilidad hacia atrás para bloques
-  // antiguos guardados con un solo día en `dia` en vez del arreglo `dias`.
+  // antiguos guardados con un solo día en `dia` en vez del arreglo `dias`, y
+  // hacia adelante para bloques de centro con horario propio por día (`horas`).
   function blockDias(b) {
+    if (b.horas && b.horas.length) return b.horas.map(h => h.dia);
     if (b.dias && b.dias.length) return b.dias;
     return b.dia ? [b.dia] : [];
   }
+  // Descompone un bloque en sub-bloques atómicos {dia, desde, hasta}, uno por
+  // día. Si el bloque trae `horas` (horario distinto por día, ej. centros con
+  // "Lun 18:00–19:00, Mié 19:00–20:00"), usa eso; si no, replica el mismo
+  // desde/hasta para cada día del bloque (forma clásica, un solo horario).
+  function bloquesAtomicos(b) {
+    if (b.horas && b.horas.length) return b.horas;
+    return blockDias(b).map(dia => ({ dia, desde: b.desde, hasta: b.hasta }));
+  }
   // Solapamiento de bloques horarios (comparten al menos un día y los rangos se intersectan)
   function overlap(a, b) {
-    const da = blockDias(a), db = blockDias(b);
-    if (!da.some(d => db.includes(d))) return false;
-    return a.desde < b.hasta && b.desde < a.hasta;
+    const A = bloquesAtomicos(a), B = bloquesAtomicos(b);
+    return A.some(x => B.some(y => x.dia === y.dia && x.desde < y.hasta && y.desde < x.hasta));
   }
   function fmtDias(dias) {
     if (dias.length <= 1) return dias[0] || '';
     if (dias.length === 2) return dias.join(' y ');
     return dias.slice(0, -1).join(', ') + ' y ' + dias[dias.length - 1];
   }
+  // Formatea un bloque agrupando los días que comparten el mismo horario
+  // (así "Lun 18–19, Mié 18–19" se ve "Lun y Mié 18:00–19:00", pero si los
+  // horarios difieren por día se listan por separado: "Lun 18:00–19:00 · Mié 19:00–20:00").
   function fmtBlock(b) {
-    const base = `${fmtDias(blockDias(b))} ${b.desde}–${b.hasta}`;
+    const grupos = [];
+    bloquesAtomicos(b).forEach(h => {
+      const g = grupos.find(g => g.desde === h.desde && g.hasta === h.hasta);
+      if (g) g.dias.push(h.dia); else grupos.push({ dias: [h.dia], desde: h.desde, hasta: h.hasta });
+    });
+    const base = grupos.map(g => `${fmtDias(g.dias)} ${g.desde}–${g.hasta}`).join(' · ');
     const conPractica = (b.practicas && b.practicas.length) ? `${b.practicas.join('/')} · ${base}` : base;
     return b.disciplina ? `${b.disciplina} · ${conPractica}` : conPractica;
   }
   // Devuelve los cruces disponibilidad-profesor ↔ horario-centro
   // Si el bloque del centro trae práctica(s) asignadas, solo cruza con profes que dicten alguna de ellas.
+  // Cruza por sub-bloque atómico, para que un bloque con horario distinto por
+  // día (ej. Lun 18:00–19:00, Mié 19:00–20:00) reporte con precisión qué día calza.
   function profMatchCentro(prof, centro) {
     const matches = [];
     (centro.horarios || []).forEach(h => {
       if (h.practicas && h.practicas.length && !h.practicas.some(pr => (prof.practicasAsignadas || []).includes(pr))) return;
-      (prof.disponibilidad || []).forEach(d => { if (overlap(d, h)) matches.push({ centro:h, prof:d }); });
+      bloquesAtomicos(h).forEach(slot => {
+        (prof.disponibilidad || []).forEach(d => {
+          if (blockDias(d).includes(slot.dia) && d.desde < slot.hasta && slot.desde < d.hasta) {
+            matches.push({ centro: { disciplina: h.disciplina, practicas: h.practicas, dias: [slot.dia], desde: slot.desde, hasta: slot.hasta }, prof: d });
+          }
+        });
+      });
     });
     return matches;
   }
@@ -279,7 +304,7 @@
   };
 
   window.DB = DB;
-  window.SCHED = { DIAS, overlap, fmtBlock, blockDias, profMatchCentro, centroCapacidad, centroOcupados };
+  window.SCHED = { DIAS, overlap, fmtBlock, blockDias, bloquesAtomicos, profMatchCentro, centroCapacidad, centroOcupados };
   window.PRACTICE_NAMES = PRACTICE_NAMES;
   window.PRACTICES = PRACTICES;
 

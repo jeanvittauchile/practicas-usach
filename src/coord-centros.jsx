@@ -1,6 +1,10 @@
 // coord-centros.jsx — Centros de práctica + editor de horarios reutilizable
 
 // ─── ScheduleEditor: edición de bloques {dias, desde, hasta, practicas?} ───
+// En modo centro (showPracticas) cada bloque puede tener horario distinto
+// por día, vía `horas: [{dia, desde, hasta}, …]` (ej. Lun 18:00–19:00,
+// Mié 19:00–20:00). En modo disponibilidad de profesor (sin showPracticas)
+// se mantiene el horario único compartido por todos los días marcados.
 function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
   const DIAS = (window.SCHED && window.SCHED.DIAS) || ['Lun','Mar','Mié','Jue','Vie','Sáb'];
   const blockDias = (window.SCHED && window.SCHED.blockDias) || (b => b.dias && b.dias.length ? b.dias : (b.dia ? [b.dia] : []));
@@ -8,12 +12,37 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
   const list = blocks || [];
   const upd = (i, k, v) => onChange(list.map((b, idx) => idx === i ? { ...b, [k]: v } : b));
   const updTutor = (i, k, v) => upd(i, 'tutor', { ...(list[i].tutor || {}), [k]: v });
-  const add = () => onChange([...list, { dias:['Lun'], desde:'09:00', hasta:'13:00', ...(showPracticas ? { disciplina:'', practicas: [], cupos: 1, tutor: { nombre:'', email:'', telefono:'' } } : {}) }]);
+  const add = () => onChange([...list, showPracticas
+    ? { horas: [{ dia:'Lun', desde:'09:00', hasta:'13:00' }], disciplina:'', practicas: [], cupos: 1, tutor: { nombre:'', email:'', telefono:'' } }
+    : { dias:['Lun'], desde:'09:00', hasta:'13:00' }]);
   const rm  = (i) => onChange(list.filter((_, idx) => idx !== i));
   const togglePractica = (i, code) => {
     const cur = list[i].practicas || [];
     upd(i, 'practicas', cur.includes(code) ? cur.filter(c => c !== code) : [...cur, code]);
   };
+
+  // Modo centro: horas por día.
+  const horasOf = (b) => (b.horas && b.horas.length) ? b.horas : blockDias(b).map(dia => ({ dia, desde: b.desde || '09:00', hasta: b.hasta || '13:00' }));
+  const toggleDiaHoras = (i, dia) => {
+    const horas = horasOf(list[i]);
+    const activo = horas.some(h => h.dia === dia);
+    let next;
+    if (activo) {
+      next = horas.filter(h => h.dia !== dia);
+      if (next.length === 0) return;
+    } else {
+      const plantilla = horas[0] || { desde:'09:00', hasta:'13:00' };
+      next = [...horas, { dia, desde: plantilla.desde, hasta: plantilla.hasta }]
+        .sort((a, b) => DIAS.indexOf(a.dia) - DIAS.indexOf(b.dia));
+    }
+    onChange(list.map((b, idx) => idx === i ? { ...b, horas: next, dias: undefined, dia: undefined, desde: undefined, hasta: undefined } : b));
+  };
+  const updHora = (i, dia, k, v) => {
+    const horas = horasOf(list[i]).map(h => h.dia === dia ? { ...h, [k]: v } : h);
+    onChange(list.map((b, idx) => idx === i ? { ...b, horas } : b));
+  };
+
+  // Modo disponibilidad de profesor: un solo horario para todos los días marcados.
   const toggleDia = (i, dia) => {
     const cur = blockDias(list[i]);
     const next = cur.includes(dia) ? cur.filter(d => d !== dia) : DIAS.filter(d => cur.includes(d) || d === dia);
@@ -33,9 +62,9 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
           )}
           <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
             {DIAS.map(d => {
-              const active = blockDias(b).includes(d);
+              const active = showPracticas ? horasOf(b).some(h => h.dia === d) : blockDias(b).includes(d);
               return (
-                <button key={d} type="button" onClick={() => toggleDia(i, d)}
+                <button key={d} type="button" onClick={() => showPracticas ? toggleDiaHoras(i, d) : toggleDia(i, d)}
                         className="day-chip"
                         style={{ cursor:'pointer', fontFamily:'inherit',
                                  border: active ? '1.5px solid currentColor' : '1.5px solid transparent',
@@ -45,19 +74,34 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
               );
             })}
           </div>
-          <div className="sched-row">
-            <input type="time" value={b.desde} onChange={e => upd(i, 'desde', e.target.value)} />
-            <span className="sched-dash">→</span>
-            <input type="time" value={b.hasta} onChange={e => upd(i, 'hasta', e.target.value)} />
-            {showPracticas && (
-              <label style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, color:'var(--ink-500)', marginLeft:6 }}>
-                Cupos
-                <input type="number" min="0" value={b.cupos ?? 1} onChange={e => upd(i, 'cupos', Math.max(0, parseInt(e.target.value) || 0))}
-                       style={{ width:52, padding:'5px 6px', border:'1.5px solid var(--border)', borderRadius:6, fontSize:13 }} />
-              </label>
-            )}
-            <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)', marginLeft: showPracticas ? 0 : 'auto' }} onClick={() => rm(i)}>✕</button>
-          </div>
+          {showPracticas ? (
+            <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+              <div className="muted" style={{ fontSize:11 }}>Puedes fijar un horario distinto por día (ej: Lun 18:00, Mié 19:00).</div>
+              {horasOf(b).map(h => (
+                <div key={h.dia} className="sched-row">
+                  <span style={{ fontSize:12, fontWeight:700, color:'var(--ink-600)', width:28, flexShrink:0 }}>{h.dia}</span>
+                  <input type="time" value={h.desde} onChange={e => updHora(i, h.dia, 'desde', e.target.value)} />
+                  <span className="sched-dash">→</span>
+                  <input type="time" value={h.hasta} onChange={e => updHora(i, h.dia, 'hasta', e.target.value)} />
+                </div>
+              ))}
+              <div className="sched-row">
+                <label style={{ display:'flex', alignItems:'center', gap:5, fontSize:12, color:'var(--ink-500)' }}>
+                  Cupos
+                  <input type="number" min="0" value={b.cupos ?? 1} onChange={e => upd(i, 'cupos', Math.max(0, parseInt(e.target.value) || 0))}
+                         style={{ width:52, padding:'5px 6px', border:'1.5px solid var(--border)', borderRadius:6, fontSize:13 }} />
+                </label>
+                <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)', marginLeft:'auto' }} onClick={() => rm(i)}>✕ Quitar bloque</button>
+              </div>
+            </div>
+          ) : (
+            <div className="sched-row">
+              <input type="time" value={b.desde} onChange={e => upd(i, 'desde', e.target.value)} />
+              <span className="sched-dash">→</span>
+              <input type="time" value={b.hasta} onChange={e => upd(i, 'hasta', e.target.value)} />
+              <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)', marginLeft:'auto' }} onClick={() => rm(i)}>✕</button>
+            </div>
+          )}
           {showPracticas && (
             <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
               {PRACTICES.map(code => {

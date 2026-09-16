@@ -439,8 +439,7 @@ tr:nth-child(even) td{background:#fafcfe}
 function generarCentrosPDF(centros, students, profs, centroId) {
   const SCHED = window.SCHED || {};
   const fmtBlock = SCHED.fmtBlock || (b => `${(b.dias||[b.dia]).join(', ')} ${b.desde}–${b.hasta}`);
-  const tutoresOf = window.centroTutores || (c => (c.tutores && c.tutores.length) ? c.tutores
-    : (c.tutor && (c.tutor.nombre || c.tutor.email || c.tutor.telefono) ? [c.tutor] : []));
+  const gruposDe = window.centroGrupos || (c => ({ grupos: (c.horarios||[]).map(h => ({ horario: h, tutor: null })), sueltos: [] }));
   const capTotal = c => SCHED.centroCapacidad ? SCHED.centroCapacidad(c) : 0;
   const ocupTotal = c => SCHED.centroOcupados ? SCHED.centroOcupados(c, students) : students.filter(s => s.centro === c.nombre).length;
   const compatCount = c => profs.filter(p => ((SCHED.profMatchCentro ? SCHED.profMatchCentro(p, c) : [])).length > 0).length;
@@ -455,21 +454,26 @@ function generarCentrosPDF(centros, students, profs, centroId) {
 
   const tutorRow = t => `<div class="tut"><b>${_esc(t.nombre || '—')}</b>${t.disciplina ? ` <span class="disc">${_esc(t.disciplina)}</span>` : ''}
     ${(t.email || t.telefono) ? `<div class="ct">${t.email ? `✉ ${_esc(t.email)}` : ''}${t.email && t.telefono ? ' &middot; ' : ''}${t.telefono ? `☎ ${_esc(t.telefono)}` : ''}</div>` : ''}</div>`;
+  const tutorInline = t => `<b>${_esc(t.nombre || '—')}</b>${(t.email || t.telefono) ? ` &middot; ${t.email ? `✉ ${_esc(t.email)}` : ''}${t.email && t.telefono ? ' &middot; ' : ''}${t.telefono ? `☎ ${_esc(t.telefono)}` : ''}` : ''}`;
 
   const centroSection = c => {
     const assigned = students.filter(s => s.centro === c.nombre);
-    const tutores = tutoresOf(c);
-    const horarios = c.horarios || [];
+    const { grupos, sueltos } = gruposDe(c);
     const cap = capTotal(c);
     const ocup = ocupTotal(c);
-    const horariosHtml = horarios.length
-      ? horarios.map(h => {
+    const gruposHtml = grupos.length
+      ? grupos.map(({ horario: h, tutor: t }) => {
           const hcap = h.cupos != null ? Number(h.cupos) : null;
           const hocup = hcap != null ? assigned.filter(s => !h.practicas?.length || h.practicas.includes(s.practica)).length : null;
-          return `<span class="sch">${_esc(fmtBlock(h))}${hcap != null ? ` <b>${hocup}/${hcap}</b>` : ''}</span>`;
+          return `<div class="grp">
+            <span class="sch">${_esc(fmtBlock(h))}${hcap != null ? ` <b>${hocup}/${hcap}</b>` : ''}</span>
+            <span class="grpt">${t ? tutorInline(t) : '<i>Sin tutor/a asignado</i>'}</span>
+          </div>`;
         }).join('')
-      : '<span class="na">Sin horarios registrados</span>';
-    const tutoresHtml = tutores.length ? tutores.map(tutorRow).join('') : '<span class="na">Sin tutores registrados</span>';
+      : '<div class="na">Sin horarios registrados</div>';
+    const sueltosHtml = sueltos.length
+      ? `<div class="lbl">Otros tutores/as (sin horario asociado)</div><div class="scw" style="display:block">${sueltos.map(tutorRow).join('')}</div>`
+      : '';
     const estudiantesHtml = assigned.length
       ? `<table class="et"><thead><tr><th>Estudiante</th><th>Práctica</th><th>Profesor/a</th></tr></thead><tbody>${
           assigned.map(s => {
@@ -485,10 +489,10 @@ function generarCentrosPDF(centros, students, profs, centroId) {
       </div>
       <div class="row2">
         <div class="col"><div class="lbl">Encargado del centro</div><div>${_esc(c.encargado?.nombre || '—')}</div><div class="ct">${_esc(c.encargado?.cargo || '')}</div></div>
-        <div class="col"><div class="lbl">Tutores/as de práctica</div>${tutoresHtml}</div>
       </div>
-      <div class="lbl">Horarios de atención / disponibilidad</div>
-      <div class="scw">${horariosHtml}</div>
+      <div class="lbl">Disciplinas, horarios y tutores/as</div>
+      <div class="scw" style="display:block">${gruposHtml}</div>
+      ${sueltosHtml}
       <div class="lbl">Estudiantes asignados (${assigned.length})</div>
       ${estudiantesHtml}
     </div>`;
@@ -517,6 +521,9 @@ body{font-family:Arial,sans-serif;font-size:9pt;color:#111;line-height:1.45}
 .ct{font-size:7.5pt;color:#666}
 .scw{padding:0 13px 9px;display:flex;flex-wrap:wrap;gap:6px}
 .sch{display:inline-block;background:#fff3e0;color:#9a5b00;font-size:7.8pt;font-weight:600;padding:3px 9px;border-radius:10px}
+.grp{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0;border-bottom:1px dashed #eee}
+.grp:last-child{border-bottom:none}
+.grpt{font-size:8pt;color:#333;text-align:right;white-space:nowrap}
 .et{width:calc(100% - 26px);margin:0 13px 10px;border-collapse:collapse;font-size:8pt}
 .et thead tr{background:#fafafa}.et th{padding:4px 7px;text-align:left;font-size:7pt;text-transform:uppercase;letter-spacing:.04em;color:#555;border:1px solid #e5e5e5}
 .et td{padding:4px 7px;border:1px solid #e5e5e5}

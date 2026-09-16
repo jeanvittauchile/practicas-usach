@@ -7,7 +7,8 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
   const PRACTICES = window.PRACTICES || ['I','II','III','IV','PI','PII'];
   const list = blocks || [];
   const upd = (i, k, v) => onChange(list.map((b, idx) => idx === i ? { ...b, [k]: v } : b));
-  const add = () => onChange([...list, { dias:['Lun'], desde:'09:00', hasta:'13:00', ...(showPracticas ? { disciplina:'', practicas: [], cupos: 1 } : {}) }]);
+  const updTutor = (i, k, v) => upd(i, 'tutor', { ...(list[i].tutor || {}), [k]: v });
+  const add = () => onChange([...list, { dias:['Lun'], desde:'09:00', hasta:'13:00', ...(showPracticas ? { disciplina:'', practicas: [], cupos: 1, tutor: { nombre:'', email:'', telefono:'' } } : {}) }]);
   const rm  = (i) => onChange(list.filter((_, idx) => idx !== i));
   const togglePractica = (i, code) => {
     const cur = list[i].practicas || [];
@@ -74,6 +75,19 @@ function ScheduleEditor({ blocks, onChange, accent, showPracticas }) {
               {(b.practicas || []).length === 0 && <span className="muted" style={{ fontSize:11 }}>Sin práctica asignada · aplica a todas</span>}
             </div>
           )}
+          {showPracticas && (
+            <div style={{ borderTop:'1px dashed var(--border)', paddingTop:7, display:'flex', flexDirection:'column', gap:6 }}>
+              <div className="muted" style={{ fontSize:11, fontWeight:600 }}>Tutor/a de esta disciplina</div>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                <input value={b.tutor?.nombre || ''} onChange={e => updTutor(i, 'nombre', e.target.value)} placeholder="Nombre del tutor/a"
+                       style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit', fontWeight:600 }} />
+                <input type="email" value={b.tutor?.email || ''} onChange={e => updTutor(i, 'email', e.target.value)} placeholder="correo@centro.cl"
+                       style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+              </div>
+              <input value={b.tutor?.telefono || ''} onChange={e => updTutor(i, 'telefono', e.target.value)} placeholder="+56 9 ..."
+                     style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+            </div>
+          )}
         </div>
       ))}
       <button type="button" className="btn btn-secondary btn-sm" style={{ alignSelf:'flex-start', borderColor:col, color:col }} onClick={add}>+ Agregar bloque</button>
@@ -93,11 +107,54 @@ function SchedChips({ blocks, tone }) {
   );
 }
 
-// Tutores de práctica de un centro, con compatibilidad hacia atrás para
-// centros antiguos guardados con un solo `tutor` en vez del arreglo `tutores`.
-function centroTutores(c) {
+// Tutores "sueltos" de un centro (no asociados a un bloque horario), con
+// compatibilidad hacia atrás para centros antiguos guardados con un solo
+// `tutor`, o con un arreglo `tutores` independiente de los horarios.
+function centroTutoresSueltos(c) {
   if (c.tutores && c.tutores.length) return c.tutores;
   return c.tutor && (c.tutor.nombre || c.tutor.email || c.tutor.telefono) ? [c.tutor] : [];
+}
+
+// Empareja cada bloque horario con su tutor/a: usa el campo `horario.tutor`
+// (nuevo, cargado directo en el bloque) o, si el centro aún no fue migrado,
+// intenta calzarlo con los tutores "sueltos" antiguos por texto de disciplina
+// (igual o uno contenido en el otro, ej. "Boxeo" ↔ "Boxeo juvenil mixto") y,
+// como último recurso, si queda un solo bloque y un solo tutor sin calzar,
+// los asocia por descarte. Devuelve { grupos: [{ horario, tutor }], sueltos }.
+function centroGrupos(c) {
+  const horarios = c.horarios || [];
+  const legacy = centroTutoresSueltos(c);
+  const norm = s => (s || '').trim().toLowerCase();
+  const usados = new Array(legacy.length).fill(false);
+  const tieneTutor = t => t && (t.nombre || t.email || t.telefono);
+  const matchIdx = (disc) => {
+    if (!disc) return -1;
+    const d = norm(disc);
+    let idx = legacy.findIndex((t, i) => !usados[i] && norm(t.disciplina) === d);
+    if (idx < 0) idx = legacy.findIndex((t, i) => !usados[i] && t.disciplina && (d.includes(norm(t.disciplina)) || norm(t.disciplina).includes(d)));
+    return idx;
+  };
+  const grupos = horarios.map(h => {
+    if (tieneTutor(h.tutor)) return { horario: h, tutor: h.tutor };
+    const idx = matchIdx(h.disciplina);
+    if (idx >= 0) { usados[idx] = true; return { horario: h, tutor: legacy[idx] }; }
+    return { horario: h, tutor: null };
+  });
+  const sinTutor = grupos.filter(g => !g.tutor);
+  const restantes = legacy.map((t, i) => ({ t, i })).filter(({ i }) => !usados[i]);
+  if (sinTutor.length === 1 && restantes.length === 1) {
+    usados[restantes[0].i] = true;
+    sinTutor[0].tutor = restantes[0].t;
+  }
+  const sueltos = legacy.filter((_, i) => !usados[i]);
+  return { grupos, sueltos };
+}
+
+// Todos los tutores de un centro (embebidos en horarios + sueltos), para
+// contadores y listados planos (reportes, resúmenes).
+function centroTutores(c) {
+  const { grupos, sueltos } = centroGrupos(c);
+  return grupos.filter(g => g.tutor).map(g => g.tutor).concat(sueltos);
 }
 
 // ─── CentrosScreen ─────────────────────────────────────────────────────────
@@ -116,6 +173,7 @@ function CentrosScreen({ ctx }) {
 
   const assignedStudents = selCentro ? students.filter(s => s.centro === selCentro.nombre) : [];
   const disciplinas = selCentro ? [...new Set((selCentro.horarios || []).map(h => h.disciplina).filter(Boolean))] : [];
+  const { grupos: horarioGrupos, sueltos: tutoresSueltos } = selCentro ? centroGrupos(selCentro) : { grupos: [], sueltos: [] };
   const tutores = selCentro ? centroTutores(selCentro) : [];
   const capTotal = selCentro ? (SCHED.centroCapacidad ? SCHED.centroCapacidad(selCentro) : 0) : 0;
   const ocupTotal = selCentro ? (SCHED.centroOcupados ? SCHED.centroOcupados(selCentro, students) : assignedStudents.length) : 0;
@@ -203,70 +261,74 @@ function CentrosScreen({ ctx }) {
               </div>
             </div>
 
-            {/* Contactos */}
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }}>
-              <div className="card" style={{ padding:'16px 20px' }}>
-                <div className="centro-block-lbl">Encargado del centro</div>
-                <div style={{ fontWeight:700, fontSize:14.5, marginTop:4 }}>{selCentro.encargado?.nombre || '—'}</div>
-                <div className="muted" style={{ fontSize:12.5 }}>{selCentro.encargado?.cargo || ''}</div>
-              </div>
-              <div className="card" style={{ padding:'16px 20px' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-                  <div className="centro-block-lbl">Tutores/as de práctica</div>
-                  {tutores.length > 0 && <span className="tag tag-teal">{tutores.length}</span>}
-                </div>
-                {tutores.length === 0 ? (
-                  <div className="muted" style={{ fontSize:12.5, marginTop:4 }}>—</div>
-                ) : (
-                  <div style={{ display:'flex', flexDirection:'column', gap:10, marginTop:6 }}>
-                    {tutores.map((t, i) => (
-                      <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none', paddingTop: i > 0 ? 8 : 0 }}>
-                        <div style={{ display:'flex', alignItems:'center', gap:6, flexWrap:'wrap' }}>
-                          <span style={{ fontWeight:700, fontSize:14 }}>{t.nombre || '—'}</span>
-                          {t.disciplina && <span className="tag" style={{ fontSize:10.5 }}>{t.disciplina}</span>}
-                        </div>
-                        <div style={{ display:'flex', flexDirection:'column', gap:2, marginTop:2 }}>
-                          {t.email && <a href={`mailto:${t.email}`} style={{ fontSize:12.5 }}>✉ {t.email}</a>}
-                          {t.telefono && <span className="muted" style={{ fontSize:12.5 }}>☎ {t.telefono}</span>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            {/* Encargado */}
+            <div className="card" style={{ padding:'16px 20px' }}>
+              <div className="centro-block-lbl">Encargado del centro</div>
+              <div style={{ fontWeight:700, fontSize:14.5, marginTop:4 }}>{selCentro.encargado?.nombre || '—'}</div>
+              <div className="muted" style={{ fontSize:12.5 }}>{selCentro.encargado?.cargo || ''}</div>
             </div>
 
-            {/* Horarios + cupos */}
+            {/* Disciplinas, horarios y tutores/as (agrupados) */}
             <div className="card" style={{ padding:'16px 20px' }}>
               <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-                <div className="centro-block-lbl" style={{ margin:0 }}>Horarios de atención / disponibilidad</div>
+                <div className="centro-block-lbl" style={{ margin:0 }}>Disciplinas, horarios y tutores/as</div>
                 {capTotal > 0 && (
                   <span className="tag" style={{ color: ocupTotal >= capTotal ? 'var(--err)' : 'var(--teal-700)' }}>
                     {ocupTotal}/{capTotal} cupos
                   </span>
                 )}
               </div>
-              {(!selCentro.horarios || selCentro.horarios.length === 0) ? (
+              {horarioGrupos.length === 0 ? (
                 <span className="muted" style={{ fontSize:12.5 }}>—</span>
               ) : (
-                <div style={{ display:'flex', flexDirection:'column', gap:7 }}>
-                  {selCentro.horarios.map((h, i) => {
+                <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                  {horarioGrupos.map(({ horario: h, tutor: t }, i) => {
                     const cap = h.cupos != null ? Number(h.cupos) : null;
                     const ocup = cap != null
                       ? assignedStudents.filter(s => !h.practicas?.length || h.practicas.includes(s.practica)).length
                       : null;
                     const lleno = cap != null && cap > 0 && ocup >= cap;
                     return (
-                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-                        <span className="sched-chip sched-chip-orange">{SCHED.fmtBlock ? SCHED.fmtBlock(h) : `${(h.dias||[h.dia]).join(', ')} ${h.desde}–${h.hasta}`}</span>
-                        {cap != null && (
-                          <span style={{ fontSize:11.5, fontWeight:700, color: lleno ? 'var(--err)' : 'var(--teal-700)' }}>
-                            {ocup}/{cap} cupos{lleno ? ' · LLENO' : ''}
-                          </span>
-                        )}
+                      <div key={i} style={{ borderTop: i > 0 ? '1px solid var(--border)' : 'none', paddingTop: i > 0 ? 10 : 0, display:'flex', flexWrap:'wrap', alignItems:'center', gap:10 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                          <span className="sched-chip sched-chip-orange">{SCHED.fmtBlock ? SCHED.fmtBlock(h) : `${(h.dias||[h.dia]).join(', ')} ${h.desde}–${h.hasta}`}</span>
+                          {cap != null && (
+                            <span style={{ fontSize:11.5, fontWeight:700, color: lleno ? 'var(--err)' : 'var(--teal-700)' }}>
+                              {ocup}/{cap} cupos{lleno ? ' · LLENO' : ''}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ marginLeft: 'auto', minWidth: 180 }}>
+                          {t ? (
+                            <div>
+                              <div style={{ fontSize:12.5, fontWeight:700 }}>👤 {t.nombre || '—'}</div>
+                              <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+                                {t.email && <a href={`mailto:${t.email}`} style={{ fontSize:11.5 }}>✉ {t.email}</a>}
+                                {t.telefono && <span className="muted" style={{ fontSize:11.5 }}>☎ {t.telefono}</span>}
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="muted" style={{ fontSize:12 }}>Sin tutor/a asignado</span>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
+                </div>
+              )}
+              {tutoresSueltos.length > 0 && (
+                <div style={{ marginTop:12, paddingTop:10, borderTop:'1px dashed var(--border)' }}>
+                  <div className="muted" style={{ fontSize:11, fontWeight:700, marginBottom:6 }}>OTROS TUTORES/AS (SIN HORARIO ASOCIADO)</div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                    {tutoresSueltos.map((t, i) => (
+                      <div key={i} style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+                        <span style={{ fontWeight:700, fontSize:13 }}>{t.nombre || '—'}</span>
+                        {t.disciplina && <span className="tag" style={{ fontSize:10.5 }}>{t.disciplina}</span>}
+                        {t.email && <a href={`mailto:${t.email}`} style={{ fontSize:12 }}>✉ {t.email}</a>}
+                        {t.telefono && <span className="muted" style={{ fontSize:12 }}>☎ {t.telefono}</span>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
@@ -340,15 +402,35 @@ function CentrosScreen({ ctx }) {
 // ─── CentroModal ───────────────────────────────────────────────────────────
 function CentroModal({ initial, onSave, onClose }) {
   const [f, setF] = useState(() => {
-    if (!initial) return { nombre:'', direccion:'', comuna:'', area:'', encargado:{ nombre:'', cargo:'' }, tutores:[], horarios:[] };
-    const { tutor, ...rest } = initial;
-    return { ...rest, tutores: centroTutores(initial) };
+    if (!initial) return { nombre:'', direccion:'', comuna:'', area:'', encargado:{ nombre:'', cargo:'' }, horarios:[], tutoresSueltos:[] };
+    const { tutor, tutores, ...rest } = initial;
+    // Migra tutores antiguos (arreglo suelto) al bloque horario de su misma disciplina,
+    // para que en el formulario queden justo al lado del deporte correspondiente.
+    const { grupos, sueltos } = centroGrupos(initial);
+    const horarios = grupos.map(({ horario, tutor: t }) => ({
+      ...horario,
+      tutor: { nombre: t?.nombre || '', email: t?.email || '', telefono: t?.telefono || '' },
+    }));
+    return { ...rest, horarios, tutoresSueltos: sueltos };
   });
   const set = (k, v) => setF(p => ({ ...p, [k]: v }));
   const setNested = (group, k, v) => setF(p => ({ ...p, [group]: { ...(p[group]||{}), [k]: v } }));
-  const updTutor = (i, k, v) => set('tutores', (f.tutores||[]).map((t, idx) => idx === i ? { ...t, [k]: v } : t));
-  const addTutor = () => set('tutores', [...(f.tutores||[]), { nombre:'', disciplina:'', email:'', telefono:'' }]);
-  const rmTutor  = (i) => set('tutores', (f.tutores||[]).filter((_, idx) => idx !== i));
+  const updSuelto = (i, k, v) => set('tutoresSueltos', (f.tutoresSueltos||[]).map((t, idx) => idx === i ? { ...t, [k]: v } : t));
+  const addSuelto = () => set('tutoresSueltos', [...(f.tutoresSueltos||[]), { nombre:'', disciplina:'', email:'', telefono:'' }]);
+  const rmSuelto  = (i) => set('tutoresSueltos', (f.tutoresSueltos||[]).filter((_, idx) => idx !== i));
+  const guardar = () => {
+    if (!f.nombre) return;
+    // Limpia tutores vacíos de cada bloque para no guardar objetos {nombre:'',email:'',telefono:''}.
+    const horarios = (f.horarios||[]).map(h => {
+      const t = h.tutor;
+      const tieneTutor = t && (t.nombre || t.email || t.telefono);
+      if (tieneTutor) return { ...h, tutor: t };
+      const { tutor: _drop, ...rest } = h;
+      return rest;
+    });
+    const { tutoresSueltos, ...rest } = f;
+    onSave({ ...rest, horarios, tutores: tutoresSueltos || [] });
+  };
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={e => e.stopPropagation()}>
@@ -367,41 +449,49 @@ function CentroModal({ initial, onSave, onClose }) {
             <div className="form-field"><label>Cargo</label><input value={f.encargado?.cargo||''} onChange={e=>setNested('encargado','cargo',e.target.value)} placeholder="Cargo"/></div>
           </div>
 
-          <div className="form-divider">Tutores/as de práctica</div>
-          <div className="muted" style={{ fontSize:12, marginTop:-6, marginBottom:2 }}>Agrega un tutor/a por cada disciplina o deporte que se dicte en el centro (ej: Natación, Boxeo, Básquetbol).</div>
-          <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
-            {(f.tutores||[]).length === 0 && <div className="muted" style={{ fontSize:12.5 }}>Sin tutores registrados. Agrega el primero ↓</div>}
-            {(f.tutores||[]).map((t, i) => (
-              <div key={i} style={{ border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', display:'flex', flexDirection:'column', gap:7 }}>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-                  <input value={t.nombre||''} onChange={e=>updTutor(i,'nombre',e.target.value)} placeholder="Nombre del tutor/a"
-                         style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit', fontWeight:600 }} />
-                  <input value={t.disciplina||''} onChange={e=>updTutor(i,'disciplina',e.target.value)} placeholder="Disciplina (ej: Natación infantil)"
-                         style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
-                </div>
-                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-                  <input type="email" value={t.email||''} onChange={e=>updTutor(i,'email',e.target.value)} placeholder="correo@centro.cl"
-                         style={{ flex:1, padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
-                  <input value={t.telefono||''} onChange={e=>updTutor(i,'telefono',e.target.value)} placeholder="+56 9 ..."
-                         style={{ flex:1, padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
-                  <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)' }} onClick={() => rmTutor(i)}>✕</button>
-                </div>
-              </div>
-            ))}
-            <button type="button" className="btn btn-secondary btn-sm" style={{ alignSelf:'flex-start', borderColor:'var(--orange-600)', color:'var(--orange-600)' }} onClick={addTutor}>+ Agregar tutor/a</button>
+          <div className="form-divider">Disciplinas, horarios y tutores/as</div>
+          <div className="muted" style={{ fontSize:12, marginTop:-6, marginBottom:2 }}>
+            Cada bloque es una disciplina o deporte con su horario y cupos; agrega el tutor/a a cargo justo debajo, en el mismo bloque
+            (ej: I y II de 13 a 14 con su tutor de Natación, IV de 15 a 16 con su tutor de Boxeo).
           </div>
-
-          <div className="form-divider">Horarios de atención / disponibilidad</div>
-          <div className="muted" style={{ fontSize:12, marginTop:-6, marginBottom:2 }}>Marca en cada bloque a qué práctica(s) corresponde (ej: I y II de 13 a 14, IV de 15 a 16).</div>
           <ScheduleEditor blocks={f.horarios} onChange={v => set('horarios', v)} accent="var(--orange-600)" showPracticas />
+
+          {(f.tutoresSueltos||[]).length > 0 && (
+            <>
+              <div className="form-divider">Otros tutores/as (sin horario asociado)</div>
+              <div className="muted" style={{ fontSize:12, marginTop:-6, marginBottom:2 }}>
+                Tutores registrados antes de asociar sus horarios, o que apoyan al centro sin un bloque propio.
+              </div>
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {(f.tutoresSueltos||[]).map((t, i) => (
+                  <div key={i} style={{ border:'1px solid var(--border)', borderRadius:8, padding:'8px 10px', display:'flex', flexDirection:'column', gap:7 }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+                      <input value={t.nombre||''} onChange={e=>updSuelto(i,'nombre',e.target.value)} placeholder="Nombre del tutor/a"
+                             style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit', fontWeight:600 }} />
+                      <input value={t.disciplina||''} onChange={e=>updSuelto(i,'disciplina',e.target.value)} placeholder="Disciplina (ej: Natación infantil)"
+                             style={{ padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+                    </div>
+                    <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                      <input type="email" value={t.email||''} onChange={e=>updSuelto(i,'email',e.target.value)} placeholder="correo@centro.cl"
+                             style={{ flex:1, padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+                      <input value={t.telefono||''} onChange={e=>updSuelto(i,'telefono',e.target.value)} placeholder="+56 9 ..."
+                             style={{ flex:1, padding:'6px 9px', border:'1.5px solid var(--border)', borderRadius:7, fontSize:13, fontFamily:'inherit' }} />
+                      <button type="button" className="btn btn-ghost btn-sm" style={{ color:'var(--err)' }} onClick={() => rmSuelto(i)}>✕</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf:'flex-start', marginTop:6 }} onClick={addSuelto}>+ Agregar tutor/a sin horario asociado</button>
         </div>
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn btn-primary" onClick={() => { if (!f.nombre) return; onSave(f); }}>Guardar</button>
+          <button className="btn btn-primary" onClick={guardar}>Guardar</button>
         </div>
       </div>
     </div>
   );
 }
 
-Object.assign(window, { CentrosScreen, CentroModal, ScheduleEditor, SchedChips, centroTutores });
+Object.assign(window, { CentrosScreen, CentroModal, ScheduleEditor, SchedChips, centroTutores, centroGrupos, centroTutoresSueltos });

@@ -566,8 +566,19 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
   const meta = De.meta || {};
   const isSolemne = window.grupoEsTeal(ev.grupo); // usa color teal como acento principal
   const grupo = window.grupoDef(ev.grupo);
-  const nivelesSet = Ce.nivelesSetForEval(ev);
-  const escala = Ce.escalaForEval(ev);
+  // Evaluaciones del grupo "presentación" (p. ej. Salidas a terreno) no tienen
+  // rúbrica propia: se califican vía la Dimensión 7 del instrumento del Supervisor.
+  const esPresentacion = ev.grupo === 'presentacion';
+  const dimPresentacion = esPresentacion ? (De.SUPERVISOR_DIMENSIONES || []).find(d => d.id === 'd7') : null;
+  const filasRubrica = esPresentacion
+    ? (dimPresentacion?.indicadores || []).map(ind => ({ id: ind.id, texto: ind.texto, doble: false }))
+    : ev.criterios;
+  const nivelesSet = esPresentacion
+    ? (De.NIVELES?.NIVELES_SUPERVISOR || De.NIVELES_SUPERVISOR || [])
+    : Ce.nivelesSetForEval(ev);
+  const escala = esPresentacion
+    ? Ce.escalaExigencia60(filasRubrica.length * (nivelesSet[0]?.pts || 0))
+    : Ce.escalaForEval(ev);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -627,7 +638,11 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                 <tbody>
                   <CoverRow k="Grupo" v={grupo.label} />
                   <CoverRow k="Tipo" v={ev.tipo} />
-                  <CoverRow k="Cantidad de criterios" v={`${ev.criterios.length} criterios (${ev.criterios.filter(c=>c.doble).length} con doble puntaje)`} />
+                  {esPresentacion && <CoverRow k="Se califica en" v="Eval. Supervisor → Dimensión 7" />}
+                  <CoverRow k={esPresentacion ? 'Indicadores evaluados' : 'Cantidad de criterios'}
+                            v={esPresentacion
+                              ? `${filasRubrica.length} indicadores (Dimensión 7 del instrumento del Supervisor)`
+                              : `${ev.criterios.length} criterios (${ev.criterios.filter(c=>c.doble).length} con doble puntaje)`} />
                   <CoverRow k="Niveles de desempeño" v={nivelesSet.map(n => `${n.label} (${n.pts} pt)`).join(' · ')} />
                 </tbody>
               </table>
@@ -679,12 +694,17 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
 
           {/* RÚBRICA */}
           <div className="pdf-page">
-            <SectionPdf title="7. Rúbrica de evaluación" accent={isSolemne ? 'teal' : 'orange'}>
+            <SectionPdf title={esPresentacion ? '7. Indicadores de evaluación (Dimensión 7 — Supervisor)' : '7. Rúbrica de evaluación'} accent={isSolemne ? 'teal' : 'orange'}>
+              {esPresentacion && (
+                <div style={{ padding: 12, background: isSolemne ? 'var(--teal-50)' : 'var(--orange-50)', borderLeft: `3px solid ${isSolemne ? 'var(--teal-500)' : 'var(--orange-500)'}`, fontSize: 11.5, color: 'var(--ink-700)', marginBottom: 14, borderRadius: '0 4px 4px 0' }}>
+                  Esta evaluación no tiene rúbrica propia: se califica junto con el resto de las dimensiones del instrumento del Supervisor, en su Dimensión 7.
+                </div>
+              )}
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5 }}>
                 <thead>
                   <tr style={{ background: 'var(--surface-1)' }}>
                     <th style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'left', width: 28 }}>N°</th>
-                    <th style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'left' }}>Criterio</th>
+                    <th style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'left' }}>{esPresentacion ? 'Indicador' : 'Criterio'}</th>
                     {nivelesSet.map(n => (
                       <th key={n.key} style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'center', minWidth: 70 }}>
                         {n.label}<br /><span style={{ fontWeight: 400, color: 'var(--ink-500)' }}>{n.pts} pt</span>
@@ -694,7 +714,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {ev.criterios.map((cr, i) => (
+                  {filasRubrica.map((cr, i) => (
                     <tr key={cr.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '8px 6px', verticalAlign: 'top', fontWeight: 700, color: isSolemne ? 'var(--teal-700)' : 'var(--orange-700)' }} className="tnum">{i+1}</td>
                       <td style={{ padding: '8px 6px', verticalAlign: 'top' }}>
@@ -703,7 +723,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                       </td>
                       {nivelesSet.map(n => (
                         <td key={n.key} style={{ padding: '8px 6px', verticalAlign: 'top', textAlign: 'center', fontSize: 10, color: 'var(--ink-600)' }}>
-                          {i === 0 ? n.desc.length > 70 ? n.desc.slice(0,68) + '…' : n.desc : '—'}
+                          {i === 0 ? (n.desc ? (n.desc.length > 70 ? n.desc.slice(0,68) + '…' : n.desc) : '—') : '—'}
                         </td>
                       ))}
                       <td style={{ padding: '8px 6px', verticalAlign: 'top', textAlign: 'right', fontWeight: 700 }} className="tnum">
@@ -721,14 +741,18 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
 
             <SectionPdf title="8. Escala de conversión de puntaje a nota (60% exigencia)" accent={isSolemne ? 'teal' : 'orange'}>
               <p style={{ fontSize: 11.5, color: 'var(--ink-600)', margin: '0 0 10px' }}>
-                La nota se asigna en escala 1,0 – 7,0 con nota mínima de aprobación 4,0 al obtener el {Math.round(ev.maxPuntos * 0.6)}% del puntaje (60%).
+                {esPresentacion
+                  ? <>La Dimensión 7 aporta hasta {ev.maxPuntos} de los 48 puntos totales del instrumento del Supervisor. La escala siguiente proyecta la nota <strong>si esta dimensión se evaluara de forma aislada</strong>, con nota mínima de aprobación 4,0 al obtener el 60% del puntaje; en la práctica, sus puntos se integran junto con las demás dimensiones al calcular la nota del Supervisor (30% de la nota final).</>
+                  : <>La nota se asigna en escala 1,0 – 7,0 con nota mínima de aprobación 4,0 al obtener el {Math.round(ev.maxPuntos * 0.6)}% del puntaje (60%).</>}
               </p>
               <EscalaTable escala={escala} maxPuntos={ev.maxPuntos} />
             </SectionPdf>
 
             <SectionPdf title="9. Penalización por atraso" accent={isSolemne ? 'teal' : 'orange'}>
               <p style={{ fontSize: 12.5, margin: 0, lineHeight: 1.55 }}>
-                Cada día calendario de atraso en la entrega descuenta <strong>0,5 puntos</strong> de la nota final de la evaluación, sin tope. La nota mínima posible tras descuento es <strong>1,0</strong>.
+                {esPresentacion
+                  ? <>Esta evaluación no aplica penalización por atraso: se realiza en la fecha y horario acordado con el/la supervisor/a y se califica de forma presencial en la Dimensión 7 del instrumento.</>
+                  : <>Cada día calendario de atraso en la entrega descuenta <strong>0,5 puntos</strong> de la nota final de la evaluación, sin tope. La nota mínima posible tras descuento es <strong>1,0</strong>.</>}
               </p>
             </SectionPdf>
 
@@ -742,11 +766,11 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                 </thead>
                 <tbody>
                   {De.PONDERACIONES.map(p => {
-                    const incluye = (p.componentes || []).includes(ev.id);
+                    const incluye = esPresentacion ? p.resolver === 'SUP' : (p.componentes || []).includes(ev.id);
                     return (
                       <tr key={p.id} style={{ borderBottom: '1px dashed var(--border)', background: incluye ? (isSolemne ? 'var(--teal-50)' : 'var(--orange-50)') : 'transparent' }}>
                         <td style={{ padding: '6px 8px', fontWeight: incluye ? 700 : 400 }}>
-                          {getPonderacionLabel(p, ctx.state.evaluaciones)} {incluye && <span style={{ fontSize: 10, color: isSolemne ? 'var(--teal-700)' : 'var(--orange-700)', marginLeft: 6 }}>← incluye esta evaluación</span>}
+                          {getPonderacionLabel(p, ctx.state.evaluaciones)} {incluye && <span style={{ fontSize: 10, color: isSolemne ? 'var(--teal-700)' : 'var(--orange-700)', marginLeft: 6 }}>← incluye esta evaluación{esPresentacion ? ' (vía Dimensión 7)' : ''}</span>}
                         </td>
                         <td style={{ padding: '6px 8px', textAlign: 'right', fontWeight: 700 }} className="tnum">{Math.round(p.peso * 100)}%</td>
                       </tr>

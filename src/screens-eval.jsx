@@ -27,7 +27,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
   // Compute progress
   const total = estudiantes.length;
   const esPresent = ev.grupo === 'presentacion';
-  const presentIds = ['p1','p2','p3','p4'];
+  const presentIds = ['p1','p2','p3','p4','p5'];
   const completados = esPresent
     ? estudiantes.filter(est => {
         const resp = ctx.state.supervisor?.[est.id] || {};
@@ -78,13 +78,13 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
           {!esPresent && <Metric label="Puntaje máx." value={ev.maxPuntos} sub="puntos" />}
           {!esPresent && <Metric label="Criterios" value={ev.criterios.length} sub={`${ev.criterios.filter(c=>c.doble).length} con doble puntaje`} />}
           {ev.ponderacion > 0 && <Metric label="Ponderación" value={`${Math.round(ev.ponderacion*100)}%`} sub="de la nota final" />}
-          {esPresent && <Metric label="Indicadores" value={4} sub="Dim. 7 del supervisor" />}
-          {esPresent && <Metric label="Escala" value="S/CS/O/CN/N" sub="máx. 16 pts" />}
+          {esPresent && <Metric label="Indicadores" value={5} sub="Dim. 7 del supervisor" />}
+          {esPresent && <Metric label="Escala" value="S/CS/O/CN/N" sub="máx. 20 pts" />}
           {ev.variantes && <VariantToggle ev={ev} ctx={ctx} />}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             {!esPresent && <button className="btn btn-secondary" onClick={() => setShowEdit(true)}><I.edit /> Editar</button>}
             {esPresent && <button className="btn btn-secondary" onClick={() => setShowEditFecha(true)}><I.edit /> Editar fecha</button>}
-            {!esPresent && <button className="btn btn-secondary" onClick={() => setShowInforme(true)}><I.print /> Generar informe</button>}
+            <button className="btn btn-secondary" onClick={() => setShowInforme(true)}><I.print /> Generar informe</button>
             {esPresent
               ? <button className="btn btn-primary" onClick={() => ctx.navTo && ctx.navTo('supervisor')}>
                   <I.checkSquare /> Ir a Eval. Supervisor → Dim. 7

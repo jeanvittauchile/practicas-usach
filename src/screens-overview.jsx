@@ -38,7 +38,7 @@ function Dashboard({ ctx, onNav }) {
   const promCurso = promediosEvals.length ? (promediosEvals.reduce((a,b)=>a+b,0)/promediosEvals.length) : null;
 
   // Próximas evaluaciones
-  const today = new Date('2025-09-15');
+  const today = new Date(window.todayISO());
   const proximas = [...evaluaciones]
     .filter(e => e.estado !== 'corregida')
     .sort((a, b) => window.evalFechaInfo(a, ctx.state).deadline.localeCompare(window.evalFechaInfo(b, ctx.state).deadline))

@@ -3,6 +3,21 @@
 
 const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
+// Prácticas asignadas "en vivo" al profesor autenticado: coord_profs (editado
+// por el coordinador en Asignaciones) es la fuente de verdad; el snapshot de
+// __authUser queda obsoleto desde el login. Mismo patrón que readProfProfile
+// en settings-modals.jsx.
+function getProfPracticasAsignadas() {
+  const auth = window.__authUser;
+  if (!auth || auth.rol === 'coordinador') return undefined;
+  try {
+    const profs = JSON.parse(localStorage.getItem('coord_profs') || '[]') || [];
+    const match = profs.find(p => (p.email || '').toLowerCase() === (auth.email || '').toLowerCase());
+    if (match) return match.practicasAsignadas;
+  } catch (e) {}
+  return auth.practicasAsignadas;
+}
+
 // ─────────────────────────────────────────────────────────────
 // Sidebar
 // ─────────────────────────────────────────────────────────────
@@ -26,8 +41,9 @@ function Sidebar({ current, onNav, counts, practicaActiva, onSelectPractica, isO
   ];
 
   const _authUser = window.__authUser;
-  const _asignadas = (_authUser && _authUser.rol !== 'coordinador' && _authUser.practicasAsignadas?.length)
-    ? _authUser.practicasAsignadas : null;
+  const _liveAsig = getProfPracticasAsignadas();
+  const _asignadas = (_authUser && _authUser.rol !== 'coordinador' && _liveAsig?.length)
+    ? _liveAsig : null;
 
   const practicas = (window.PRACTICAS_INDEX || []).map(p => {
     const asignada = !_asignadas || _asignadas.includes(p.codigo);

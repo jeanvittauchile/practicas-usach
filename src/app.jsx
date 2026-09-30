@@ -45,7 +45,7 @@ function App() {
   useEffect(() => {
     const _au = window.__authUser;
     if (!_au || _au.rol === 'coordinador') return;
-    const asig = _au.practicasAsignadas;
+    const asig = getProfPracticasAsignadas();
     if (!Array.isArray(asig) || asig.length === 0) return;
     if (!asig.includes(practica)) cambiarPractica(asig[0]);
   }, []);

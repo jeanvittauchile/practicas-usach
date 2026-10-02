@@ -342,15 +342,15 @@ function AsistenciaPanel({ ctx, estudiantes }) {
 
   // ── Lista de clases + resumen por estudiante ──
   const resumen = A.porEstudiante(doc);
-  const totalGeneral = A.contar(sesiones.flatMap(s => Object.values(s.registros || {})));
+  const totalGeneral = A.sumar(Object.values(resumen));
   const bajoUmbral = estudiantes.filter(e => resumen[e.id] && resumen[e.id].pct != null && resumen[e.id].pct < A.UMBRAL).length;
 
   return (
     <>
       <div className="grid-4" style={{ marginBottom: 20 }}>
         <StatCard label="Clases registradas" value={sesiones.length} delta={sesiones[0] ? `última: ${fmtFechaCorta(sesiones[0].fecha)}` : 'aún no hay clases'} color="teal" />
-        <StatCard label="Asistencia general" value={totalGeneral.pct != null ? totalGeneral.pct + '%' : '—'} delta="presentes + atrasos" color="ink" />
-        <StatCard label="Inasistencias" value={totalGeneral.A} delta={`${totalGeneral.J} justificadas aparte`} color="orange" />
+        <StatCard label="Asistencia general" value={totalGeneral.pct != null ? totalGeneral.pct + '%' : '—'} delta={`cada ${A.ATRASOS_POR_INASISTENCIA} atrasos = 1 inasistencia`} color="ink" />
+        <StatCard label="Inasistencias" value={totalGeneral.inasist} delta={`${totalGeneral.A} ausencias · ${totalGeneral.AT} por atrasos · ${totalGeneral.J} justificadas aparte`} color="orange" />
         <StatCard label={`Bajo ${A.UMBRAL}%`} value={bajoUmbral} delta="estudiantes con inasistencias" color="orange" />
       </div>
 
@@ -385,7 +385,7 @@ function AsistenciaPanel({ ctx, estudiantes }) {
               <div key={est.id} className="card-section" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: 13.5 }}>{est.nombre}</div>
-                  <div className="muted" style={{ fontSize: 11.5 }}>{r ? `${r.P} P · ${r.T} T · ${r.A} A · ${r.J} J` : 'Sin registros'}</div>
+                  <div className="muted" style={{ fontSize: 11.5 }}>{r ? `${r.P} P · ${r.T} T · ${r.A} A · ${r.J} J` + (r.AT ? ` · ${r.AT} inasist. por atrasos` : '') : 'Sin registros'}</div>
                 </div>
                 {pctTag(r && r.pct)}
               </div>

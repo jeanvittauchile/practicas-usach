@@ -12,6 +12,7 @@
 
 (function () {
   const PREFIX = 'usach_asist_v1_';
+  const ATRASOS_POR_INASISTENCIA = 3;
 
   const ESTADOS = [
     { k: 'P', label: 'Presente',    cls: 'on-E' },
@@ -50,14 +51,36 @@
     return out;
   }
 
-  // Conteo de estados. Asistencia = (presentes + atrasos) / registros; los
-  // justificados no cuentan en contra (se excluyen del denominador).
-  function contar(valores) {
-    const c = { P: 0, T: 0, A: 0, J: 0, total: 0 };
-    valores.forEach(v => { if (c[v] != null) { c[v]++; c.total++; } });
+  // Reglas: los justificados no bajan el porcentaje (salen del denominador) y
+  // los atrasos cuentan como asistencia, salvo que cada 3 atrasos de un mismo
+  // estudiante el tercero se convierte en inasistencia (AT).
+  // inasist = A + AT ;  pct = (P + T - AT) / (P + T + A)
+  function calcular(c) {
     const base = c.P + c.T + c.A;
-    c.pct = base ? Math.round((c.P + c.T) / base * 100) : null;
+    c.inasist = c.A + c.AT;
+    c.pct = base ? Math.floor((base - c.inasist) / base * 100) : null;
     return c;
+  }
+
+  // Conteo de una sola clase (sin conversión de atrasos: la regla es por estudiante).
+  function contar(valores) {
+    const c = { P: 0, T: 0, A: 0, J: 0, AT: 0, total: 0 };
+    valores.forEach(v => { if (c[v] != null) { c[v]++; c.total++; } });
+    return calcular(c);
+  }
+
+  // Conteo acumulado de un estudiante: aplica la regla de 3 atrasos.
+  function contarEstudiante(valores) {
+    const c = contar(valores);
+    c.AT = Math.floor(c.T / ATRASOS_POR_INASISTENCIA);
+    return calcular(c);
+  }
+
+  // Suma conteos de varios estudiantes (para totales generales).
+  function sumar(conteos) {
+    const c = { P: 0, T: 0, A: 0, J: 0, AT: 0, total: 0 };
+    conteos.forEach(x => { ['P', 'T', 'A', 'J', 'AT', 'total'].forEach(k => { c[k] += x[k] || 0; }); });
+    return calcular(c);
   }
 
   // Resumen por estudiante a partir de las sesiones de un documento.
@@ -67,9 +90,9 @@
       Object.entries(s.registros || {}).forEach(([estId, v]) => { (vals[estId] = vals[estId] || []).push(v); });
     });
     const out = {};
-    Object.keys(vals).forEach(estId => { out[estId] = contar(vals[estId]); });
+    Object.keys(vals).forEach(estId => { out[estId] = contarEstudiante(vals[estId]); });
     return out;
   }
 
-  window.ASISTENCIA = { PREFIX, ESTADOS, UMBRAL: 100, key, read, write, readAll, contar, porEstudiante };
+  window.ASISTENCIA = { PREFIX, ESTADOS, UMBRAL: 100, ATRASOS_POR_INASISTENCIA, key, read, write, readAll, contar, contarEstudiante, sumar, porEstudiante };
 })();

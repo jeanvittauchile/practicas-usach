@@ -35,7 +35,7 @@ function AsistenciaCoordScreen({ ctx }) {
   // Por profesor y práctica
   const filasProf = filtrados.map(d => {
     const ses = Object.values(d.sesiones || {});
-    const c = A.contar(ses.flatMap(s => Object.values(s.registros || {})));
+    const c = A.sumar(Object.values(A.porEstudiante(d)));
     const ultima = ses.reduce((m, s) => (s.fecha && (!m || s.fecha > m)) ? s.fecha : m, null);
     return { key: A.key(d.practica, d.profesorEmail), nombre: profNombre(d), practica: d.practica, clases: ses.length, ultima, c };
   }).sort((a, b) => a.nombre.localeCompare(b.nombre) || a.practica.localeCompare(b.practica));
@@ -59,14 +59,14 @@ function AsistenciaCoordScreen({ ctx }) {
   const enRiesgo = filasEst.filter(f => f.c.pct != null && f.c.pct < A.UMBRAL);
   const visiblesEst = soloRiesgo ? enRiesgo : filasEst;
 
-  const general = A.contar(filtrados.flatMap(d => Object.values(d.sesiones || {}).flatMap(s => Object.values(s.registros || {}))));
+  const general = A.sumar(filasEst.map(f => f.c));
   const totalClases = filasProf.reduce((a, f) => a + f.clases, 0);
   const autores = [...new Map(docs.filter(d => Object.keys(d.sesiones || {}).length).map(d => [d.profesorEmail, { email: d.profesorEmail, nombre: profNombre(d) }])).values()];
 
   const exportarCSV = () => {
     const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-    const head = ['Estudiante', 'RUT', 'Práctica', 'Profesor', 'Presente', 'Atraso', 'Ausente', 'Justificado', '% asistencia'];
-    const rows = visiblesEst.map(f => [f.nombre, f.rut, f.practica, f.profesor, f.c.P, f.c.T, f.c.A, f.c.J, f.c.pct == null ? '' : f.c.pct].map(q).join(';'));
+    const head = ['Estudiante', 'RUT', 'Práctica', 'Profesor', 'Presente', 'Atraso', 'Ausente', 'Justificado', 'Inasist. por atrasos', 'Inasistencias', '% asistencia'];
+    const rows = visiblesEst.map(f => [f.nombre, f.rut, f.practica, f.profesor, f.c.P, f.c.T, f.c.A, f.c.J, f.c.AT, f.c.inasist, f.c.pct == null ? '' : f.c.pct].map(q).join(';'));
     const blob = new Blob(['﻿' + [head.map(q).join(';'), ...rows].join('\n')], { type: 'text/csv;charset=utf-8' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -113,12 +113,12 @@ function AsistenciaCoordScreen({ ctx }) {
         <div className="stat-card">
           <div className="stat-lbl">Asistencia general</div>
           <div className="stat-val">{general.pct != null ? general.pct + '%' : '—'}</div>
-          <div className="stat-sub">presentes + atrasos; justificados no cuentan</div>
+          <div className="stat-sub">justificados no cuentan · cada {A.ATRASOS_POR_INASISTENCIA} atrasos = 1 inasistencia</div>
         </div>
         <div className="stat-card">
           <div className="stat-lbl">Inasistencias</div>
-          <div className="stat-val">{general.A}</div>
-          <div className="stat-sub">{general.J} justificadas · {general.T} atrasos</div>
+          <div className="stat-val">{general.inasist}</div>
+          <div className="stat-sub">{general.A} ausencias · {general.AT} por atrasos ({general.T} atrasos) · {general.J} justif.</div>
         </div>
         <div className="stat-card accent">
           <div className="stat-lbl">Estudiantes bajo {A.UMBRAL}%</div>
@@ -137,7 +137,7 @@ function AsistenciaCoordScreen({ ctx }) {
           <table className="tbl">
             <thead><tr>
               <th>Profesor</th><th>Práctica</th><th className="numeric">Clases</th><th>Última clase</th>
-              <th className="numeric">Ausentes</th><th className="numeric">Justif.</th><th className="numeric">Asistencia</th>
+              <th className="numeric">Inasist.</th><th className="numeric">Justif.</th><th className="numeric">Asistencia</th>
             </tr></thead>
             <tbody>
               {filasProf.map(f => (
@@ -146,7 +146,7 @@ function AsistenciaCoordScreen({ ctx }) {
                   <td>{f.practica}</td>
                   <td className="numeric tnum">{f.clases}</td>
                   <td className="tnum muted">{fmt(f.ultima)}</td>
-                  <td className="numeric tnum">{f.c.A}</td>
+                  <td className="numeric tnum">{f.c.inasist}</td>
                   <td className="numeric tnum">{f.c.J}</td>
                   <td className="numeric">{pctTag(f.c.pct)}</td>
                 </tr>
@@ -160,7 +160,7 @@ function AsistenciaCoordScreen({ ctx }) {
           <table className="tbl">
             <thead><tr>
               <th>Estudiante</th><th>RUT</th><th>Práctica</th><th>Profesor</th>
-              <th className="numeric">P</th><th className="numeric">T</th><th className="numeric">A</th><th className="numeric">J</th><th className="numeric">Asistencia</th>
+              <th className="numeric">P</th><th className="numeric">T</th><th className="numeric">A</th><th className="numeric">J</th><th className="numeric" title="Ausencias + 1 por cada 3 atrasos">Inasist.</th><th className="numeric">Asistencia</th>
             </tr></thead>
             <tbody>
               {visiblesEst.map(f => (
@@ -173,10 +173,11 @@ function AsistenciaCoordScreen({ ctx }) {
                   <td className="numeric tnum">{f.c.T}</td>
                   <td className="numeric tnum">{f.c.A}</td>
                   <td className="numeric tnum">{f.c.J}</td>
+                  <td className="numeric tnum" style={{ fontWeight:600 }}>{f.c.inasist}{f.c.AT ? <span className="muted" style={{ fontWeight:400 }}> ({f.c.AT} atr.)</span> : null}</td>
                   <td className="numeric">{pctTag(f.c.pct)}</td>
                 </tr>
               ))}
-              {visiblesEst.length === 0 && <tr><td colSpan={9} className="muted" style={{ textAlign:'center', padding:24 }}>Ningún estudiante bajo {A.UMBRAL}%.</td></tr>}
+              {visiblesEst.length === 0 && <tr><td colSpan={10} className="muted" style={{ textAlign:'center', padding:24 }}>Ningún estudiante bajo {A.UMBRAL}%.</td></tr>}
             </tbody>
           </table>
         </div>

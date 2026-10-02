@@ -71,5 +71,5 @@
     return out;
   }
 
-  window.ASISTENCIA = { PREFIX, ESTADOS, UMBRAL: 75, key, read, write, readAll, contar, porEstudiante };
+  window.ASISTENCIA = { PREFIX, ESTADOS, UMBRAL: 100, key, read, write, readAll, contar, porEstudiante };
 })();

@@ -26,6 +26,15 @@ function Dashboard({ ctx, onNav }) {
   const grupos = D.GRUPOS || [];
   const estudiantes = ctx.state.estudiantes || D.ESTUDIANTES;
   const [tab, setTab] = useState('resumen');
+  // Profesores con esta práctica asignada por el coordinador (coord_profs);
+  // la lista fija D.PROFESORES es solo de demostración.
+  const nProfs = (() => {
+    try {
+      const profs = JSON.parse(localStorage.getItem('coord_profs') || '[]') || [];
+      if (profs.length) return profs.filter(p => (p.practicasAsignadas || []).includes(D.activeCodigo)).length;
+    } catch (e) {}
+    return (D.PROFESORES || []).length;
+  })();
   // Stats
   const evalsCorregidas = evaluaciones.filter(e => e.estado === 'corregida').length;
   const evalsEnEval = evaluaciones.filter(e => e.estado === 'en-evaluacion').length;
@@ -50,7 +59,7 @@ function Dashboard({ ctx, onNav }) {
       <div className="section-head">
         <div>
           <h1>{meta.cursoTitulo || 'Práctica'}</h1>
-          <div className="subtitle">{window.semestreLabel(ctx.state.inicioPractica, meta.semestre)} · {estudiantes.length} estudiantes · {D.PROFESORES.length} profesores supervisores</div>
+          <div className="subtitle">{window.semestreLabel(ctx.state.inicioPractica, meta.semestre)} · {estudiantes.length} estudiantes · {nProfs} profesor{nProfs === 1 ? '' : 'es'} supervisor{nProfs === 1 ? '' : 'es'}</div>
         </div>
         <div className="actions">
           <a className="btn btn-secondary" href={ctx.driveUrl || 'https://drive.google.com'} target="_blank" rel="noopener noreferrer" title="Abrir Google Drive del curso">
@@ -229,7 +238,7 @@ function fmtFechaCorta(iso) {
 
 function pctTag(pct) {
   if (pct == null) return <span className="muted">—</span>;
-  const cls = pct < window.ASISTENCIA.UMBRAL ? 'tag-danger' : pct < 90 ? 'tag-warn' : 'tag-teal';
+  const cls = pct < window.ASISTENCIA.UMBRAL ? 'tag-danger' : 'tag-teal';
   return <span className={`tag ${cls} tnum`}>{pct}%</span>;
 }
 
@@ -342,7 +351,7 @@ function AsistenciaPanel({ ctx, estudiantes }) {
         <StatCard label="Clases registradas" value={sesiones.length} delta={sesiones[0] ? `última: ${fmtFechaCorta(sesiones[0].fecha)}` : 'aún no hay clases'} color="teal" />
         <StatCard label="Asistencia general" value={totalGeneral.pct != null ? totalGeneral.pct + '%' : '—'} delta="presentes + atrasos" color="ink" />
         <StatCard label="Inasistencias" value={totalGeneral.A} delta={`${totalGeneral.J} justificadas aparte`} color="orange" />
-        <StatCard label={`Bajo ${A.UMBRAL}%`} value={bajoUmbral} delta="estudiantes en riesgo" color="orange" />
+        <StatCard label={`Bajo ${A.UMBRAL}%`} value={bajoUmbral} delta="estudiantes con inasistencias" color="orange" />
       </div>
 
       <div className="grid-2">

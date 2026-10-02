@@ -27,7 +27,7 @@ function AsistenciaCoordScreen({ ctx }) {
   };
   const fmt = iso => { if (!iso) return '—'; const [y, m, d] = iso.split('-'); return `${d}/${m}/${y}`; };
   const pctTag = pct => pct == null ? <span className="muted">—</span>
-    : <span className={`tag ${pct < A.UMBRAL ? 'tag-danger' : pct < 90 ? 'tag-warn' : 'tag-teal'} tnum`}>{pct}%</span>;
+    : <span className={`tag ${pct < A.UMBRAL ? 'tag-danger' : 'tag-teal'} tnum`}>{pct}%</span>;
 
   const filtrados = docs.filter(d => (!fPrac || d.practica === fPrac) && (!fProf || (d.profesorEmail || '') === fProf)
     && Object.keys(d.sesiones || {}).length > 0);

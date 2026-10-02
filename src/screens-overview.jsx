@@ -25,6 +25,7 @@ function Dashboard({ ctx, onNav }) {
   const meta = D.meta || {};
   const grupos = D.GRUPOS || [];
   const estudiantes = ctx.state.estudiantes || D.ESTUDIANTES;
+  const [tab, setTab] = useState('resumen');
   // Stats
   const evalsCorregidas = evaluaciones.filter(e => e.estado === 'corregida').length;
   const evalsEnEval = evaluaciones.filter(e => e.estado === 'en-evaluacion').length;
@@ -62,6 +63,14 @@ function Dashboard({ ctx, onNav }) {
         </div>
       </div>
 
+      <div className="tabs">
+        <button className={tab === 'resumen' ? 'active' : ''} onClick={() => setTab('resumen')}>Resumen</button>
+        <button className={tab === 'asistencia' ? 'active' : ''} onClick={() => setTab('asistencia')}>Asistencia</button>
+      </div>
+
+      {tab === 'asistencia' && <AsistenciaPanel key={window.USACH_DATA.activeCodigo} ctx={ctx} estudiantes={estudiantes} />}
+
+      {tab === 'resumen' && <>
       <div className="grid-4" style={{ marginBottom: 20 }}>
         <StatCard label="Promedio curso" value={promCurso != null ? formatNota(promCurso) : '—'}
                   delta="sobre evaluaciones corregidas" color="teal" />
@@ -202,7 +211,180 @@ function Dashboard({ ctx, onNav }) {
           </div>
         </div>
       </div>
+      </>}
     </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════
+// ASISTENCIA a las clases del supervisor/a (pestaña de Inicio)
+// Se guarda por práctica y profesor (ver asistencia-store.js) y el
+// coordinador la ve consolidada en su pantalla "Asistencia".
+// ═════════════════════════════════════════════════════════════
+function fmtFechaCorta(iso) {
+  if (!iso) return '—';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function pctTag(pct) {
+  if (pct == null) return <span className="muted">—</span>;
+  const cls = pct < window.ASISTENCIA.UMBRAL ? 'tag-danger' : pct < 90 ? 'tag-warn' : 'tag-teal';
+  return <span className={`tag ${cls} tnum`}>{pct}%</span>;
+}
+
+function AsistenciaPanel({ ctx, estudiantes }) {
+  const A = window.ASISTENCIA;
+  const au = window.__authUser || {};
+  const practica = window.USACH_DATA.activeCodigo;
+  const [doc, setDoc] = useState(() => A.read(practica, au.email));
+  const [selId, setSelId] = useState(null);
+  const [confirmDel, setConfirmDel] = useState(false);
+
+  // Guarda y deja el nombre/RUT de los estudiantes registrados para que el
+  // coordinador los vea aunque el estudiante cambie de profesor.
+  const guardar = (next) => {
+    const est = { ...(next.estudiantes || {}) };
+    estudiantes.forEach(e => { est[e.id] = { nombre: e.nombre, rut: e.rut || '' }; });
+    const full = { ...next, estudiantes: est, profesorNombre: au.nombre || next.profesorNombre || '' };
+    A.write(practica, au.email, full);
+    setDoc(full);
+  };
+
+  const sesiones = Object.values(doc.sesiones || {}).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || '') || (b.id || '').localeCompare(a.id || ''));
+  const ses = selId ? (doc.sesiones || {})[selId] : null;
+
+  const nuevaClase = () => {
+    const id = 'as_' + Date.now();
+    guardar({ ...doc, sesiones: { ...(doc.sesiones || {}), [id]: { id, fecha: window.todayISO(), tema: '', registros: {} } } });
+    setSelId(id);
+  };
+  const updSes = (data) => guardar({ ...doc, sesiones: { ...doc.sesiones, [selId]: { ...ses, ...data } } });
+  const marcar = (estId, v) => {
+    const registros = { ...(ses.registros || {}) };
+    if (registros[estId] === v) delete registros[estId]; else registros[estId] = v;
+    updSes({ registros });
+  };
+  const todosPresentes = () => {
+    const registros = { ...(ses.registros || {}) };
+    estudiantes.forEach(e => { if (!registros[e.id]) registros[e.id] = 'P'; });
+    updSes({ registros });
+  };
+  const eliminar = () => {
+    const s = { ...doc.sesiones }; delete s[selId];
+    guardar({ ...doc, sesiones: s });
+    setSelId(null); setConfirmDel(false);
+    ctx.toast('Clase eliminada');
+  };
+
+  // ── Detalle: pasar lista de una clase ──
+  if (ses) {
+    const c = A.contar(estudiantes.map(e => (ses.registros || {})[e.id]).filter(Boolean));
+    return (
+      <div className="card">
+        <div className="card-header" style={{ flexWrap: 'wrap', gap: 8 }}>
+          <button className="btn btn-ghost btn-sm" onClick={() => setSelId(null)}><I.arrowLeft /> Clases</button>
+          <h3 style={{ margin: 0 }}>Pasar lista</h3>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
+            <button className="btn btn-secondary btn-sm" onClick={todosPresentes}><I.check /> Resto presentes</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDel(true)} title="Eliminar clase"><I.trash /></button>
+          </div>
+        </div>
+        <div className="card-pad" style={{ display: 'flex', gap: 14, flexWrap: 'wrap', borderBottom: '1px solid var(--border)' }}>
+          <Field label="Fecha"><input className="input" type="date" value={ses.fecha || ''} onChange={e => updSes({ fecha: e.target.value })} /></Field>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <Field label="Tema / actividad de la clase"><input className="input" placeholder="Ej: Retroalimentación planificación" value={ses.tema || ''} onChange={e => updSes({ tema: e.target.value })} /></Field>
+          </div>
+        </div>
+        {confirmDel && (
+          <div className="card-section" style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--orange-50)' }}>
+            <I.warn size={16} /> <span style={{ flex: 1, fontSize: 13 }}>¿Eliminar esta clase y su registro de asistencia?</span>
+            <button className="btn btn-ghost btn-sm" onClick={() => setConfirmDel(false)}>Cancelar</button>
+            <button className="btn btn-primary btn-sm" onClick={eliminar}>Eliminar</button>
+          </div>
+        )}
+        <div className="card-section muted" style={{ fontSize: 12.5, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <span>{c.total}/{estudiantes.length} registrados</span>
+          {A.ESTADOS.map(s => <span key={s.k}>{s.label}: <strong className="tnum">{c[s.k]}</strong></span>)}
+        </div>
+        {estudiantes.length === 0 && <div className="empty"><div className="title">Sin estudiantes</div><div>El coordinador aún no te asigna estudiantes en esta práctica.</div></div>}
+        {estudiantes.map(est => {
+          const v = (ses.registros || {})[est.id];
+          return (
+            <div key={est.id} className="card-section row" style={{ flexWrap: 'wrap', gap: 10 }}>
+              <div className="avatar" style={{ background: 'linear-gradient(135deg, var(--teal-400), var(--orange-500))' }}>
+                {est.nombre.split(' ').slice(0, 2).map(n => n[0]).join('')}
+              </div>
+              <div style={{ flex: 1, minWidth: 160 }}>
+                <div style={{ fontWeight: 600, fontSize: 13.5 }}>{est.nombre}</div>
+                <div className="muted" style={{ fontSize: 11.5 }}>{est.rut}</div>
+              </div>
+              <div className="seg">
+                {A.ESTADOS.map(s => (
+                  <button key={s.k} className={v === s.k ? s.cls : ''} title={s.label} onClick={() => marcar(est.id, s.k)}>{s.label}</button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // ── Lista de clases + resumen por estudiante ──
+  const resumen = A.porEstudiante(doc);
+  const totalGeneral = A.contar(sesiones.flatMap(s => Object.values(s.registros || {})));
+  const bajoUmbral = estudiantes.filter(e => resumen[e.id] && resumen[e.id].pct != null && resumen[e.id].pct < A.UMBRAL).length;
+
+  return (
+    <>
+      <div className="grid-4" style={{ marginBottom: 20 }}>
+        <StatCard label="Clases registradas" value={sesiones.length} delta={sesiones[0] ? `última: ${fmtFechaCorta(sesiones[0].fecha)}` : 'aún no hay clases'} color="teal" />
+        <StatCard label="Asistencia general" value={totalGeneral.pct != null ? totalGeneral.pct + '%' : '—'} delta="presentes + atrasos" color="ink" />
+        <StatCard label="Inasistencias" value={totalGeneral.A} delta={`${totalGeneral.J} justificadas aparte`} color="orange" />
+        <StatCard label={`Bajo ${A.UMBRAL}%`} value={bajoUmbral} delta="estudiantes en riesgo" color="orange" />
+      </div>
+
+      <div className="grid-2">
+        <div className="card">
+          <div className="card-header">
+            <h3>Clases</h3>
+            <button className="btn btn-primary btn-sm" onClick={nuevaClase}><I.plus /> Pasar asistencia</button>
+          </div>
+          {sesiones.length === 0 && <div className="empty"><div className="title">Sin clases registradas</div><div>Usa «Pasar asistencia» al comenzar cada clase.</div></div>}
+          {sesiones.map(s => {
+            const c = A.contar(Object.values(s.registros || {}));
+            return (
+              <div key={s.id} className="card-section" style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }} onClick={() => setSelId(s.id)}>
+                <I.calendar size={16} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5 }}>{fmtFechaCorta(s.fecha)}</div>
+                  <div className="muted" style={{ fontSize: 12, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.tema || 'Sin tema'} · {c.P + c.T} presentes · {c.A} ausentes</div>
+                </div>
+                {pctTag(c.pct)}
+                <I.arrowRight />
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="card">
+          <div className="card-header"><h3>Asistencia por estudiante</h3></div>
+          {estudiantes.map(est => {
+            const r = resumen[est.id];
+            return (
+              <div key={est.id} className="card-section" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13.5 }}>{est.nombre}</div>
+                  <div className="muted" style={{ fontSize: 11.5 }}>{r ? `${r.P} P · ${r.T} T · ${r.A} A · ${r.J} J` : 'Sin registros'}</div>
+                </div>
+                {pctTag(r && r.pct)}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 }
 

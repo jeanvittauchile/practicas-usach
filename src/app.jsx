@@ -232,7 +232,7 @@ function App() {
         ...s,
         estudiantes: [
           ...(s.estudiantes || []),
-          { id: 'e_' + Date.now(), ...data },
+          { id: 'e_' + Date.now(), addedBy: (window.__authUser && window.__authUser.email) || '', ...data },
         ],
       }));
       toastMsg(`${data.nombre || 'Estudiante'} agregado e inscrito automáticamente`);
@@ -450,8 +450,25 @@ function getCoordStudents(practica) {
   } catch (e) { return []; }
 }
 
+// El estado de cada práctica es un único documento compartido entre todas las
+// cuentas, así que su lista `estudiantes` no sirve para un profesor: siempre se
+// reconstruye desde coord_students (filtrado por profesor), aunque quede vacía.
+function esProfesor() {
+  const au = window.__authUser;
+  return !!(au && au.rol !== 'coordinador');
+}
+
+// Estudiantes agregados a mano (id 'e_…'); a un profesor solo se le muestran los suyos.
+function extrasPropios(estudiantes) {
+  const extras = (estudiantes || []).filter(function(s) { return s.id && s.id.startsWith('e_'); });
+  if (!esProfesor()) return extras;
+  const email = (window.__authUser.email || '').toLowerCase();
+  return extras.filter(function(s) { return (s.addedBy || '').toLowerCase() === email; });
+}
+
 function loadState(practica, kind) {
   const coordStudents = getCoordStudents(practica);
+  const filtrar = esProfesor();
   try {
     const raw = localStorage.getItem(stateKey(practica, kind));
     if (raw) {
@@ -459,16 +476,14 @@ function loadState(practica, kind) {
       if (parsed && typeof parsed === 'object' && Array.isArray(parsed.evaluaciones)) {
         const catalog = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
         parsed.evaluaciones = window.backfillSemanaEntrega(parsed.evaluaciones, catalog);
-        if (!coordStudents.length) return parsed;
+        if (!filtrar && !coordStudents.length) return parsed;
         // Coordinator students are authoritative; keep professor-added extras (id starts with 'e_')
-        const coordIds = new Set(coordStudents.map(function(s) { return s.id; }));
-        const extras = (parsed.estudiantes || []).filter(function(s) { return s.id && s.id.startsWith('e_'); });
-        return Object.assign({}, parsed, { estudiantes: coordStudents.concat(extras) });
+        return Object.assign({}, parsed, { estudiantes: coordStudents.concat(extrasPropios(parsed.estudiantes)) });
       }
     }
   } catch (e) {}
   const base = initialState(kind);
-  return coordStudents.length ? Object.assign({}, base, { estudiantes: coordStudents }) : base;
+  return (filtrar || coordStudents.length) ? Object.assign({}, base, { estudiantes: coordStudents }) : base;
 }
 
 // ─── Color helpers ────────────────────────────────────────────

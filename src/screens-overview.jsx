@@ -422,7 +422,9 @@ function EvalCard({ ev, state, onClick, mencionBadge }) {
   const total = estudiantes.length;
   // Para evaluaciones vinculadas al supervisor (dim 7), el progreso viene de esos indicadores
   const esPresent = ev.grupo === 'presentacion';
-  const presentIds = ['p1','p2','p3','p4'];
+  const dimsSup = state.supervisorDims || D.SUPERVISOR_DIMENSIONES || [];
+  const dim7 = dimsSup.find(d => d.id === 'd7');
+  const presentIds = dim7 ? dim7.indicadores.map(i => i.id) : ['p1','p2','p3','p4','p5'];
   const completados = esPresent
     ? estudiantes.filter(est => {
         const resp = state.supervisor?.[est.id] || {};

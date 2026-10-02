@@ -286,7 +286,7 @@ const PRESENTACION_TERRENO_P1 = {
     'Lenguaje técnico, claro y profesional durante toda la exposición.',
     'Puntualidad: presentarse 5 min antes del horario acordado con el/la supervisor/a.',
   ],
-  criterios: [], // calificación vía supervisor dim 7 → indicadores p1–p4
+  criterios: [], // calificación vía supervisor dim 7 → indicadores p1–p5
 };
 
 const SOLEMNES_P1 = [

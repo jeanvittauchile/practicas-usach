@@ -27,7 +27,9 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
   // Compute progress
   const total = estudiantes.length;
   const esPresent = ev.grupo === 'presentacion';
-  const presentIds = ['p1','p2','p3','p4'];
+  const dim7 = esPresent ? presentacionDim(ctx) : null;
+  const presentIds = dim7 ? dim7.indicadores.map(i => i.id) : [];
+  const ptsMaxNivel = (nivelesSupervisor()[0] || { pts: 4 }).pts;
   const completados = esPresent
     ? estudiantes.filter(est => {
         const resp = ctx.state.supervisor?.[est.id] || {};
@@ -78,8 +80,8 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
           {!esPresent && <Metric label="Puntaje máx." value={ev.maxPuntos} sub="puntos" />}
           {!esPresent && <Metric label="Criterios" value={ev.criterios.length} sub={`${ev.criterios.filter(c=>c.doble).length} con doble puntaje`} />}
           {ev.ponderacion > 0 && <Metric label="Ponderación" value={`${Math.round(ev.ponderacion*100)}%`} sub="de la nota final" />}
-          {esPresent && <Metric label="Indicadores" value={4} sub="Dim. 7 del supervisor" />}
-          {esPresent && <Metric label="Escala" value="S/CS/O/CN/N" sub="máx. 16 pts" />}
+          {esPresent && <Metric label="Indicadores" value={presentIds.length} sub="Dim. 7 del supervisor" />}
+          {esPresent && <Metric label="Escala" value="S/CS/O/CN/N" sub={`máx. ${presentIds.length * ptsMaxNivel} pts`} />}
           {ev.variantes && <VariantToggle ev={ev} ctx={ctx} />}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             {!esPresent && <button className="btn btn-secondary" onClick={() => setShowEdit(true)}><I.edit /> Editar</button>}
@@ -163,7 +165,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
       {showEditFecha && <EditFechaModal ev={ev} ctx={ctx} onClose={() => setShowEditFecha(false)} />}
       {showInforme && <InformeAcademicoModal ev={ev} ctx={ctx} onClose={() => setShowInforme(false)} />}
 
-      {tab === 'rubrica' && <RubricaPreview ev={ev} />}
+      {tab === 'rubrica' && <RubricaPreview ev={ev} ctx={ctx} />}
 
       {tab === 'estudiantes' && <EvalStudentList ev={ev} ctx={ctx} onOpenPdf={(est) => ctx.openStudentPdf(ev, est)} />}
 
@@ -219,7 +221,126 @@ function DetailSection({ open, toggle, sec, icon, title, isTaller, children }) {
   );
 }
 
-function RubricaPreview({ ev }) {
+// Dimensión 7 del supervisor = rúbrica de la Presentación: Salidas a terreno
+function presentacionDim(ctx) {
+  const dims = (ctx && ctx.state.supervisorDims) || Dd.SUPERVISOR_DIMENSIONES || [];
+  return dims.find(d => d.id === 'd7') || dims.find(d => /presentaci/i.test(d.label)) || null;
+}
+
+function nivelesSupervisor() {
+  return (Dd.NIVELES && Dd.NIVELES.NIVELES_SUPERVISOR) || Dd.NIVELES_SUPERVISOR || [];
+}
+
+function descargarRubricaPresentacionPDF(ev, ctx) {
+  const dim = presentacionDim(ctx);
+  if (!dim) return;
+  const niveles = nivelesSupervisor();
+  const meta = Dd.meta || {};
+  const grupo = window.grupoDef(ev.grupo);
+  const ideal = dim.indicadores.length * (niveles[0] ? niveles[0].pts : 4);
+  const e = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const titulo = `Rúbrica — ${ev.titulo}`;
+  const ths = niveles.map(n => `<th class="opt">${e(n.key)}<small>${e(n.label)}<br>(${n.pts} pts)</small></th>`).join('');
+  const rows = dim.indicadores.map((ind, i) =>
+    `<tr><td class="num">${i + 1}</td><td>${e(ind.texto)}</td>${niveles.map(() => '<td class="opt"><span class="box"></span></td>').join('')}</tr>`).join('');
+  const lista = (t, arr) => arr && arr.length ? `<h2>${t}</h2><ul>${arr.map(x => `<li>${e(x)}</li>`).join('')}</ul>` : '';
+  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${e(titulo)}</title>
+<style>
+  *{box-sizing:border-box;} body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1c2630;margin:0;padding:28px;font-size:12.5px;}
+  .sheet{max-width:900px;margin:0 auto;}
+  .head{background:linear-gradient(105deg,#c2410c,#f97316);color:#fff;padding:20px 24px;border-radius:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .head .sub{font-size:11px;opacity:.9;text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+  .head h1{margin:6px 0 4px;font-size:20px;} .head .inf{font-size:12px;opacity:.92;}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:18px 0;}
+  .meta div{border-bottom:1.5px solid #cfd6de;padding:14px 2px 4px;font-size:10.5px;color:#5b6675;text-transform:uppercase;letter-spacing:.05em;font-weight:700;}
+  p.desc{color:#3b4652;line-height:1.5;margin:0 0 12px;}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#c2410c;margin:16px 0 6px;}
+  ul{margin:0;padding-left:18px;line-height:1.5;}
+  table{width:100%;border-collapse:collapse;margin-top:6px;}
+  th,td{border:1px solid #d7dde4;padding:8px 9px;text-align:left;vertical-align:middle;}
+  thead th{background:#fff4ec;font-size:11px;color:#9a3412;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  th.opt,td.opt{width:64px;text-align:center;} th.opt small{display:block;font-weight:500;font-size:9.5px;color:#5b6675;margin-top:2px;}
+  td.num{width:34px;text-align:center;font-weight:700;color:#5b6675;}
+  .box{display:inline-block;width:14px;height:14px;border:1.5px solid #9aa5b1;border-radius:3px;}
+  .total{display:flex;justify-content:flex-end;gap:24px;margin-top:12px;font-size:13px;}
+  .total span{border-bottom:1.5px solid #cfd6de;min-width:120px;display:inline-block;}
+  .foot{margin-top:18px;color:#5b6675;line-height:1.5;}
+  .firma{display:flex;justify-content:space-between;gap:40px;margin-top:48px;}
+  .firma div{flex:1;border-top:1px solid #1c2630;text-align:center;padding-top:4px;font-size:11px;color:#5b6675;}
+  .actions{max-width:900px;margin:0 auto 14px;text-align:right;}
+  .actions button{font:inherit;font-weight:600;border:none;background:#ea580c;color:#fff;border-radius:7px;padding:9px 14px;cursor:pointer;}
+  @media print{body{padding:0;} .actions{display:none;} tr{page-break-inside:avoid;}}
+</style></head><body>
+<div class="actions"><button onclick="window.print()">Guardar como PDF</button></div>
+<div class="sheet">
+  <div class="head">
+    <div class="sub">${e(meta.escuela || 'Entrenador Deportivo · USACH')}</div>
+    <h1>${e(grupo.singular)} ${e(ev.numero)} · ${e(ev.tipo)} — ${e(ev.titulo)}</h1>
+    <div class="inf">${e(meta.cursoTitulo || meta.nombre || '')}${ev.duracion ? ' · ' + e(ev.duracion) : ''}</div>
+  </div>
+  <div class="meta"><div>Estudiante</div><div>Fecha</div><div>Centro / comuna</div><div>Supervisor/a</div></div>
+  <p class="desc">${e(ev.descripcion)}</p>
+  <h2>${e(dim.label)} — Rúbrica de evaluación</h2>
+  <table><thead><tr><th>N°</th><th>Indicador</th>${ths}</tr></thead><tbody>${rows}</tbody></table>
+  <div class="total"><div>Puntaje: <span></span> / ${ideal}</div></div>
+  ${lista('Aspectos formales', ev.aspectosFormales)}
+  <div class="foot"><b>Observaciones:</b><br><br>______________________________________________________________________________________<br><br>______________________________________________________________________________________</div>
+  <div class="firma"><div>Firma supervisor/a</div><div>Firma estudiante</div></div>
+</div>
+<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350);};<\/script>
+</body></html>`;
+  const w = window.open('', '_blank', 'width=960,height=760');
+  if (!w) { if (ctx && ctx.toast) ctx.toast('Habilita las ventanas emergentes para generar el PDF.'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+function RubricaPresentacion({ ev, ctx }) {
+  const dim = presentacionDim(ctx);
+  const niveles = nivelesSupervisor();
+  if (!dim) return <div className="card" style={{ padding: 18 }}><span className="muted">No se encontró la Dimensión 7 del instrumento del supervisor.</span></div>;
+  const ideal = dim.indicadores.length * (niveles[0] ? niveles[0].pts : 4);
+  return (
+    <div className="col" style={{ gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+        <div className="muted" style={{ fontSize: 12.5 }}>{dim.label} · {dim.indicadores.length} indicadores · escala {niveles.map(n => n.key).join('/')} · máx. {ideal} pts</div>
+        <button className="btn btn-primary btn-sm" style={{ marginLeft: 'auto' }} onClick={() => descargarRubricaPresentacionPDF(ev, ctx)}>
+          <I.download size={14} /> Descargar PDF
+        </button>
+      </div>
+      <div className="card" style={{ padding: 0, overflow: 'auto' }}>
+        <table className="tbl" style={{ minWidth: 700 }}>
+          <thead>
+            <tr>
+              <th style={{ minWidth: 320 }}>Indicador</th>
+              {niveles.map(n => (
+                <th key={n.key} style={{ textAlign: 'center' }}>
+                  <span className={`lvl lvl-${n.key}`}>{n.key}</span>
+                  <div className="muted" style={{ fontSize: 11, fontWeight: 500 }}>{n.label} ({n.pts})</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dim.indicadores.map((ind, i) => (
+              <tr key={ind.id}>
+                <td>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--orange-700)' }} className="tnum">{i+1}.</span>
+                    <span>{ind.texto}</span>
+                  </div>
+                </td>
+                {niveles.map(n => <td key={n.key} style={{ textAlign: 'center' }} className="muted">○</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function RubricaPreview({ ev, ctx }) {
+  if (ev.grupo === 'presentacion') return <RubricaPresentacion ev={ev} ctx={ctx} />;
   const nivelesSet = Cc.nivelesSetForEval(ev);
   const esTeal = window.grupoEsTeal(ev.grupo);
   return (

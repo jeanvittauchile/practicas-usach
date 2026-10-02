@@ -573,6 +573,11 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
   const escala = esPresent ? null : Ce.escalaForEval(ev);
   const filas = esPresent ? (dim7 ? dim7.indicadores : []) : ev.criterios;
   const maxPts = esPresent ? filas.length * (nivelesSet[0] ? nivelesSet[0].pts : 4) : ev.maxPuntos;
+  // Evaluador = usuario con sesión iniciada; si lo descarga el coordinador, queda en blanco
+  const au = window.__authUser;
+  const evaluador = !au || au.rol === 'coordinador'
+    ? { nombre: '', email: '' }
+    : { nombre: String(au.nombre || '').replace(/^Prof\.?\s+/i, ''), email: au.email || '' };
   const bodyRef = useRef(null);
   const title = `Informe académico — ${grupo.singular} ${ev.numero} — ${ev.titulo}`;
 
@@ -611,8 +616,8 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
 
             <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse' }}>
               <tbody>
-                <CoverRow k="Profesor evaluador" v="Andrés Tapia Vergara" />
-                <CoverRow k="Email institucional" v="andres.tapia@usach.cl" />
+                <CoverRow k="Profesor evaluador" v={evaluador.nombre} />
+                <CoverRow k="Email institucional" v={evaluador.email} />
                 <CoverRow k="Semestre" v={window.semestreLabel(ctx.state.inicioPractica, meta.semestre)} />
                 <CoverRow k="Fecha de entrega" v={window.evalFechaInfo(ev, ctx.state).label} />
                 <CoverRow k="Tipo de evaluación" v={ev.tipo} />

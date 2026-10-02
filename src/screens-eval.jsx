@@ -86,7 +86,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             {!esPresent && <button className="btn btn-secondary" onClick={() => setShowEdit(true)}><I.edit /> Editar</button>}
             {esPresent && <button className="btn btn-secondary" onClick={() => setShowEditFecha(true)}><I.edit /> Editar fecha</button>}
-            {!esPresent && <button className="btn btn-secondary" onClick={() => setShowInforme(true)}><I.print /> Generar informe</button>}
+            <button className="btn btn-secondary" onClick={() => setShowInforme(true)}><I.print /> Generar informe</button>
             {esPresent
               ? <button className="btn btn-primary" onClick={() => ctx.navTo && ctx.navTo('supervisor')}>
                   <I.checkSquare /> Ir a Eval. Supervisor → Dim. 7
@@ -118,14 +118,9 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
                   La nota de la presentación forma parte del instrumento del Supervisor (30%). Para registrar las calificaciones, ve a
                   <strong> Procesos → Eval. Supervisor</strong> y completa la Dimensión 7 de cada estudiante.
                 </div>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => ctx.navTo && ctx.navTo('supervisor')}>
-                    <I.checkSquare size={14} /> Ir a Eval. Supervisor → Dim. 7
-                  </button>
-                  <button className="btn btn-secondary btn-sm" onClick={() => descargarDetallePresentacionPDF(ev, ctx)}>
-                    <I.download size={14} /> Descargar PDF
-                  </button>
-                </div>
+                <button className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => ctx.navTo && ctx.navTo('supervisor')}>
+                  <I.checkSquare size={14} /> Ir a Eval. Supervisor → Dim. 7
+                </button>
               </div>
             </div>
           )}
@@ -234,75 +229,6 @@ function presentacionDim(ctx) {
 
 function nivelesSupervisor() {
   return (Dd.NIVELES && Dd.NIVELES.NIVELES_SUPERVISOR) || Dd.NIVELES_SUPERVISOR || [];
-}
-
-// PDF con el detalle completo de la presentación (sin las pautas confidenciales del evaluador)
-function descargarDetallePresentacionPDF(ev, ctx) {
-  const dim = presentacionDim(ctx);
-  const niveles = nivelesSupervisor();
-  const meta = Dd.meta || {};
-  const grupo = window.grupoDef(ev.grupo);
-  const ideal = dim ? dim.indicadores.length * (niveles[0] ? niveles[0].pts : 4) : 0;
-  const fecha = window.evalFechaInfo(ev, ctx.state).label;
-  const e = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const titulo = `${grupo.singular} ${ev.numero} — ${ev.titulo}`;
-  const lista = (t, arr, tag) => arr && arr.length ? `<h2>${t}</h2><${tag || 'ul'}>${arr.map(x => `<li>${e(x)}</li>`).join('')}</${tag || 'ul'}>` : '';
-  const ths = niveles.map(n => `<th class="opt">${e(n.key)}<small>${e(n.label)}<br>(${n.pts} pts)</small></th>`).join('');
-  const rows = dim ? dim.indicadores.map((ind, i) =>
-    `<tr><td class="num">${i + 1}</td><td>${e(ind.texto)}</td>${niveles.map(() => '<td class="opt"><span class="box"></span></td>').join('')}</tr>`).join('') : '';
-  const rubrica = dim ? `<h2>Rúbrica de evaluación · ${e(dim.label)}</h2>
-  <p class="desc">Se califica en el instrumento del Supervisor (Dimensión 7) · ${dim.indicadores.length} indicadores · escala ${niveles.map(n => e(n.key)).join('/')} · máx. ${ideal} pts.</p>
-  <table><thead><tr><th>N°</th><th>Indicador</th>${ths}</tr></thead><tbody>${rows}</tbody></table>` : '';
-  const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>${e(titulo)}</title>
-<style>
-  *{box-sizing:border-box;} body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1c2630;margin:0;padding:28px;font-size:12.5px;}
-  .sheet{max-width:900px;margin:0 auto;}
-  .head{background:linear-gradient(105deg,#c2410c,#f97316);color:#fff;padding:20px 24px;border-radius:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .head .sub{font-size:11px;opacity:.9;text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
-  .head h1{margin:6px 0 4px;font-size:20px;} .head .inf{font-size:12.5px;opacity:.92;line-height:1.5;}
-  .info{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 4px;}
-  .info div{background:#fff7f0;border:1px solid #fde0c8;border-radius:8px;padding:8px 10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  .info b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#9a3412;margin-bottom:2px;}
-  p.desc{color:#3b4652;line-height:1.5;margin:0 0 8px;}
-  h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#c2410c;border-bottom:2px solid #f97316;padding-bottom:3px;margin:20px 0 8px;}
-  ul,ol{margin:0;padding-left:18px;line-height:1.55;} li{margin-bottom:4px;}
-  table{width:100%;border-collapse:collapse;margin-top:6px;}
-  th,td{border:1px solid #d7dde4;padding:8px 9px;text-align:left;vertical-align:middle;}
-  thead th{background:#fff4ec;font-size:11px;color:#9a3412;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-  th.opt,td.opt{width:64px;text-align:center;} th.opt small{display:block;font-weight:500;font-size:9.5px;color:#5b6675;margin-top:2px;}
-  td.num{width:34px;text-align:center;font-weight:700;color:#5b6675;}
-  .box{display:inline-block;width:14px;height:14px;border:1.5px solid #9aa5b1;border-radius:3px;}
-  .pie{margin-top:24px;padding-top:10px;border-top:1px solid #d7dde4;font-size:10.5px;color:#5b6675;text-align:center;}
-  .actions{max-width:900px;margin:0 auto 14px;text-align:right;}
-  .actions button{font:inherit;font-weight:600;border:none;background:#ea580c;color:#fff;border-radius:7px;padding:9px 14px;cursor:pointer;}
-  @media print{body{padding:0;} .actions{display:none;} tr,li{page-break-inside:avoid;} h2{page-break-after:avoid;}}
-</style></head><body>
-<div class="actions"><button onclick="window.print()">Guardar como PDF</button></div>
-<div class="sheet">
-  <div class="head">
-    <div class="sub">${e(meta.escuela || 'Entrenador Deportivo · USACH')} · ${e(meta.cursoTitulo || meta.nombre || '')}</div>
-    <h1>${e(ev.titulo)}</h1>
-    <div class="inf">${e(grupo.singular)} ${e(ev.numero)} · ${e(ev.tipo)}</div>
-  </div>
-  <div class="info">
-    <div><b>Fecha de entrega</b>${e(fecha)}${ev.semanaEntrega ? ' · Semana ' + e(ev.semanaEntrega) : ''}</div>
-    <div><b>Duración</b>${e(ev.duracion)}</div>
-    <div><b>Calificación</b>Eval. Supervisor · Dim. 7${ideal ? ' (máx. ' + ideal + ' pts)' : ''}</div>
-  </div>
-  <h2>Descripción</h2><p class="desc">${e(ev.descripcion)}</p>
-  ${lista('Resultados de aprendizaje', ev.resultadosAprendizaje)}
-  ${lista('Objetivos específicos', ev.objetivosEspecificos)}
-  ${lista('Instrucciones', ev.instrucciones, 'ol')}
-  ${lista('Aspectos formales', ev.aspectosFormales)}
-  ${lista('Recomendaciones para el estudiante', ev.pautasEstudiante)}
-  ${rubrica}
-  <div class="pie">Documento generado el ${e(new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' }))} · Sistema de gestión de prácticas USACH</div>
-</div>
-<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350);};<\/script>
-</body></html>`;
-  const w = window.open('', '_blank', 'width=960,height=760');
-  if (!w) { if (ctx && ctx.toast) ctx.toast('Habilita las ventanas emergentes para generar el PDF.'); return; }
-  w.document.open(); w.document.write(html); w.document.close();
 }
 
 function RubricaPresentacion({ ev, ctx }) {

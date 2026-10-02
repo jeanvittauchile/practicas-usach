@@ -566,8 +566,15 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
   const meta = De.meta || {};
   const isSolemne = window.grupoEsTeal(ev.grupo); // usa color teal como acento principal
   const grupo = window.grupoDef(ev.grupo);
-  const nivelesSet = Ce.nivelesSetForEval(ev);
-  const escala = Ce.escalaForEval(ev);
+  // Presentación: se califica con la Dim. 7 del supervisor (sin criterios propios)
+  const esPresent = ev.grupo === 'presentacion';
+  const dim7 = esPresent ? (ctx.state.supervisorDims || De.SUPERVISOR_DIMENSIONES || []).find(d => d.id === 'd7') : null;
+  const nivelesSet = esPresent ? ((De.NIVELES && De.NIVELES.NIVELES_SUPERVISOR) || De.NIVELES_SUPERVISOR || []) : Ce.nivelesSetForEval(ev);
+  const escala = esPresent ? null : Ce.escalaForEval(ev);
+  const filas = esPresent ? (dim7 ? dim7.indicadores : []) : ev.criterios;
+  const maxPts = esPresent ? filas.length * (nivelesSet[0] ? nivelesSet[0].pts : 4) : ev.maxPuntos;
+  const bodyRef = useRef(null);
+  const title = `Informe académico — ${grupo.singular} ${ev.numero} — ${ev.titulo}`;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -578,7 +585,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
           <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
         </div>
 
-        <div className="modal-body">
+        <div className="modal-body" ref={bodyRef}>
           {/* PORTADA */}
           <div className="pdf-page" style={{ padding: '72px 64px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 60 }}>
@@ -610,7 +617,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                 <CoverRow k="Fecha de entrega" v={window.evalFechaInfo(ev, ctx.state).label} />
                 <CoverRow k="Tipo de evaluación" v={ev.tipo} />
                 <CoverRow k="Duración / extensión" v={ev.duracion} />
-                <CoverRow k="Puntaje máximo" v={`${ev.maxPuntos} puntos`} />
+                <CoverRow k="Puntaje máximo" v={esPresent ? `${maxPts} puntos (Eval. Supervisor · Dim. 7)` : `${ev.maxPuntos} puntos`} />
                 <CoverRow k="Exigencia" v="60%" />
               </tbody>
             </table>
@@ -627,7 +634,9 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                 <tbody>
                   <CoverRow k="Grupo" v={grupo.label} />
                   <CoverRow k="Tipo" v={ev.tipo} />
-                  <CoverRow k="Cantidad de criterios" v={`${ev.criterios.length} criterios (${ev.criterios.filter(c=>c.doble).length} con doble puntaje)`} />
+                  {esPresent
+                    ? <CoverRow k="Cantidad de indicadores" v={`${filas.length} indicadores · Dimensión 7 del instrumento del Supervisor`} />
+                    : <CoverRow k="Cantidad de criterios" v={`${ev.criterios.length} criterios (${ev.criterios.filter(c=>c.doble).length} con doble puntaje)`} />}
                   <CoverRow k="Niveles de desempeño" v={nivelesSet.map(n => `${n.label} (${n.pts} pt)`).join(' · ')} />
                 </tbody>
               </table>
@@ -684,7 +693,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                 <thead>
                   <tr style={{ background: 'var(--surface-1)' }}>
                     <th style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'left', width: 28 }}>N°</th>
-                    <th style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'left' }}>Criterio</th>
+                    <th style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'left' }}>{esPresent ? 'Indicador' : 'Criterio'}</th>
                     {nivelesSet.map(n => (
                       <th key={n.key} style={{ padding: '8px 6px', borderBottom: '2px solid var(--ink-700)', textAlign: 'center', minWidth: 70 }}>
                         {n.label}<br /><span style={{ fontWeight: 400, color: 'var(--ink-500)' }}>{n.pts} pt</span>
@@ -694,7 +703,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {ev.criterios.map((cr, i) => (
+                  {filas.map((cr, i) => (
                     <tr key={cr.id} style={{ borderBottom: '1px solid var(--border)' }}>
                       <td style={{ padding: '8px 6px', verticalAlign: 'top', fontWeight: 700, color: isSolemne ? 'var(--teal-700)' : 'var(--orange-700)' }} className="tnum">{i+1}</td>
                       <td style={{ padding: '8px 6px', verticalAlign: 'top' }}>
@@ -703,7 +712,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                       </td>
                       {nivelesSet.map(n => (
                         <td key={n.key} style={{ padding: '8px 6px', verticalAlign: 'top', textAlign: 'center', fontSize: 10, color: 'var(--ink-600)' }}>
-                          {i === 0 ? n.desc.length > 70 ? n.desc.slice(0,68) + '…' : n.desc : '—'}
+                          {i === 0 && n.desc ? n.desc.length > 70 ? n.desc.slice(0,68) + '…' : n.desc : '—'}
                         </td>
                       ))}
                       <td style={{ padding: '8px 6px', verticalAlign: 'top', textAlign: 'right', fontWeight: 700 }} className="tnum">
@@ -713,26 +722,34 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                   ))}
                   <tr style={{ background: 'var(--surface-2)', borderTop: '2px solid var(--ink-700)' }}>
                     <td colSpan={2 + nivelesSet.length} style={{ padding: '10px 6px', fontWeight: 700, fontSize: 12 }}>Puntaje máximo total</td>
-                    <td style={{ padding: '10px 6px', textAlign: 'right', fontWeight: 700, fontSize: 13 }} className="tnum">{ev.maxPuntos}</td>
+                    <td style={{ padding: '10px 6px', textAlign: 'right', fontWeight: 700, fontSize: 13 }} className="tnum">{maxPts}</td>
                   </tr>
                 </tbody>
               </table>
             </SectionPdf>
 
-            <SectionPdf title="8. Escala de conversión de puntaje a nota (60% exigencia)" accent={isSolemne ? 'teal' : 'orange'}>
+            {esPresent && (
+              <SectionPdf title="8. Calificación" accent={isSolemne ? 'teal' : 'orange'}>
+                <p style={{ fontSize: 12.5, margin: 0, lineHeight: 1.55 }}>
+                  Esta presentación no tiene nota propia: el puntaje de sus <strong>{filas.length} indicadores (máx. {maxPts} pts)</strong> se registra en la <strong>Dimensión 7 del instrumento del Supervisor/a</strong>, cuya nota pondera el <strong>30%</strong> de la nota final del curso. Escala de apreciación: {nivelesSet.map(n => `${n.label} (${n.pts})`).join(' · ')}.
+                </p>
+              </SectionPdf>
+            )}
+
+            {!esPresent && <SectionPdf title="8. Escala de conversión de puntaje a nota (60% exigencia)" accent={isSolemne ? 'teal' : 'orange'}>
               <p style={{ fontSize: 11.5, color: 'var(--ink-600)', margin: '0 0 10px' }}>
                 La nota se asigna en escala 1,0 – 7,0 con nota mínima de aprobación 4,0 al obtener el {Math.round(ev.maxPuntos * 0.6)}% del puntaje (60%).
               </p>
               <EscalaTable escala={escala} maxPuntos={ev.maxPuntos} />
-            </SectionPdf>
+            </SectionPdf>}
 
-            <SectionPdf title="9. Penalización por atraso" accent={isSolemne ? 'teal' : 'orange'}>
+            {!esPresent && <SectionPdf title="9. Penalización por atraso" accent={isSolemne ? 'teal' : 'orange'}>
               <p style={{ fontSize: 12.5, margin: 0, lineHeight: 1.55 }}>
                 Cada día calendario de atraso en la entrega descuenta <strong>0,5 puntos</strong> de la nota final de la evaluación, sin tope. La nota mínima posible tras descuento es <strong>1,0</strong>.
               </p>
-            </SectionPdf>
+            </SectionPdf>}
 
-            <SectionPdf title="10. Ponderación en la nota final del curso" accent={isSolemne ? 'teal' : 'orange'}>
+            <SectionPdf title={`${esPresent ? 9 : 10}. Ponderación en la nota final del curso`} accent={isSolemne ? 'teal' : 'orange'}>
               <table style={{ width: '100%', fontSize: 11.5, borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ borderBottom: '1.5px solid var(--ink-700)' }}>
@@ -742,7 +759,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
                 </thead>
                 <tbody>
                   {De.PONDERACIONES.map(p => {
-                    const incluye = (p.componentes || []).includes(ev.id);
+                    const incluye = (p.componentes || []).includes(ev.id) || (esPresent && p.resolver === 'SUP');
                     return (
                       <tr key={p.id} style={{ borderBottom: '1px dashed var(--border)', background: incluye ? (isSolemne ? 'var(--teal-50)' : 'var(--orange-50)') : 'transparent' }}>
                         <td style={{ padding: '6px 8px', fontWeight: incluye ? 700 : 400 }}>
@@ -764,8 +781,8 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
 
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-          <button className="btn btn-secondary"><I.print /> Imprimir</button>
-          <button className="btn btn-primary"><I.download /> Descargar PDF</button>
+          <button className="btn btn-secondary" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, false)}><I.print /> Imprimir</button>
+          <button className="btn btn-primary" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, true)}><I.download /> Descargar PDF</button>
         </div>
       </div>
     </div>

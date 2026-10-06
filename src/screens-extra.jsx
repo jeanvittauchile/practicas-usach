@@ -786,8 +786,7 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
 
         <div className="modal-foot">
           <button className="btn btn-ghost" onClick={onClose}>Cerrar</button>
-          <button className="btn btn-secondary" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, false)}><I.print /> Imprimir</button>
-          <button className="btn btn-primary" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, true)}><I.download /> Descargar PDF</button>
+          <button className="btn btn-primary btn-press" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, true)}><I.download /> Descargar PDF</button>
         </div>
       </div>
     </div>

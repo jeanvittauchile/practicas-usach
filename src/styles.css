@@ -321,6 +321,19 @@ a:hover { text-decoration: underline; }
   background: var(--teal-500); color: #fff;
 }
 .btn-primary:hover { background: var(--teal-600); }
+/* Botón con sensación de "presionar" marcada al pasar el cursor */
+.btn-press {
+  box-shadow: 0 3px 0 var(--teal-700, #0b5a55), 0 4px 10px rgba(0,0,0,0.12);
+  transition: background 0.15s, transform 0.12s ease, box-shadow 0.12s ease;
+}
+.btn-press:hover {
+  transform: translateY(2px) scale(0.97);
+  box-shadow: 0 1px 0 var(--teal-700, #0b5a55), 0 1px 3px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.18);
+}
+.btn-press:active {
+  transform: translateY(3px) scale(0.95);
+  box-shadow: inset 0 3px 6px rgba(0,0,0,0.28);
+}
 .btn-secondary {
   background: var(--bg); color: var(--ink-800);
   border-color: var(--border-strong);

@@ -323,15 +323,27 @@ a:hover { text-decoration: underline; }
 .btn-primary:hover { background: var(--teal-600); }
 /* Botón con sensación de "presionar" marcada al pasar el cursor */
 .btn-press {
+  position: relative;
+  padding: 10px 18px;
+  cursor: pointer;
   box-shadow: 0 3px 0 var(--teal-700, #0b5a55), 0 4px 10px rgba(0,0,0,0.12);
   transition: background 0.15s, transform 0.12s ease, box-shadow 0.12s ease;
 }
+/* Zona de detección invisible más grande que el botón: la manito aparece antes
+   y no se pierde cuando el botón se hunde. */
+.btn-press::before {
+  content: '';
+  position: absolute;
+  inset: -8px -6px;
+}
+/* Más separación para que las zonas de detección de botones vecinos no se pisen */
+.modal-foot:has(.btn-press) { gap: 14px; }
 .btn-press:hover {
-  transform: translateY(2px) scale(0.97);
+  transform: translateY(2px);
   box-shadow: 0 1px 0 var(--teal-700, #0b5a55), 0 1px 3px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.18);
 }
 .btn-press:active {
-  transform: translateY(3px) scale(0.95);
+  transform: translateY(3px) scale(0.97);
   box-shadow: inset 0 3px 6px rgba(0,0,0,0.28);
 }
 .btn-secondary.btn-press { box-shadow: 0 3px 0 var(--ink-400), 0 4px 10px rgba(0,0,0,0.08); }

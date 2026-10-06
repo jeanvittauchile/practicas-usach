@@ -334,6 +334,9 @@ a:hover { text-decoration: underline; }
   transform: translateY(3px) scale(0.95);
   box-shadow: inset 0 3px 6px rgba(0,0,0,0.28);
 }
+.btn-secondary.btn-press { box-shadow: 0 3px 0 var(--ink-400), 0 4px 10px rgba(0,0,0,0.08); }
+.btn-secondary.btn-press:hover { box-shadow: 0 1px 0 var(--ink-400), 0 1px 3px rgba(0,0,0,0.1), inset 0 2px 4px rgba(0,0,0,0.12); }
+.btn-secondary.btn-press:active { box-shadow: inset 0 3px 6px rgba(0,0,0,0.2); }
 .btn-secondary {
   background: var(--bg); color: var(--ink-800);
   border-color: var(--border-strong);

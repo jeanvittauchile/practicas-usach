@@ -6,14 +6,20 @@ const C = window.USACH_CALC;
 
 function openPrintWindow(contentEl, title, autoClose) {
   const w = window.open('', '_blank', 'width=960,height=760');
-  if (!w) return;
+  if (!w) { alert('El navegador bloqueó la ventana emergente. Permite ventanas emergentes para este sitio y vuelve a intentarlo.'); return; }
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     .map(function(el) { return el.outerHTML; }).join('\n');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + title + '</title>' + styles + '<style>body{background:#fff;margin:0;padding:0;}</style></head><body>' + contentEl.innerHTML + '</body></html>');
+  // <base> para que las hojas de estilo relativas carguen en la ventana nueva (Safari no hereda la URL del opener).
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><base href="' + location.href + '"><title>' + title + '</title>' + styles + '<style>body{background:#fff;margin:0;padding:0;}</style></head><body>' + contentEl.innerHTML + '</body></html>');
   w.document.close();
-  w.focus();
-  if (autoClose) w.onafterprint = function() { w.close(); };
-  setTimeout(function() { w.print(); }, 600);
+  // Safari (Mac) dispara afterprint apenas abre el diálogo: cerrar ahí borraba la ventana antes de guardar el PDF.
+  const isSafari = /^((?!chrome|chromium|crios|fxios|android).)*safari/i.test(navigator.userAgent);
+  if (autoClose && !isSafari) w.onafterprint = function() { w.close(); };
+  let printed = false;
+  const doPrint = function() { if (printed) return; printed = true; w.focus(); w.print(); };
+  // Imprimir cuando terminen de cargar los estilos (con un tope por si el evento load no llega).
+  w.addEventListener('load', function() { setTimeout(doPrint, 200); });
+  setTimeout(doPrint, 1500);
 }
 
 // ═════════════════════════════════════════════════════════════

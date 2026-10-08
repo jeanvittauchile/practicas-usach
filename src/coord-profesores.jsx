@@ -36,6 +36,11 @@ function AsignacionesScreen({ ctx }) {
     setDragStudent(null); setDragOverProf(null);
     assignTo(p, s);
   };
+  const unassign = (s) => {
+    if (picked?.id === s.id) setPicked(null);
+    saveStudent({ ...s, profesorId: '' });
+    toast(`${s.nombre} quedó sin profesor/a`);
+  };
   const assignToSel = (selProf) => {
     const s = dragStudent || picked;
     setDragStudent(null); setDragOverProf(null); setDragOverSelf(false); setPicked(null);
@@ -184,7 +189,7 @@ function AsignacionesScreen({ ctx }) {
               <div style={{ fontWeight:700, fontSize:14, marginBottom:4 }}>
                 Estudiantes asignados <span className="muted">({selStudents.length})</span>
               </div>
-              <div className="muted" style={{ fontSize:12, marginBottom:12 }}>Elige un/a estudiante del listado por práctica (clic) y haz clic aquí para asignarlo/a · también puedes arrastrarlo/a, o moverlo/a a otro/a profesor/a del panel izquierdo.</div>
+              <div className="muted" style={{ fontSize:12, marginBottom:12 }}>Asigna con el buscador de abajo · para mover a alguien, haz clic en su píldora y luego en otro/a profesor/a del panel izquierdo (o arrástralo/a) · × para quitarlo/a.</div>
               {selStudents.length === 0 && <div className="muted" style={{ fontSize:13 }}>Sin estudiantes asignados a este profesor.</div>}
               <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
                 {selStudents.map(s => (
@@ -197,46 +202,19 @@ function AsignacionesScreen({ ctx }) {
                     <div className="avatar-sm" style={{ width:22, height:22, fontSize:9 }}>{avatar(s.nombre)}</div>
                     <span style={{ fontWeight:500 }}>{s.nombre}</span>
                     <span className={`practice-chip chip-${s.practica}`} style={{ fontSize:9.5, padding:'1px 5px' }}>{s.practica}</span>
+                    <button className="pill-x" title="Quitar de este/a profesor/a"
+                            onClick={e => { e.stopPropagation(); unassign(s); }}>×</button>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Listado de estudiantes por práctica activa (arrastrables para asignar) */}
-            {(selProf.practicasAsignadas||[]).map(code => {
-              const pool = students.filter(s => s.practica === code && s.profesorId !== selProf.id);
-              return (
-                <div key={code} className="card" style={{ padding:'14px 20px' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                    <span className={`practice-chip chip-${code}`}>{code}</span>
-                    <div style={{ fontWeight:700, fontSize:14 }}>{PNAMES[code] || ('Práctica '+code)}</div>
-                    <span className="tag" style={{ marginLeft:'auto' }}>{pool.length} por asignar</span>
-                  </div>
-                  <div className="muted" style={{ fontSize:12, marginBottom:10 }}>Estudiantes que deben cursar esta práctica. Haz clic en uno/a y luego clic en el/la profesor/a (o en «Estudiantes asignados»). También puedes arrastrarlo/a.</div>
-                  {pool.length === 0
-                    ? <div className="muted" style={{ fontSize:13 }}>Todos los estudiantes de esta práctica ya están con este/a profesor/a, o no hay inscritos.</div>
-                    : (
-                      <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-                        {pool.map(s => {
-                          const cur = profs.find(p => p.id === s.profesorId);
-                          return (
-                            <div key={s.id} className={`drag-pill ${dragStudent?.id===s.id ? 'dragging' : ''} ${picked?.id===s.id ? 'picked' : ''}`} draggable
-                                 onClick={e => { e.stopPropagation(); togglePick(s); }}
-                                 onDragStart={e => { setDragStudent(s); e.dataTransfer.effectAllowed='move'; try { e.dataTransfer.setData('text/plain', s.id); } catch(err){} }}
-                                 onDragEnd={() => { setDragStudent(null); setDragOverProf(null); setDragOverSelf(false); }}
-                                 title="Clic para elegir · o arrastra para asignar">
-                              <span className="grip">⠿</span>
-                              <div className="avatar-sm" style={{ width:22, height:22, fontSize:9 }}>{avatar(s.nombre)}</div>
-                              <span style={{ fontWeight:500 }}>{s.nombre}</span>
-                              <span className="muted" style={{ fontSize:10.5 }}>{cur ? cur.nombre.replace('Prof. ','') : 'sin asignar'}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                </div>
-              );
-            })}
+            {/* Buscador y asignación de estudiantes */}
+            <AssignStudentsCard prof={selProf} profs={profs} students={students}
+                                saveStudent={saveStudent} toast={toast}
+                                picked={picked}
+                                dragStudent={dragStudent} setDragStudent={setDragStudent}
+                                onDragEnd={() => { setDragStudent(null); setDragOverProf(null); setDragOverSelf(false); }} />
           </div>
         )}
       </div>
@@ -291,6 +269,163 @@ function ProfModal({ initial, onSave, onClose }) {
           <button className="btn btn-primary" onClick={() => { if (!form.nombre||!form.email) return; onSave({ ...form, horasAsignadas: parseInt(form.horasAsignadas)||0 }); }}>Guardar</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// ─── Buscador + asignación de estudiantes al profesor/a seleccionado/a ──
+const normTxt = (t) => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function AssignStudentsCard({ prof, profs, students, saveStudent, toast, picked, dragStudent, setDragStudent, onDragEnd }) {
+  const PNAMES = window.PRACTICE_NAMES || {};
+  const PAGE = 40;
+  const pracs = prof.practicasAsignadas || [];
+  const [q, setQ] = useState('');
+  const [fPrac, setFPrac] = useState('');        // '' = todas las que imparte
+  const [fEstado, setFEstado] = useState('sin'); // sin | otro | todos
+  const [checked, setChecked] = useState([]);
+  const [limit, setLimit] = useState(PAGE);
+  useEffect(() => { setChecked([]); setFPrac(''); setLimit(PAGE); }, [prof.id]);
+  useEffect(() => { setLimit(PAGE); }, [q, fPrac, fEstado]);
+
+  const profById = Object.fromEntries(profs.map(p => [p.id, p]));
+  const hasProf = (s) => !!(s.profesorId && profById[s.profesorId]);
+  const short = (n) => (n || '').replace('Prof. ', '');
+  const avatar = (n) => n.split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
+  const cleanRut = (t) => normTxt(t).replace(/[.\-\s]/g, '');
+
+  // Universo: estudiantes de las prácticas que imparte y que aún no están con él/ella
+  const base = students.filter(s => pracs.includes(s.practica) && s.profesorId !== prof.id)
+                       .filter(s => !fPrac || s.practica === fPrac);
+  const countSin = base.filter(s => !hasProf(s)).length;
+  const countOtro = base.length - countSin;
+  const nq = normTxt(q).trim();
+  const nqRut = cleanRut(q);
+  const list = base
+    .filter(s => fEstado === 'todos' || (fEstado === 'sin' ? !hasProf(s) : hasProf(s)))
+    .filter(s => !nq
+      || normTxt(s.nombre).includes(nq)
+      || normTxt(s.email).includes(nq)
+      || (nqRut && cleanRut(s.rut).includes(nqRut))
+      || normTxt(s.centro).includes(nq)
+      || normTxt(short(profById[s.profesorId]?.nombre)).includes(nq))
+    .sort((a, b) => (hasProf(a) - hasProf(b)) || a.nombre.localeCompare(b.nombre, 'es'));
+  const shown = list.slice(0, limit);
+  const checkedSet = new Set(checked);
+  const allShownChecked = shown.length > 0 && shown.every(s => checkedSet.has(s.id));
+
+  const toggleCheck = (id) => setChecked(c => c.includes(id) ? c.filter(x => x !== id) : [...c, id]);
+  const toggleAll = () => setChecked(allShownChecked
+    ? checked.filter(id => !shown.some(s => s.id === id))
+    : [...new Set([...checked, ...shown.map(s => s.id)])]);
+
+  const assignOne = (s) => {
+    saveStudent({ ...s, profesorId: prof.id });
+    setChecked(c => c.filter(x => x !== s.id));
+    toast(`${s.nombre} asignado/a a ${short(prof.nombre)}`);
+  };
+  const assignChecked = () => {
+    const sel = students.filter(s => checkedSet.has(s.id) && s.profesorId !== prof.id && pracs.includes(s.practica));
+    if (!sel.length) { setChecked([]); return; }
+    const moving = sel.filter(hasProf).length;
+    if (moving && !window.confirm(`${moving} de los ${sel.length} estudiantes ya tienen otro/a profesor/a. ¿Reasignarlos a ${short(prof.nombre)}?`)) return;
+    sel.forEach(s => saveStudent({ ...s, profesorId: prof.id }));
+    setChecked([]);
+    toast(`${sel.length} estudiante${sel.length!==1?'s':''} asignado${sel.length!==1?'s':''} a ${short(prof.nombre)}`);
+  };
+
+  const chip = (on, label, onClick, key) => (
+    <button key={key} type="button" className={`filter-chip ${on ? 'on' : ''}`} onClick={onClick}>{label}</button>
+  );
+
+  return (
+    <div className="card" style={{ padding:'14px 20px' }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4, flexWrap:'wrap' }}>
+        <div style={{ fontWeight:700, fontSize:14 }}>Asignar estudiantes</div>
+        {pracs.length > 0 && <span className="tag" style={{ marginLeft:'auto' }}>{countSin} sin profesor/a</span>}
+      </div>
+      <div className="muted" style={{ fontSize:12, marginBottom:12 }}>
+        Busca entre los estudiantes de las prácticas que imparte {short(prof.nombre)}. Pulsa «Asignar» en una fila, o marca varias y asígnalas juntas.
+      </div>
+
+      {pracs.length === 0 ? (
+        <div className="muted" style={{ fontSize:13 }}>Activa al menos una práctica arriba para poder asignarle estudiantes.</div>
+      ) : (<>
+        <div className="assign-search">
+          <span className="assign-search-ic">⌕</span>
+          <input value={q} onChange={e => setQ(e.target.value)} autoComplete="off"
+                 placeholder="Buscar por nombre, RUT, correo, centro o profesor/a actual…"
+                 onKeyDown={e => { if (e.key === 'Escape') setQ(''); }} />
+          {q && <button type="button" className="assign-search-x" onClick={() => setQ('')} title="Limpiar búsqueda">×</button>}
+        </div>
+
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6, alignItems:'center', margin:'10px 0 6px' }}>
+          <span className="muted" style={{ fontSize:11.5, marginRight:2 }}>Práctica:</span>
+          {pracs.length > 1 && chip(!fPrac, 'Todas', () => setFPrac(''), '_all')}
+          {pracs.map(c => chip(fPrac === c || pracs.length === 1,
+            <>{c}{PNAMES[c] && <span className="filter-chip-sub"> · {PNAMES[c]}</span>}</>,
+            () => setFPrac(fPrac === c ? '' : c), c))}
+        </div>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6, alignItems:'center', marginBottom:12 }}>
+          <span className="muted" style={{ fontSize:11.5, marginRight:2 }}>Estado:</span>
+          {chip(fEstado === 'sin',   `Sin profesor/a (${countSin})`,          () => setFEstado('sin'),   'sin')}
+          {chip(fEstado === 'otro',  `Con otro/a profesor/a (${countOtro})`,  () => setFEstado('otro'),  'otro')}
+          {chip(fEstado === 'todos', `Todos (${base.length})`,                () => setFEstado('todos'), 'todos')}
+        </div>
+
+        <div className="assign-bar">
+          <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, cursor: shown.length ? 'pointer' : 'default' }}>
+            <input type="checkbox" checked={allShownChecked} disabled={!shown.length} onChange={toggleAll} style={{ margin:0, width:'auto' }} />
+            Seleccionar visibles
+          </label>
+          <span className="muted" style={{ fontSize:12 }}>{list.length} resultado{list.length!==1?'s':''}</span>
+          {checked.length > 0 && <>
+            <button className="btn btn-ghost btn-sm" style={{ marginLeft:'auto' }} onClick={() => setChecked([])}>Desmarcar</button>
+            <button className="btn btn-primary btn-sm" onClick={assignChecked}>Asignar {checked.length} seleccionado{checked.length!==1?'s':''}</button>
+          </>}
+        </div>
+
+        {list.length === 0 ? (
+          <div className="muted" style={{ fontSize:13, padding:'18px 4px', textAlign:'center' }}>
+            {nq ? `Ningún estudiante coincide con «${q}».`
+                : fEstado === 'sin' ? 'No quedan estudiantes sin profesor/a en estas prácticas.'
+                : 'No hay estudiantes con estos filtros.'}
+          </div>
+        ) : (
+          <div className="assign-list">
+            {shown.map(s => {
+              const cur = profById[s.profesorId];
+              const on = checkedSet.has(s.id);
+              return (
+                <div key={s.id} className={`assign-row ${on ? 'checked' : ''} ${picked?.id===s.id ? 'picked' : ''} ${dragStudent?.id===s.id ? 'dragging' : ''}`}
+                     draggable
+                     onClick={() => toggleCheck(s.id)}
+                     onDragStart={e => { setDragStudent(s); e.dataTransfer.effectAllowed='move'; try { e.dataTransfer.setData('text/plain', s.id); } catch(err){} }}
+                     onDragEnd={onDragEnd}
+                     title="Clic para marcar · o arrastra hacia un/a profesor/a">
+                  <input type="checkbox" checked={on} readOnly tabIndex={-1} style={{ margin:0, width:'auto', pointerEvents:'none' }} />
+                  <div className="avatar-sm" style={{ width:28, height:28, fontSize:10 }}>{avatar(s.nombre)}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', color:'var(--ink-900)' }}>{s.nombre}</div>
+                    <div className="muted" style={{ fontSize:11, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+                      {[s.rut, s.cohorte && ('Cohorte ' + s.cohorte), s.centro].filter(Boolean).join(' · ')}
+                    </div>
+                  </div>
+                  <span className={`practice-chip chip-${s.practica}`} style={{ fontSize:10, padding:'1px 6px' }}>{s.practica}</span>
+                  <span className={`assign-cur ${cur ? '' : 'none'}`}>{cur ? short(cur.nombre) : 'Sin profesor/a'}</span>
+                  <button className="btn btn-sm btn-primary" style={{ padding:'3px 10px', whiteSpace:'nowrap' }}
+                          onClick={e => { e.stopPropagation(); assignOne(s); }}>{cur ? 'Mover aquí' : 'Asignar'}</button>
+                </div>
+              );
+            })}
+            {list.length > shown.length && (
+              <button className="btn btn-ghost btn-sm" style={{ alignSelf:'center', marginTop:6 }} onClick={() => setLimit(l => l + PAGE)}>
+                Mostrar más ({list.length - shown.length} restantes)
+              </button>
+            )}
+          </div>
+        )}
+      </>)}
     </div>
   );
 }

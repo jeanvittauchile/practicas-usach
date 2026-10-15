@@ -73,7 +73,13 @@ function puntajeEvaluacion(ev, nivelesEst) {
 function calcNotaEvaluacion(ev, nivelesEst, diasAtraso) {
   const r = puntajeEvaluacion(ev, nivelesEst);
   if (!r) return null;
-  const baseNota = notaFromEscala(escalaForEval(ev), r.puntos);
+  // Todos los criterios en el nivel más bajo (p. ej. trabajo no entregado) → 1,0,
+  // aunque ese nivel otorgue puntos (en talleres P1 "No logrado" vale 1 pt).
+  const set = nivelesSetForEval(ev);
+  const minPts = set.length ? Math.min(...set.map(n => n.pts)) : null;
+  const todoMinimo = !r.parcial && ev.criterios.length > 0 &&
+    ev.criterios.every(cr => nivelInfoEv(ev, nivelesEst[cr.id])?.pts === minPts);
+  const baseNota = todoMinimo ? 1.0 : notaFromEscala(escalaForEval(ev), r.puntos);
   if (baseNota == null) return null;
   const ajuste = (diasAtraso || 0) * 0.5;
   const notaFinal = Math.max(1.0, Math.round((baseNota - ajuste) * 10) / 10);

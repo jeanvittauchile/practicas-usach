@@ -473,6 +473,7 @@ function RubricaBatch({ evalId, ctx, onBack }) {
   const todosEst = ctx.state.estudiantes || Dd.ESTUDIANTES;
   const estudiantes = ev.menciones ? todosEst.filter(e => ev.menciones.includes(e.area || 'deportiva')) : todosEst;
   const [showFeedback, setShowFeedback] = useState(null);
+  const actaRef = useRef(null);
 
   return (
     <div data-screen-label="Rúbrica batch">
@@ -496,7 +497,10 @@ function RubricaBatch({ evalId, ctx, onBack }) {
           <button className="btn btn-secondary" onClick={() => ctx.clearEval(ev.id)}>
             Limpiar todo
           </button>
-          <button className="btn btn-primary" onClick={() => ctx.toast('Notas guardadas y publicadas a estudiantes')}>
+          <button className="btn btn-primary" onClick={() => {
+            ctx.toast('Notas guardadas y publicadas a estudiantes');
+            if (actaRef.current) window.openPrintWindow(actaRef.current, `Acta de calificaciones — ${grupo.singular} ${ev.numero} — ${ev.titulo}`, true);
+          }}>
             <I.send /> Guardar y publicar
           </button>
         </div>
@@ -654,6 +658,113 @@ function RubricaBatch({ evalId, ctx, onBack }) {
       </div>
 
       {showFeedback && <FeedbackModal est={showFeedback} ev={ev} onClose={() => setShowFeedback(null)} ctx={ctx} />}
+
+      {/* Contenido oculto del acta: se copia a la ventana de impresión al publicar */}
+      <div ref={actaRef} style={{ display: 'none' }}>
+        <ActaCalificaciones ev={ev} ctx={ctx} estudiantes={estudiantes} nivelesSet={nivelesSet} grupo={grupo} esTeal={esTeal} />
+      </div>
+    </div>
+  );
+}
+
+// Acta de calificaciones (PDF) — estudiantes, nivel por criterio, puntos y nota.
+function ActaCalificaciones({ ev, ctx, estudiantes, nivelesSet, grupo, esTeal }) {
+  const meta = Dd.meta || {};
+  const acento = esTeal ? '#00796B' : '#B8661B';
+  const hoy = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
+  const filas = estudiantes.map(est => {
+    const nv = ctx.state.niveles[ev.id]?.[est.id] || {};
+    const atraso = ctx.state.atrasos[ev.id]?.[est.id] || 0;
+    return { est, nv, atraso, r: Cc.calcNotaEvaluacion(ev, nv, atraso) };
+  });
+  const notas = filas.map(f => f.r && !f.r.parcial ? f.r.notaFinal : null).filter(n => n != null);
+  const promedio = notas.length ? notas.reduce((a, b) => a + b, 0) / notas.length : null;
+  const aprobados = notas.filter(n => n >= 4).length;
+  const cell = { border: '1px solid #CBD5DC', padding: '5px 6px', textAlign: 'center' };
+  const head = { ...cell, background: '#F1F5F7', fontWeight: 700, fontSize: 10 };
+
+  return (
+    <div style={{ padding: '28px 32px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, color: '#15242E' }}>
+      <style>{'@page { size: A4 landscape; margin: 12mm; } table { page-break-inside: auto; } tr { page-break-inside: avoid; }'}</style>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: `2px solid ${acento}`, paddingBottom: 10, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: '#5A6B76' }}>Universidad de Santiago de Chile</div>
+          <div style={{ fontSize: 10.5, color: '#5A6B76' }}>{meta.escuela}</div>
+          <h1 style={{ fontSize: 17, margin: '8px 0 2px' }}>Acta de calificaciones</h1>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: acento }}>{grupo.singular} {ev.numero} · {ev.titulo}</div>
+        </div>
+        <div style={{ textAlign: 'right', fontSize: 10.5, color: '#5A6B76', lineHeight: 1.5 }}>
+          <div>{meta.cursoTitulo}</div>
+          <div>{meta.semestre}</div>
+          <div>Puntaje máximo: {ev.maxPuntos} pts</div>
+          <div>Emitida el {hoy}</div>
+        </div>
+      </div>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={head}>N°</th>
+            <th style={{ ...head, textAlign: 'left' }}>Estudiante</th>
+            <th style={head}>RUT</th>
+            {ev.criterios.map((cr, i) => <th key={cr.id} style={head}>C{i + 1}{cr.doble ? ' ×2' : ''}</th>)}
+            <th style={head}>Atraso</th>
+            <th style={head}>Puntos</th>
+            <th style={head}>Nota</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map(({ est, nv, atraso, r }, idx) => {
+            const nota = r && !r.parcial ? r.notaFinal : null;
+            return (
+              <tr key={est.id}>
+                <td style={cell}>{idx + 1}</td>
+                <td style={{ ...cell, textAlign: 'left', fontWeight: 600 }}>{est.nombre}</td>
+                <td style={cell}>{est.rut}</td>
+                {ev.criterios.map(cr => <td key={cr.id} style={cell}>{nv[cr.id] || '—'}</td>)}
+                <td style={cell}>{atraso ? `${atraso} d` : '—'}</td>
+                <td style={cell}>{r && r.count > 0 ? `${r.puntos}${r.parcial ? '*' : ''}` : '—'}</td>
+                <td style={{ ...cell, fontWeight: 700, color: nota == null ? '#8A94A6' : nota >= 4 ? '#1E7A4C' : '#B3261E' }}>{formatNota(nota)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <div style={{ display: 'flex', gap: 24, marginTop: 10, fontSize: 11 }}>
+        <span><strong>Promedio del curso:</strong> {formatNota(promedio)}</span>
+        <span><strong>Calificados:</strong> {notas.length} de {filas.length}</span>
+        <span><strong>Aprobados (≥ 4,0):</strong> {aprobados}</span>
+        <span><strong>Reprobados:</strong> {notas.length - aprobados}</span>
+      </div>
+      {filas.some(f => !f.r || f.r.parcial) && (
+        <div style={{ fontSize: 10, color: '#5A6B76', marginTop: 4 }}>— sin calificar · * calificación incompleta (faltan criterios)</div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginTop: 18, pageBreakInside: 'avoid' }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: acento, borderBottom: '1px solid #CBD5DC', paddingBottom: 3, marginBottom: 6 }}>Criterios</div>
+          {ev.criterios.map((cr, i) => (
+            <div key={cr.id} style={{ fontSize: 10.5, marginBottom: 3, lineHeight: 1.4 }}>
+              <strong>C{i + 1}{cr.doble ? ' (×2)' : ''}.</strong> {cr.texto}
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: acento, borderBottom: '1px solid #CBD5DC', paddingBottom: 3, marginBottom: 6 }}>Niveles</div>
+          {nivelesSet.map(n => (
+            <div key={n.key} style={{ fontSize: 10.5, marginBottom: 3 }}><strong>{n.key}</strong> = {n.label} ({n.pts} pt)</div>
+          ))}
+          <div style={{ fontSize: 10.5, marginTop: 6, color: '#5A6B76' }}>Atraso: −0,5 por día sobre la nota.</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 48, pageBreakInside: 'avoid' }}>
+        <div style={{ width: 240, borderTop: '1px solid #15242E', paddingTop: 4, textAlign: 'center', fontSize: 10.5 }}>
+          {String(window.__authUser?.nombre || 'Profesor/a responsable')}
+          <div style={{ color: '#5A6B76' }}>Firma</div>
+        </div>
+      </div>
     </div>
   );
 }

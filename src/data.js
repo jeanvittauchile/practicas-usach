@@ -83,7 +83,7 @@ function calcNotaEvaluacion(ev, nivelesEst, diasAtraso) {
   if (baseNota == null) return null;
   const ajuste = (diasAtraso || 0) * 0.5;
   const notaFinal = Math.max(1.0, Math.round((baseNota - ajuste) * 10) / 10);
-  return { puntos: r.puntos, parcial: r.parcial, notaBase: baseNota, ajuste, notaFinal };
+  return { puntos: r.puntos, parcial: r.parcial, count: r.count, notaBase: baseNota, ajuste, notaFinal };
 }
 
 // Instrumento de escala de apreciación (supervisor P1, proceso/terreno/autoeval P2).

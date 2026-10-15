@@ -428,10 +428,7 @@ function InstrumentoScreen({ ctx, kind }) {
               {cfg.dimensiones.flatMap(dim =>
                 dim.indicadores.map((ind, i) => (
                   <th key={ind.id} className="crit" style={{ minWidth: 168, maxWidth: 220 }}>
-                    <span className="crit-num">{dim.label.split('.')[0]}.{i + 1}</span>
-                    <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-700)', fontWeight: 500, lineHeight: 1.3, marginTop: 2 }}>
-                      {ind.texto.length > 72 ? ind.texto.slice(0, 72) + '…' : ind.texto}
-                    </span>
+                    <CritDesc num={`${dim.label.split('.')[0]}.${i + 1}`} texto={ind.texto} max={72} />
                   </th>
                 ))
               )}

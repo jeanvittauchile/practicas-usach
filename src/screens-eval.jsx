@@ -429,6 +429,41 @@ function EvalAnexos({ ev, ctx }) {
 // RÚBRICA BATCH — vista Excel para calificar todo el curso
 // ═════════════════════════════════════════════════════════════
 
+// Cabecera de criterio/indicador: muestra el texto truncado y, al pasar el
+// cursor, un cuadro con la descripción completa. Usa position: fixed para que
+// no lo recorte el overflow de .rubric-grid-wrap.
+function CritDesc({ num, texto, max = 80, doble, taller }) {
+  const [rect, setRect] = useState(null);
+  useEffect(() => {
+    if (!rect) return;
+    const close = () => setRect(null);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+  }, [rect]);
+  const W = 320;
+  return (
+    <div className="crit-hover"
+         onMouseEnter={e => setRect(e.currentTarget.getBoundingClientRect())}
+         onMouseLeave={() => setRect(null)}>
+      <span className="crit-num">{num}</span>
+      <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-700)', fontWeight: 500, lineHeight: 1.3, marginTop: 2 }}>
+        {texto.length > max ? texto.slice(0, max) + '…' : texto}
+      </span>
+      {rect && (
+        <div className={`crit-tip ${taller ? 'is-taller' : ''}`} role="tooltip"
+             style={{ width: W, top: rect.bottom + 8, left: Math.max(8, Math.min(rect.left, window.innerWidth - W - 8)) }}>
+          <div className="crit-tip-head">
+            {num}
+            {doble && <span className="tag tag-orange" style={{ marginLeft: 6 }}>×2</span>}
+          </div>
+          <div>{texto}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RubricaBatch({ evalId, ctx, onBack }) {
   const ev = ctx.state.evaluaciones.find(e => e.id === evalId);
   if (!ev) return null;
@@ -437,7 +472,6 @@ function RubricaBatch({ evalId, ctx, onBack }) {
   const esTeal = window.grupoEsTeal(ev.grupo);
   const todosEst = ctx.state.estudiantes || Dd.ESTUDIANTES;
   const estudiantes = ev.menciones ? todosEst.filter(e => ev.menciones.includes(e.area || 'deportiva')) : todosEst;
-  const [showDescPara, setShowDescPara] = useState(null); // criterioId — open desc popover
   const [showFeedback, setShowFeedback] = useState(null);
 
   return (
@@ -508,10 +542,7 @@ function RubricaBatch({ evalId, ctx, onBack }) {
               <th className="student" style={{ width: 220 }}>Estudiante</th>
               {ev.criterios.map((cr, i) => (
                 <th key={cr.id} className={`crit ${cr.doble ? 'doble' : ''} ${!esTeal ? 'is-taller' : ''}`}>
-                  <span className="crit-num">CRITERIO {i+1}</span>
-                  <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-700)', fontWeight: 500, lineHeight: 1.3, marginTop: 2 }}>
-                    {cr.texto.length > 80 ? cr.texto.slice(0, 80) + '…' : cr.texto}
-                  </span>
+                  <CritDesc num={`CRITERIO ${i+1}`} texto={cr.texto} doble={cr.doble} taller={!esTeal} />
                 </th>
               ))}
               <th className="crit atraso-cell" style={{ width: 80 }}>
@@ -746,10 +777,7 @@ function SupervisorScreen({ ctx, kind = 'supervisor' }) {
               {dims.flatMap(dim =>
                 dim.indicadores.map((ind, i) => (
                   <th key={ind.id} className="crit" style={{ minWidth: 170, maxWidth: 220 }}>
-                    <span className="crit-num">{(dim.label.split('.')[0] || '').trim()}.{i+1}</span>
-                    <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-700)', fontWeight: 500, lineHeight: 1.3, marginTop: 2 }}>
-                      {ind.texto.length > 80 ? ind.texto.slice(0, 80) + '…' : ind.texto}
-                    </span>
+                    <CritDesc num={`${(dim.label.split('.')[0] || '').trim()}.${i+1}`} texto={ind.texto} />
                     {editMode && puedeEditar && (
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 6 }}>
                         <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px' }} title="Editar columna" onClick={() => setEditCol({ ind, dimId: dim.id })}><I.edit size={13} /></button>
@@ -979,5 +1007,5 @@ function SupervisorCommentModal({ est, isAuto, value, onSave, onClose }) {
 
 Object.assign(window, {
   EvalDetail, RubricaBatch, SupervisorScreen, FeedbackModal, SupervisorCommentModal,
-  SupDimEditor, SupColumnEditModal,
+  SupDimEditor, SupColumnEditModal, CritDesc,
 });

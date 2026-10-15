@@ -836,6 +836,21 @@ a:hover { text-decoration: underline; }
 .rubric-grid th.crit { min-width: 130px; max-width: 220px; }
 .rubric-grid th.crit .crit-num { font-weight: 700; color: var(--teal-700); font-size: 11px; display: block; }
 .rubric-grid th.crit.is-taller .crit-num { color: var(--orange-700); }
+.rubric-grid th.crit .crit-hover { cursor: help; }
+.rubric-grid th.crit .crit-hover:hover .crit-num { text-decoration: underline dotted; text-underline-offset: 3px; }
+.crit-tip {
+  position: fixed; z-index: 1000; pointer-events: none;
+  background: var(--bg); color: var(--ink-800);
+  border: 1px solid var(--border); border-left: 3px solid var(--teal-500);
+  border-radius: var(--r-md); box-shadow: var(--shadow-lg);
+  padding: 10px 12px; font-size: 13px; line-height: 1.45; font-weight: 400;
+}
+.crit-tip.is-taller { border-left-color: var(--orange-500); }
+.crit-tip-head {
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--teal-700); margin-bottom: 4px; display: flex; align-items: center;
+}
+.crit-tip.is-taller .crit-tip-head { color: var(--orange-700); }
 .rubric-grid th.crit.doble::after {
   content: '×2'; font-size: 10px; font-weight: 700; color: var(--orange-600);
   background: var(--orange-50); padding: 1px 6px; border-radius: 999px;

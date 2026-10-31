@@ -424,7 +424,7 @@
         { id:'PROC', titulo:'Proceso en mi Centro de Práctica (rediseño)', tipo:'Informe Word (máx. 8 pp.)', puntos:32, descripcion:'[Solo Gestión] Diagnóstico de un proceso de gestión real y propuesta de mejora (formato Antes/Después).' },
         { id:'ENS', titulo:'Ensayo Final y Reflexión', tipo:'Ensayo (máx. 3 pp.) + Presentación', puntos:51, descripcion:'Ensayo argumentativo y presentación de reflexión sobre la integración teoría-práctica y desarrollo profesional.' },
         { id:'TUTOR', titulo:'Evaluación Tutor/a o Guía + Eval. Semestral', tipo:'Escala de frecuencia', puntos:64, descripcion:'Desempeño formal, disciplinar y actitudinal. El instrumento varía para Gestión vs. Entrenador/Ciencias.' },
-        { id:'SUP', titulo:'Supervisión + Portafolio (3 evaluaciones)', tipo:'Escala de apreciación', puntos:'—', descripcion:'Visitas en terreno diferenciadas por área + 3 evaluaciones del portafolio + Eval. Semestral del Supervisor.' },
+        { id:'SUP', titulo:'Supervisión + Portafolio', tipo:'Escala de apreciación', puntos:'—', descripcion:'Visitas en terreno diferenciadas por área + evaluación del portafolio + Eval. Semestral del Supervisor.' },
         { id:'AUTO', titulo:'Autoevaluación', tipo:'Escala de frecuencia', puntos:68, descripcion:'7 dimensiones: responsabilidad, solución de problemas, participación, desarrollo disciplinar, comunicación, actitud y reflexión profesional.' },
       ],
       ponderacionesMencion: [

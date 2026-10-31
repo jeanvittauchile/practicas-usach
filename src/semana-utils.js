@@ -114,7 +114,8 @@ function backfillSemanaEntrega(evaluaciones, catalogo) {
 // catálogo reemplazó, según `migraDe` de la evaluación nueva:
 //   migraDe: [{ id: 'PF1', mapa: { c21: 'c14' } }, …]
 // Cada criterio de origen va a su id en `mapa` o, si no está, al mismo id si
-// existe en la evaluación nueva; ante conflicto gana la primera fuente. Corre
+// existe en la evaluación nueva (mapa a null = no se traspasa); ante conflicto
+// gana la primera fuente. Corre
 // una sola vez por evaluación (state.migrado) y no toca estudiantes que ya
 // tengan calificaciones en la evaluación nueva. Los datos de origen se conservan.
 function migrarCalificacionesLegado(state, catalogo) {
@@ -132,7 +133,7 @@ function migrarCalificacionesLegado(state, catalogo) {
       Object.entries((next.niveles || {})[src.id] || {}).forEach(([est, nv]) => {
         if (yaCalificados.has(est) || !nv) return;
         Object.entries(nv).forEach(([crId, k]) => {
-          const dest = mapa[crId] || (destinoIds.has(crId) ? crId : null);
+          const dest = crId in mapa ? mapa[crId] : (destinoIds.has(crId) ? crId : null);
           if (!k || !dest || !destinoIds.has(dest)) return;
           niveles[est] = niveles[est] || {};
           if (niveles[est][dest] == null) niveles[est][dest] = k;

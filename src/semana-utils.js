@@ -110,6 +110,52 @@ function backfillSemanaEntrega(evaluaciones, catalogo) {
 //  · Claves estructurales (grupo, escala, niveles, ponderación…) vienen del catálogo.
 //  · Se conservan las ediciones del usuario (títulos, textos, fechas, criterios)
 //    mientras los ids de criterios coincidan con el catálogo (o su variante).
+// Traspasa calificaciones (niveles, atrasos, feedback) de evaluaciones que el
+// catálogo reemplazó, según `migraDe` de la evaluación nueva:
+//   migraDe: [{ id: 'PF1', mapa: { c21: 'c14' } }, …]
+// Cada criterio de origen va a su id en `mapa` o, si no está, al mismo id si
+// existe en la evaluación nueva; ante conflicto gana la primera fuente. Corre
+// una sola vez por evaluación (state.migrado) y no toca estudiantes que ya
+// tengan calificaciones en la evaluación nueva. Los datos de origen se conservan.
+function migrarCalificacionesLegado(state, catalogo) {
+  if (!state || !Array.isArray(catalogo)) return state;
+  let next = state;
+  catalogo.forEach(ev => {
+    if (!ev.migraDe || (next.migrado && next.migrado[ev.id])) return;
+    const destinoIds = new Set((ev.criterios || []).map(c => c.id));
+    const niveles = { ...((next.niveles || {})[ev.id] || {}) };
+    const atrasos = { ...((next.atrasos || {})[ev.id] || {}) };
+    const feedback = { ...((next.evalFeedback || {})[ev.id] || {}) };
+    const yaCalificados = new Set(Object.keys(niveles).filter(est => Object.keys(niveles[est] || {}).length));
+    ev.migraDe.forEach(src => {
+      const mapa = src.mapa || {};
+      Object.entries((next.niveles || {})[src.id] || {}).forEach(([est, nv]) => {
+        if (yaCalificados.has(est) || !nv) return;
+        Object.entries(nv).forEach(([crId, k]) => {
+          const dest = mapa[crId] || (destinoIds.has(crId) ? crId : null);
+          if (!k || !dest || !destinoIds.has(dest)) return;
+          niveles[est] = niveles[est] || {};
+          if (niveles[est][dest] == null) niveles[est][dest] = k;
+        });
+      });
+      Object.entries((next.atrasos || {})[src.id] || {}).forEach(([est, d]) => {
+        if (!yaCalificados.has(est) && atrasos[est] == null && d) atrasos[est] = d;
+      });
+      Object.entries((next.evalFeedback || {})[src.id] || {}).forEach(([est, t]) => {
+        if (!yaCalificados.has(est) && !feedback[est] && t) feedback[est] = t;
+      });
+    });
+    next = {
+      ...next,
+      niveles: { ...(next.niveles || {}), [ev.id]: niveles },
+      atrasos: { ...(next.atrasos || {}), [ev.id]: atrasos },
+      evalFeedback: { ...(next.evalFeedback || {}), [ev.id]: feedback },
+      migrado: { ...(next.migrado || {}), [ev.id]: true },
+    };
+  });
+  return next;
+}
+
 const EVAL_CLAVES_ESTRUCTURALES = ['grupo', 'numero', 'nivelesKey', 'escalaKey', 'ponderacion', 'variantes'];
 function sincronizarEvaluaciones(evaluaciones, catalogo) {
   const guardadas = new Map(evaluaciones.map(e => [e.id, e]));
@@ -161,6 +207,6 @@ function semestreGlobalLabel(fallback) {
 }
 
 Object.assign(window, {
-  fechaFmt, addDiasISO, semanaRango, semanaDeFecha, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega,
+  fechaFmt, addDiasISO, semanaRango, semanaDeFecha, fechaRangoFmt, fechaRangoCorto, evalFechaInfo, backfillSemanaEntrega, migrarCalificacionesLegado,
   semestreLabel, semestreGlobalLabel, todayISO,
 });

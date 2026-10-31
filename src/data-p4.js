@@ -256,6 +256,8 @@
     ],
     aspectosFormales: ['Carpeta DRIVE editable con el nombre correcto.', 'Bitácora Excel al día.', 'Atraso: descuento de 0,5 por día.'],
     pautas: ['Puntaje ideal 39: 1) Construcción y carga del portafolio (4 criterios) · 2) Bitácora (9 criterios). Se promedia con la supervisión en terreno (20%).'],
+    // Calificaciones de las 3 evaluaciones de portafolio anteriores (PORT1/PORT2/PORT3).
+    migraDe: [{ id: 'PORT1' }, { id: 'PORT3', mapa: { c11: 'c14' } }, { id: 'PORT2' }],
     criterios: [
       // 1. Construcción y carga del portafolio
       cr('c11', 'Construye el portafolio en la fecha indicada, con el nombre correcto descrito en la consigna.'),

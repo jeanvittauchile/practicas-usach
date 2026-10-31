@@ -214,6 +214,8 @@
     ],
     aspectosFormales: ['Carpeta DRIVE editable, nombre correcto.', 'Bitácora en archivo Excel proporcionado por los docentes.', 'Atraso: descuento de 0,5 por día.'],
     pautas: ['Puntaje ideal 42: 1) Construcción y carga del portafolio (5 criterios) · 2) Bitácora (9 criterios).'],
+    // Calificaciones de las 3 evaluaciones de portafolio anteriores (PF1/PF2/PF3).
+    migraDe: [{ id: 'PF1', mapa: { c21: 'c14' } }, { id: 'PF3', mapa: { c11: 'c15' } }, { id: 'PF2' }],
     criterios: [
       // 1. Construcción y carga del portafolio
       cr('c11', 'Construye el portafolio en la fecha indicada, con el nombre correcto descrito en la consigna.'),

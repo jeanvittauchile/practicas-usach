@@ -455,9 +455,10 @@ function loadState(practica, kind) {
   try {
     const raw = localStorage.getItem(stateKey(practica, kind));
     if (raw) {
-      const parsed = JSON.parse(raw);
+      let parsed = JSON.parse(raw);
       if (parsed && typeof parsed === 'object' && Array.isArray(parsed.evaluaciones)) {
         const catalog = (window.USACH_DATA && window.USACH_DATA.EVALUACIONES) || [];
+        parsed = window.migrarCalificacionesLegado(parsed, catalog);
         parsed.evaluaciones = window.backfillSemanaEntrega(parsed.evaluaciones, catalog);
         if (!coordStudents.length) return parsed;
         // Coordinator students are authoritative; keep professor-added extras (id starts with 'e_')

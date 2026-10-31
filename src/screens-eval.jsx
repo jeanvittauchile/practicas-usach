@@ -27,7 +27,9 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
   // Compute progress
   const total = estudiantes.length;
   const esPresent = ev.grupo === 'presentacion';
-  const presentIds = ['p1','p2','p3','p4','p5'];
+  const dim7 = esPresent ? presentacionDim(ctx) : null;
+  const presentIds = dim7 ? dim7.indicadores.map(i => i.id) : [];
+  const ptsMaxNivel = (nivelesSupervisor()[0] || { pts: 4 }).pts;
   const completados = esPresent
     ? estudiantes.filter(est => {
         const resp = ctx.state.supervisor?.[est.id] || {};
@@ -78,8 +80,8 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
           {!esPresent && <Metric label="Puntaje máx." value={ev.maxPuntos} sub="puntos" />}
           {!esPresent && <Metric label="Criterios" value={ev.criterios.length} sub={`${ev.criterios.filter(c=>c.doble).length} con doble puntaje`} />}
           {ev.ponderacion > 0 && <Metric label="Ponderación" value={`${Math.round(ev.ponderacion*100)}%`} sub="de la nota final" />}
-          {esPresent && <Metric label="Indicadores" value={5} sub="Dim. 7 del supervisor" />}
-          {esPresent && <Metric label="Escala" value="S/CS/O/CN/N" sub="máx. 20 pts" />}
+          {esPresent && <Metric label="Indicadores" value={presentIds.length} sub="Dim. 7 del supervisor" />}
+          {esPresent && <Metric label="Escala" value="S/CS/O/CN/N" sub={`máx. ${presentIds.length * ptsMaxNivel} pts`} />}
           {ev.variantes && <VariantToggle ev={ev} ctx={ctx} />}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
             {!esPresent && <button className="btn btn-secondary" onClick={() => setShowEdit(true)}><I.edit /> Editar</button>}
@@ -163,7 +165,7 @@ function EvalDetail({ evalId, ctx, onBack, onGrade }) {
       {showEditFecha && <EditFechaModal ev={ev} ctx={ctx} onClose={() => setShowEditFecha(false)} />}
       {showInforme && <InformeAcademicoModal ev={ev} ctx={ctx} onClose={() => setShowInforme(false)} />}
 
-      {tab === 'rubrica' && <RubricaPreview ev={ev} />}
+      {tab === 'rubrica' && <RubricaPreview ev={ev} ctx={ctx} />}
 
       {tab === 'estudiantes' && <EvalStudentList ev={ev} ctx={ctx} onOpenPdf={(est) => ctx.openStudentPdf(ev, est)} />}
 
@@ -219,7 +221,58 @@ function DetailSection({ open, toggle, sec, icon, title, isTaller, children }) {
   );
 }
 
-function RubricaPreview({ ev }) {
+// Dimensión 7 del supervisor = rúbrica de la Presentación: Salidas a terreno
+function presentacionDim(ctx) {
+  const dims = (ctx && ctx.state.supervisorDims) || Dd.SUPERVISOR_DIMENSIONES || [];
+  return dims.find(d => d.id === 'd7') || dims.find(d => /presentaci/i.test(d.label)) || null;
+}
+
+function nivelesSupervisor() {
+  return (Dd.NIVELES && Dd.NIVELES.NIVELES_SUPERVISOR) || Dd.NIVELES_SUPERVISOR || [];
+}
+
+function RubricaPresentacion({ ev, ctx }) {
+  const dim = presentacionDim(ctx);
+  const niveles = nivelesSupervisor();
+  if (!dim) return <div className="card" style={{ padding: 18 }}><span className="muted">No se encontró la Dimensión 7 del instrumento del supervisor.</span></div>;
+  const ideal = dim.indicadores.length * (niveles[0] ? niveles[0].pts : 4);
+  return (
+    <div className="col" style={{ gap: 12 }}>
+      <div className="muted" style={{ fontSize: 12.5 }}>{dim.label} · {dim.indicadores.length} indicadores · escala {niveles.map(n => n.key).join('/')} · máx. {ideal} pts</div>
+      <div className="card" style={{ padding: 0, overflow: 'auto' }}>
+        <table className="tbl" style={{ minWidth: 700 }}>
+          <thead>
+            <tr>
+              <th style={{ minWidth: 320 }}>Indicador</th>
+              {niveles.map(n => (
+                <th key={n.key} style={{ textAlign: 'center' }}>
+                  <span className={`lvl lvl-${n.key}`}>{n.key}</span>
+                  <div className="muted" style={{ fontSize: 11, fontWeight: 500 }}>{n.label} ({n.pts})</div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {dim.indicadores.map((ind, i) => (
+              <tr key={ind.id}>
+                <td>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--orange-700)' }} className="tnum">{i+1}.</span>
+                    <span>{ind.texto}</span>
+                  </div>
+                </td>
+                {niveles.map(n => <td key={n.key} style={{ textAlign: 'center' }} className="muted">○</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function RubricaPreview({ ev, ctx }) {
+  if (ev.grupo === 'presentacion') return <RubricaPresentacion ev={ev} ctx={ctx} />;
   const nivelesSet = Cc.nivelesSetForEval(ev);
   const esTeal = window.grupoEsTeal(ev.grupo);
   return (
@@ -376,6 +429,41 @@ function EvalAnexos({ ev, ctx }) {
 // RÚBRICA BATCH — vista Excel para calificar todo el curso
 // ═════════════════════════════════════════════════════════════
 
+// Cabecera de criterio/indicador: muestra el texto truncado y, al pasar el
+// cursor, un cuadro con la descripción completa. Usa position: fixed para que
+// no lo recorte el overflow de .rubric-grid-wrap.
+function CritDesc({ num, texto, max = 80, doble, taller }) {
+  const [rect, setRect] = useState(null);
+  useEffect(() => {
+    if (!rect) return;
+    const close = () => setRect(null);
+    window.addEventListener('scroll', close, true);
+    window.addEventListener('resize', close);
+    return () => { window.removeEventListener('scroll', close, true); window.removeEventListener('resize', close); };
+  }, [rect]);
+  const W = 320;
+  return (
+    <div className="crit-hover"
+         onMouseEnter={e => setRect(e.currentTarget.getBoundingClientRect())}
+         onMouseLeave={() => setRect(null)}>
+      <span className="crit-num">{num}</span>
+      <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-700)', fontWeight: 500, lineHeight: 1.3, marginTop: 2 }}>
+        {texto.length > max ? texto.slice(0, max) + '…' : texto}
+      </span>
+      {rect && (
+        <div className={`crit-tip ${taller ? 'is-taller' : ''}`} role="tooltip"
+             style={{ width: W, top: rect.bottom + 8, left: Math.max(8, Math.min(rect.left, window.innerWidth - W - 8)) }}>
+          <div className="crit-tip-head">
+            {num}
+            {doble && <span className="tag tag-orange" style={{ marginLeft: 6 }}>×2</span>}
+          </div>
+          <div>{texto}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RubricaBatch({ evalId, ctx, onBack }) {
   const ev = ctx.state.evaluaciones.find(e => e.id === evalId);
   if (!ev) return null;
@@ -384,8 +472,8 @@ function RubricaBatch({ evalId, ctx, onBack }) {
   const esTeal = window.grupoEsTeal(ev.grupo);
   const todosEst = ctx.state.estudiantes || Dd.ESTUDIANTES;
   const estudiantes = ev.menciones ? todosEst.filter(e => ev.menciones.includes(e.area || 'deportiva')) : todosEst;
-  const [showDescPara, setShowDescPara] = useState(null); // criterioId — open desc popover
   const [showFeedback, setShowFeedback] = useState(null);
+  const actaRef = useRef(null);
 
   return (
     <div data-screen-label="Rúbrica batch">
@@ -409,7 +497,10 @@ function RubricaBatch({ evalId, ctx, onBack }) {
           <button className="btn btn-secondary" onClick={() => ctx.clearEval(ev.id)}>
             Limpiar todo
           </button>
-          <button className="btn btn-primary" onClick={() => ctx.toast('Notas guardadas y publicadas a estudiantes')}>
+          <button className="btn btn-primary" onClick={() => {
+            ctx.toast('Notas guardadas y publicadas a estudiantes');
+            if (actaRef.current) window.openPrintWindow(actaRef.current, `Acta de calificaciones — ${grupo.singular} ${ev.numero} — ${ev.titulo}`, true);
+          }}>
             <I.send /> Guardar y publicar
           </button>
         </div>
@@ -455,10 +546,7 @@ function RubricaBatch({ evalId, ctx, onBack }) {
               <th className="student" style={{ width: 220 }}>Estudiante</th>
               {ev.criterios.map((cr, i) => (
                 <th key={cr.id} className={`crit ${cr.doble ? 'doble' : ''} ${!esTeal ? 'is-taller' : ''}`}>
-                  <span className="crit-num">CRITERIO {i+1}</span>
-                  <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-700)', fontWeight: 500, lineHeight: 1.3, marginTop: 2 }}>
-                    {cr.texto.length > 80 ? cr.texto.slice(0, 80) + '…' : cr.texto}
-                  </span>
+                  <CritDesc num={`CRITERIO ${i+1}`} texto={cr.texto} doble={cr.doble} taller={!esTeal} />
                 </th>
               ))}
               <th className="crit atraso-cell" style={{ width: 80 }}>
@@ -570,6 +658,113 @@ function RubricaBatch({ evalId, ctx, onBack }) {
       </div>
 
       {showFeedback && <FeedbackModal est={showFeedback} ev={ev} onClose={() => setShowFeedback(null)} ctx={ctx} />}
+
+      {/* Contenido oculto del acta: se copia a la ventana de impresión al publicar */}
+      <div ref={actaRef} style={{ display: 'none' }}>
+        <ActaCalificaciones ev={ev} ctx={ctx} estudiantes={estudiantes} nivelesSet={nivelesSet} grupo={grupo} esTeal={esTeal} />
+      </div>
+    </div>
+  );
+}
+
+// Acta de calificaciones (PDF) — estudiantes, nivel por criterio, puntos y nota.
+function ActaCalificaciones({ ev, ctx, estudiantes, nivelesSet, grupo, esTeal }) {
+  const meta = Dd.meta || {};
+  const acento = esTeal ? '#00796B' : '#B8661B';
+  const hoy = new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' });
+  const filas = estudiantes.map(est => {
+    const nv = ctx.state.niveles[ev.id]?.[est.id] || {};
+    const atraso = ctx.state.atrasos[ev.id]?.[est.id] || 0;
+    return { est, nv, atraso, r: Cc.calcNotaEvaluacion(ev, nv, atraso) };
+  });
+  const notas = filas.map(f => f.r && !f.r.parcial ? f.r.notaFinal : null).filter(n => n != null);
+  const promedio = notas.length ? notas.reduce((a, b) => a + b, 0) / notas.length : null;
+  const aprobados = notas.filter(n => n >= 4).length;
+  const cell = { border: '1px solid #CBD5DC', padding: '5px 6px', textAlign: 'center' };
+  const head = { ...cell, background: '#F1F5F7', fontWeight: 700, fontSize: 10 };
+
+  return (
+    <div style={{ padding: '28px 32px', fontFamily: 'Inter, system-ui, sans-serif', fontSize: 11, color: '#15242E' }}>
+      <style>{'@page { size: A4 landscape; margin: 12mm; } table { page-break-inside: auto; } tr { page-break-inside: avoid; }'}</style>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', borderBottom: `2px solid ${acento}`, paddingBottom: 10, marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, color: '#5A6B76' }}>Universidad de Santiago de Chile</div>
+          <div style={{ fontSize: 10.5, color: '#5A6B76' }}>{meta.escuela}</div>
+          <h1 style={{ fontSize: 17, margin: '8px 0 2px' }}>Acta de calificaciones</h1>
+          <div style={{ fontSize: 12.5, fontWeight: 600, color: acento }}>{grupo.singular} {ev.numero} · {ev.titulo}</div>
+        </div>
+        <div style={{ textAlign: 'right', fontSize: 10.5, color: '#5A6B76', lineHeight: 1.5 }}>
+          <div>{meta.cursoTitulo}</div>
+          <div>{meta.semestre}</div>
+          <div>Puntaje máximo: {ev.maxPuntos} pts</div>
+          <div>Emitida el {hoy}</div>
+        </div>
+      </div>
+
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>
+            <th style={head}>N°</th>
+            <th style={{ ...head, textAlign: 'left' }}>Estudiante</th>
+            <th style={head}>RUT</th>
+            {ev.criterios.map((cr, i) => <th key={cr.id} style={head}>C{i + 1}{cr.doble ? ' ×2' : ''}</th>)}
+            <th style={head}>Atraso</th>
+            <th style={head}>Puntos</th>
+            <th style={head}>Nota</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map(({ est, nv, atraso, r }, idx) => {
+            const nota = r && !r.parcial ? r.notaFinal : null;
+            return (
+              <tr key={est.id}>
+                <td style={cell}>{idx + 1}</td>
+                <td style={{ ...cell, textAlign: 'left', fontWeight: 600 }}>{est.nombre}</td>
+                <td style={cell}>{est.rut}</td>
+                {ev.criterios.map(cr => <td key={cr.id} style={cell}>{nv[cr.id] || '—'}</td>)}
+                <td style={cell}>{atraso ? `${atraso} d` : '—'}</td>
+                <td style={cell}>{r && r.count > 0 ? `${r.puntos}${r.parcial ? '*' : ''}` : '—'}</td>
+                <td style={{ ...cell, fontWeight: 700, color: nota == null ? '#8A94A6' : nota >= 4 ? '#1E7A4C' : '#B3261E' }}>{formatNota(nota)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      <div style={{ display: 'flex', gap: 24, marginTop: 10, fontSize: 11 }}>
+        <span><strong>Promedio del curso:</strong> {formatNota(promedio)}</span>
+        <span><strong>Calificados:</strong> {notas.length} de {filas.length}</span>
+        <span><strong>Aprobados (≥ 4,0):</strong> {aprobados}</span>
+        <span><strong>Reprobados:</strong> {notas.length - aprobados}</span>
+      </div>
+      {filas.some(f => !f.r || f.r.parcial) && (
+        <div style={{ fontSize: 10, color: '#5A6B76', marginTop: 4 }}>— sin calificar · * calificación incompleta (faltan criterios)</div>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 24, marginTop: 18, pageBreakInside: 'avoid' }}>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: acento, borderBottom: '1px solid #CBD5DC', paddingBottom: 3, marginBottom: 6 }}>Criterios</div>
+          {ev.criterios.map((cr, i) => (
+            <div key={cr.id} style={{ fontSize: 10.5, marginBottom: 3, lineHeight: 1.4 }}>
+              <strong>C{i + 1}{cr.doble ? ' (×2)' : ''}.</strong> {cr.texto}
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: acento, borderBottom: '1px solid #CBD5DC', paddingBottom: 3, marginBottom: 6 }}>Niveles</div>
+          {nivelesSet.map(n => (
+            <div key={n.key} style={{ fontSize: 10.5, marginBottom: 3 }}><strong>{n.key}</strong> = {n.label} ({n.pts} pt)</div>
+          ))}
+          <div style={{ fontSize: 10.5, marginTop: 6, color: '#5A6B76' }}>Atraso: −0,5 por día sobre la nota.</div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 48, pageBreakInside: 'avoid' }}>
+        <div style={{ width: 240, borderTop: '1px solid #15242E', paddingTop: 4, textAlign: 'center', fontSize: 10.5 }}>
+          {String(window.__authUser?.nombre || 'Profesor/a responsable')}
+          <div style={{ color: '#5A6B76' }}>Firma</div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -693,10 +888,7 @@ function SupervisorScreen({ ctx, kind = 'supervisor' }) {
               {dims.flatMap(dim =>
                 dim.indicadores.map((ind, i) => (
                   <th key={ind.id} className="crit" style={{ minWidth: 170, maxWidth: 220 }}>
-                    <span className="crit-num">{(dim.label.split('.')[0] || '').trim()}.{i+1}</span>
-                    <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-700)', fontWeight: 500, lineHeight: 1.3, marginTop: 2 }}>
-                      {ind.texto.length > 80 ? ind.texto.slice(0, 80) + '…' : ind.texto}
-                    </span>
+                    <CritDesc num={`${(dim.label.split('.')[0] || '').trim()}.${i+1}`} texto={ind.texto} />
                     {editMode && puedeEditar && (
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 6 }}>
                         <button className="btn btn-ghost btn-sm" style={{ padding: '2px 6px' }} title="Editar columna" onClick={() => setEditCol({ ind, dimId: dim.id })}><I.edit size={13} /></button>
@@ -926,5 +1118,5 @@ function SupervisorCommentModal({ est, isAuto, value, onSave, onClose }) {
 
 Object.assign(window, {
   EvalDetail, RubricaBatch, SupervisorScreen, FeedbackModal, SupervisorCommentModal,
-  SupDimEditor, SupColumnEditModal,
+  SupDimEditor, SupColumnEditModal, CritDesc,
 });

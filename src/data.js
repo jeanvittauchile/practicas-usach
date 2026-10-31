@@ -73,18 +73,24 @@ function puntajeEvaluacion(ev, nivelesEst) {
 function calcNotaEvaluacion(ev, nivelesEst, diasAtraso) {
   const r = puntajeEvaluacion(ev, nivelesEst);
   if (!r) return null;
-  let baseNota = notaFromEscala(escalaForEval(ev), r.puntos);
+  // Todos los criterios en el nivel más bajo (p. ej. trabajo no entregado) → 1,0,
+  // aunque ese nivel otorgue puntos (en talleres P1 "No logrado" vale 1 pt).
+  const set = nivelesSetForEval(ev);
+  const minPts = set.length ? Math.min(...set.map(n => n.pts)) : null;
+  const todoMinimo = !r.parcial && ev.criterios.length > 0 &&
+    ev.criterios.every(cr => nivelInfoEv(ev, nivelesEst[cr.id])?.pts === minPts);
+  let baseNota = todoMinimo ? 1.0 : notaFromEscala(escalaForEval(ev), r.puntos);
   if (baseNota == null) {
     // Sin escala o escala que no cubre el puntaje (p. ej. criterios marcados
     // como dobles en el editor): escala lineal 60% sobre el ideal real.
-    const maxPts = Math.max(0, ...nivelesSetForEval(ev).map(n => n.pts));
+    const maxPts = Math.max(0, ...set.map(n => n.pts));
     const ideal = ev.criterios.reduce((a, cr) => a + maxPts * (cr.doble ? 2 : 1), 0);
     if (ideal > 0) baseNota = notaFromEscala(escalaExigencia60(ideal), r.puntos);
   }
   if (baseNota == null) return null;
   const ajuste = (diasAtraso || 0) * 0.5;
   const notaFinal = Math.max(1.0, Math.round((baseNota - ajuste) * 10) / 10);
-  return { puntos: r.puntos, parcial: r.parcial, notaBase: baseNota, ajuste, notaFinal };
+  return { puntos: r.puntos, parcial: r.parcial, count: r.count, notaBase: baseNota, ajuste, notaFinal };
 }
 
 // Instrumento de escala de apreciación (supervisor P1, proceso/terreno/autoeval P2).
@@ -293,7 +299,7 @@ const PRESENTACION_TERRENO_P1 = {
     'Lenguaje técnico, claro y profesional durante toda la exposición.',
     'Puntualidad: presentarse 5 min antes del horario acordado con el/la supervisor/a.',
   ],
-  criterios: [], // calificación vía supervisor dim 7 → indicadores p1–p4
+  criterios: [], // calificación vía supervisor dim 7 → indicadores p1–p5
 };
 
 const SOLEMNES_P1 = [

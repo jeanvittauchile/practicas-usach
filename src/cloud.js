@@ -13,7 +13,7 @@
   // Claves de localStorage que se espejan a Firestore. Coinciden por prefijo.
   // (Las fotos de visitas NO se espejan: son base64 pesado → usar Firebase
   //  Storage en una fase posterior.)
-  const MIRROR = ['coord_profs', 'coord_students', 'coord_cartas', 'coord_centros', 'usach_state_v1_', 'usach_usuarios'];
+  const MIRROR = ['coord_profs', 'coord_students', 'coord_cartas', 'coord_centros', 'usach_state_v1_', 'usach_usuarios', 'usach_asist_v1_'];
   const KV_COLLECTION = 'kv';
   const DEBOUNCE_MS = 600;
 

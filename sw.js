@@ -12,6 +12,7 @@ const LOCAL_ASSETS = [
   './src/styles.css',
   './src/firebase-config.js',
   './src/cloud.js',
+  './src/asistencia-store.js',
   './src/data.js',
   './src/data-p2.js',
   './src/data-p3.js',

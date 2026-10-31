@@ -28,14 +28,20 @@ function notaColumnaCoord(col, estId, state, D, Cr) {
 // Abre una ventana con el contenido de impresión/PDF (mismo mecanismo que usan los reportes de profesores).
 function openPrintWindow(contentEl, title, autoClose) {
   const w = window.open('', '_blank', 'width=960,height=760');
-  if (!w) return;
+  if (!w) { alert('El navegador bloqueó la ventana emergente. Permite ventanas emergentes para este sitio y vuelve a intentarlo.'); return; }
   const styles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
     .map(el => el.outerHTML).join('\n');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + title + '</title>' + styles + '<style>body{background:#fff;margin:0;padding:0;}</style></head><body>' + contentEl.innerHTML + '</body></html>');
+  // <base> para que las hojas de estilo relativas carguen en la ventana nueva (Safari no hereda la URL del opener).
+  w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><base href="' + location.href + '"><title>' + title + '</title>' + styles + '<style>body{background:#fff;margin:0;padding:0;}</style></head><body>' + contentEl.innerHTML + '</body></html>');
   w.document.close();
-  w.focus();
-  if (autoClose) w.onafterprint = () => w.close();
-  setTimeout(() => w.print(), 600);
+  // Safari (Mac) dispara afterprint apenas abre el diálogo: cerrar ahí borraba la ventana antes de guardar el PDF.
+  const isSafari = /^((?!chrome|chromium|crios|fxios|android).)*safari/i.test(navigator.userAgent);
+  if (autoClose && !isSafari) w.onafterprint = () => w.close();
+  let printed = false;
+  const doPrint = () => { if (printed) return; printed = true; w.focus(); w.print(); };
+  // Imprimir cuando terminen de cargar los estilos (con un tope por si el evento load no llega).
+  w.addEventListener('load', () => setTimeout(doPrint, 200));
+  setTimeout(doPrint, 1500);
 }
 
 function NotasExportModal({ practica, D, state, cols, filas, onClose }) {

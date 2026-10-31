@@ -73,7 +73,14 @@ function puntajeEvaluacion(ev, nivelesEst) {
 function calcNotaEvaluacion(ev, nivelesEst, diasAtraso) {
   const r = puntajeEvaluacion(ev, nivelesEst);
   if (!r) return null;
-  const baseNota = notaFromEscala(escalaForEval(ev), r.puntos);
+  let baseNota = notaFromEscala(escalaForEval(ev), r.puntos);
+  if (baseNota == null) {
+    // Sin escala o escala que no cubre el puntaje (p. ej. criterios marcados
+    // como dobles en el editor): escala lineal 60% sobre el ideal real.
+    const maxPts = Math.max(0, ...nivelesSetForEval(ev).map(n => n.pts));
+    const ideal = ev.criterios.reduce((a, cr) => a + maxPts * (cr.doble ? 2 : 1), 0);
+    if (ideal > 0) baseNota = notaFromEscala(escalaExigencia60(ideal), r.puntos);
+  }
   if (baseNota == null) return null;
   const ajuste = (diasAtraso || 0) * 0.5;
   const notaFinal = Math.max(1.0, Math.round((baseNota - ajuste) * 10) / 10);

@@ -97,9 +97,42 @@ function evalFechaInfo(ev, state) {
 function backfillSemanaEntrega(evaluaciones, catalogo) {
   if (!Array.isArray(evaluaciones) || !Array.isArray(catalogo) || !catalogo.length) return evaluaciones;
   const porId = new Map(catalogo.map(e => [e.id, e.semanaEntrega]));
-  return evaluaciones.map(e => (e.semanaEntrega != null || !porId.has(e.id))
+  return sincronizarEvaluaciones(evaluaciones, catalogo).map(e => (e.semanaEntrega != null || !porId.has(e.id))
     ? e
     : { ...e, semanaEntrega: porId.get(e.id) });
+}
+
+// Alinea las evaluaciones guardadas con la estructura del catálogo actual.
+// Un estado persistido antes de un cambio de catálogo (p. ej. la consolidación
+// de PF1/PF2/PF3 en una única evaluación PORT) conservaba evaluaciones que
+// apuntaban a escalas ya inexistentes, y la rúbrica no entregaba nota.
+//  · Evaluaciones que ya no existen en el catálogo se descartan; las nuevas se agregan.
+//  · Claves estructurales (grupo, escala, niveles, ponderación…) vienen del catálogo.
+//  · Se conservan las ediciones del usuario (títulos, textos, fechas, criterios)
+//    mientras los ids de criterios coincidan con el catálogo (o su variante).
+const EVAL_CLAVES_ESTRUCTURALES = ['grupo', 'numero', 'nivelesKey', 'escalaKey', 'ponderacion', 'variantes'];
+function sincronizarEvaluaciones(evaluaciones, catalogo) {
+  const guardadas = new Map(evaluaciones.map(e => [e.id, e]));
+  const idsDe = (crit) => (crit || []).map(c => c.id).sort().join('|');
+  return catalogo.map(cat => {
+    const saved = guardadas.get(cat.id);
+    if (!saved) return { ...cat };
+    const next = { ...saved };
+    EVAL_CLAVES_ESTRUCTURALES.forEach(k => {
+      if (cat[k] === undefined) delete next[k]; else next[k] = cat[k];
+    });
+    const variante = saved.variante && cat.variantes && cat.variantes[saved.variante];
+    const ref = variante
+      ? { criterios: variante.criterios, maxPuntos: variante.maxPuntos, escala: variante.escala }
+      : { criterios: cat.criterios, maxPuntos: cat.maxPuntos, escala: cat.escala };
+    if (!variante) delete next.variante;
+    if (ref.escala === undefined) delete next.escala; else next.escala = ref.escala;
+    if (idsDe(saved.criterios) !== idsDe(ref.criterios)) {
+      next.criterios = ref.criterios;
+      next.maxPuntos = ref.maxPuntos;
+    }
+    return next;
+  });
 }
 
 // Deriva la etiqueta de semestre ("Semestre 2026-1") desde la fecha de inicio

@@ -66,7 +66,7 @@ function buildCartaHTML(p) {
   .topbar { background:#0f8a8a; color:#fff; padding:10px 18px; display:flex; align-items:center; gap:10px; font-size:9.5pt; position:sticky; top:0; }
   .topbar button { margin-left:auto; background:#fff; color:#0f8a8a; border:none; padding:7px 18px; border-radius:4px; font-weight:700; cursor:pointer; font-size:9.5pt; }
   @media print { .topbar { display:none; } }
-  .sheet { max-width: 168mm; margin: 0 auto; padding: 26px 0 40px; }
+  .sheet { max-width: 168mm; margin: 0 auto; padding: 26px 0 0; }
   .lh { margin-bottom: 30px; }
   .lh img { height: 60px; width: auto; display: block; }
   .lh .fallback { color:#0f8a8a; font-weight:800; font-size:12pt; line-height:1.25; letter-spacing:.01em; }
@@ -88,7 +88,7 @@ function buildCartaHTML(p) {
   .firma .nm { font-weight: 700; }
   .firma .rl { font-size: 10pt; color: #444; }
 </style></head><body>
-<div class="topbar">Carta de presentación — ${_esc(p.institucion)}${plural ? ` · ${p.students.length} estudiantes` : ''}
+<div class="topbar no-print">Carta de presentación — ${_esc(p.institucion)}${plural ? ` · ${p.students.length} estudiantes` : ''}
   <button onclick="window.print()">Guardar como PDF</button></div>
 <div class="sheet">
   <div class="lh">${LH ? `<img src="${LH}" alt="ECIADES · Universidad de Santiago de Chile"/>` : `<div class="fallback">ESCUELA DE CIENCIAS DE LA ACTIVIDAD<br/>FÍSICA, LA SALUD Y EL DEPORTE</div>`}</div>
@@ -115,13 +115,15 @@ function buildCartaHTML(p) {
       <tbody>${filas}</tbody>
     </table>
     <p>${sujetoSeguro}</p>
-    <p class="despedida">Sin otro particular y agradeciendo desde ya su apoyo y colaboración en la formación ${sujeto} de nuestra Escuela, se despide atentamente,</p>
   </div>
-  <div class="firma">
-    <div class="ln"></div>
-    <div class="nm">${_esc(p.coordinadora || CARTA_COORD_DEFAULT)}</div>
-    <div class="rl">${_esc(p.coordinadoraCargo || CARTA_COORD_CARGO_DEFAULT)}</div>
-    <div class="rl">Entrenador Deportivo – U. Santiago de Chile</div>
+  <div class="firma-bloque">
+    <p class="despedida">Sin otro particular y agradeciendo desde ya su apoyo y colaboración en la formación ${sujeto} de nuestra Escuela, se despide atentamente,</p>
+    <div class="firma">
+      <div class="ln"></div>
+      <div class="nm">${_esc(p.coordinadora || CARTA_COORD_DEFAULT)}</div>
+      <div class="rl">${_esc(p.coordinadoraCargo || CARTA_COORD_CARGO_DEFAULT)}</div>
+      <div class="rl">Entrenador Deportivo – U. Santiago de Chile</div>
+    </div>
   </div>
 </div>
 ${p.autoprint ? '<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},350);};<\/script>' : ''}
@@ -131,6 +133,8 @@ ${p.autoprint ? '<script>window.onload=function(){setTimeout(function(){window.f
   if (!w) { alert('Habilita las ventanas emergentes para generar el PDF.'); return; }
   w.document.write(html);
   w.document.close();
+  // Antes del autoprint de la carta (load + 350 ms) y del botón "Guardar como PDF".
+  if (window.fitFirmaPrint) w.addEventListener('load', () => window.fitFirmaPrint(w));
 }
 
 // Mapea una carta guardada → payload y abre el PDF (1 estudiante)

@@ -245,7 +245,7 @@ function NotasReportModal({ ctx, onClose }) {
             <div style={{ marginTop: 18, fontSize: 10.5, color: 'var(--ink-500)' }}>
               Exigencia 60% · Aprobación con nota 4,0 · Las notas en rojo indican reprobación.
             </div>
-            <div style={{ marginTop: 32, paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--ink-500)' }}>
+            <div className="firma-bloque" style={{ marginTop: 32, paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--ink-500)' }}>
               {prof.nombre
                 ? <span>Firma: <strong>{prof.nombre}</strong>{prof.titulo ? ' · ' + prof.titulo : ''} ________________________________</span>
                 : <span>Firma profesor evaluador: ________________________________</span>}
@@ -604,7 +604,7 @@ function StudentReportModal({ est, ctx, onClose }) {
                   <CoverRow k="Documento generado" v={new Date().toLocaleDateString('es-CL', { day: '2-digit', month: 'long', year: 'numeric' })} />
                 </tbody>
               </table>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, marginTop: 40, fontSize: 10.5, color: 'var(--ink-600)' }}>
+              <div className="firma-bloque" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, marginTop: 40, fontSize: 10.5, color: 'var(--ink-600)' }}>
                 <div style={{ borderTop: '1px solid var(--ink-700)', paddingTop: 6, textAlign: 'center' }}>Firma profesor supervisor</div>
                 <div style={{ borderTop: '1px solid var(--ink-700)', paddingTop: 6, textAlign: 'center' }}>Firma estudiante</div>
               </div>

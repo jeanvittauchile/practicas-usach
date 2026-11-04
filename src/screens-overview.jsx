@@ -16,7 +16,7 @@ function openPrintWindow(contentEl, title, autoClose) {
   const isSafari = /^((?!chrome|chromium|crios|fxios|android).)*safari/i.test(navigator.userAgent);
   if (autoClose && !isSafari) w.onafterprint = function() { w.close(); };
   let printed = false;
-  const doPrint = function() { if (printed) return; printed = true; w.focus(); w.print(); };
+  const doPrint = function() { if (printed) return; printed = true; if (window.fitFirmaPrint) window.fitFirmaPrint(w); w.focus(); w.print(); };
   // Imprimir cuando terminen de cargar los estilos (con un tope por si el evento load no llega).
   w.addEventListener('load', function() { setTimeout(doPrint, 200); });
   setTimeout(doPrint, 1500);
@@ -854,7 +854,7 @@ function NotasPublishModal({ ctx, mode, onClose }) {
               <div style={{ marginTop: 18, fontSize: 10.5, color: 'var(--ink-500)' }}>
                 Exigencia 60% · Aprobación con nota 4,0 · Las notas en rojo indican reprobación.
               </div>
-              <div style={{ marginTop: 32, paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--ink-500)' }}>
+              <div className="firma-bloque" style={{ marginTop: 32, paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 10, color: 'var(--ink-500)' }}>
                 {prof.nombre
                   ? <span>Firma: <strong>{prof.nombre}</strong>{prof.titulo ? ' · ' + prof.titulo : ''} ________________________________</span>
                   : <span>Firma profesor evaluador: ________________________________</span>}

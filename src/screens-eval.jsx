@@ -759,7 +759,7 @@ function ActaCalificaciones({ ev, ctx, estudiantes, nivelesSet, grupo, esTeal })
         </div>
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 48, pageBreakInside: 'avoid' }}>
+      <div className="firma-bloque" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 48, pageBreakInside: 'avoid' }}>
         <div style={{ width: 240, borderTop: '1px solid #15242E', paddingTop: 4, textAlign: 'center', fontSize: 10.5 }}>
           {String(window.__authUser?.nombre || 'Profesor/a responsable')}
           <div style={{ color: '#5A6B76' }}>Firma</div>

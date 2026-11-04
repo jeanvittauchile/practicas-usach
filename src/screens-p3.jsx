@@ -538,7 +538,7 @@ function InstrumentoReportModal({ est, ctx, respKey, cfg, niveles, titulo, ponde
               </div>
             </SectionPdf>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, marginTop: 40, fontSize: 10.5, color: 'var(--ink-600)' }}>
+            <div className="firma-bloque" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 30, marginTop: 40, fontSize: 10.5, color: 'var(--ink-600)' }}>
               <div style={{ borderTop: '1px solid var(--ink-700)', paddingTop: 6, textAlign: 'center' }}>
                 {respKey === 'tutor' ? 'Firma entrenador/a tutor/a' : 'Firma supervisor/a'}
               </div>

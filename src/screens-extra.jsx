@@ -793,6 +793,121 @@ function InformeAcademicoModal({ ev, ctx, onClose }) {
   );
 }
 
+// ═════════════════════════════════════════════════════════════
+// AUTOEVALUACIÓN — instrumento en blanco para compartir con estudiantes
+// ═════════════════════════════════════════════════════════════
+
+function AutoevalPdfModal({ dims, niveles, escala, maxPts, ctx, onClose }) {
+  const meta = De.meta || {};
+  const pond = (De.PONDERACIONES || []).find(p => p.resolver === 'AUTO');
+  const nInd = dims.reduce((a, d) => a + d.indicadores.length, 0);
+  const bodyRef = useRef(null);
+  const title = `Autoevaluación del estudiante — ${meta.cursoTitulo || 'Práctica'}`;
+  const th = { padding: '8px 6px', borderBottom: '2px solid var(--ink-700)' };
+  const casilla = <span style={{ display: 'inline-block', width: 14, height: 14, border: '1.5px solid var(--ink-500)', borderRadius: 3 }} />;
+  const linea = <span style={{ display: 'inline-block', minWidth: 220, borderBottom: '1px solid var(--ink-500)' }}>&nbsp;</span>;
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 1000, maxHeight: '94vh' }} onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <I.pdf />
+          <h3 className="h3" style={{ margin: 0 }}>Autoevaluación — instrumento para estudiantes</h3>
+          <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto' }} onClick={onClose}><I.x /></button>
+        </div>
+
+        <div className="modal-body" ref={bodyRef}>
+          <div className="pdf-page">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--ink-500)', fontWeight: 700 }}>Universidad de Santiago de Chile</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-600)', marginTop: 2 }}>Escuela de Cs. de la Actividad Física, Deporte y Salud · Entrenador Deportivo</div>
+                <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--ink-900)', margin: '18px 0 4px' }}>Autoevaluación del estudiante</h1>
+                <div style={{ fontSize: 13, color: 'var(--ink-600)' }}>{meta.cursoTitulo || 'Práctica'} · {window.semestreLabel(ctx.state.inicioPractica, meta.semestre)}</div>
+              </div>
+              <USACHCrest size={56} />
+            </div>
+
+            <table style={{ width: '100%', fontSize: 12, borderCollapse: 'collapse', marginBottom: 22 }}>
+              <tbody>
+                <CoverRow k="Nombre del estudiante" v={linea} />
+                <CoverRow k="RUT" v={linea} />
+                <CoverRow k="Centro de práctica" v={linea} />
+                <CoverRow k="Fecha" v={linea} />
+                <CoverRow k="Instrumento" v={`${dims.length} dimensiones · ${nInd} indicadores · máx. ${maxPts} puntos · exigencia 60%`} />
+                {pond && <CoverRow k="Ponderación" v={`${Math.round(pond.peso * 100)}% de la nota final del curso`} />}
+              </tbody>
+            </table>
+
+            <SectionPdf title="Instrucciones" accent="teal">
+              <p style={{ fontSize: 12.5, lineHeight: 1.6, margin: '0 0 10px' }}>
+                Lee cada indicador y marca con una X la casilla que mejor represente la frecuencia con que lo cumpliste durante tu práctica. Responde con honestidad: esta autoevaluación es una instancia de reflexión sobre tu propio desempeño profesional.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, fontSize: 11.5 }}>
+                {niveles.map(n => <span key={n.key}><strong>{n.key}</strong> = {n.label} ({n.pts} pt{n.pts === 1 ? '' : 's'})</span>)}
+              </div>
+            </SectionPdf>
+
+            <SectionPdf title="Instrumento" accent="teal">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5 }}>
+                <thead>
+                  <tr style={{ background: 'var(--surface-1)' }}>
+                    <th style={{ ...th, textAlign: 'left', width: 34 }}>N°</th>
+                    <th style={{ ...th, textAlign: 'left' }}>Indicador</th>
+                    {niveles.map(n => <th key={n.key} style={{ ...th, textAlign: 'center', width: 38 }}>{n.key}</th>)}
+                  </tr>
+                </thead>
+                <tbody>
+                  {dims.flatMap(dim => [
+                    <tr key={dim.id} style={{ background: 'var(--teal-50)' }}>
+                      <td colSpan={2 + niveles.length} style={{ padding: '7px 6px', fontWeight: 700, color: 'var(--teal-800)', fontSize: 11 }}>{dim.label}</td>
+                    </tr>,
+                    ...dim.indicadores.map((ind, i) => (
+                      <tr key={ind.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                        <td style={{ padding: '7px 6px', verticalAlign: 'top', fontWeight: 700, color: 'var(--teal-700)' }} className="tnum">{`${(dim.label.split('.')[0] || '').trim()}.${i + 1}`}</td>
+                        <td style={{ padding: '7px 6px', verticalAlign: 'top', lineHeight: 1.45 }}>{ind.texto}</td>
+                        {niveles.map(n => <td key={n.key} style={{ padding: '7px 6px', textAlign: 'center', verticalAlign: 'middle' }}>{casilla}</td>)}
+                      </tr>
+                    )),
+                  ])}
+                  <tr style={{ background: 'var(--surface-2)', borderTop: '2px solid var(--ink-700)' }}>
+                    <td colSpan={2} style={{ padding: '10px 6px', fontWeight: 700, fontSize: 12 }}>Puntaje total</td>
+                    <td colSpan={niveles.length} style={{ padding: '10px 6px', textAlign: 'right', fontWeight: 700, fontSize: 12 }} className="tnum">_______ / {maxPts}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </SectionPdf>
+
+            <SectionPdf title="Reflexión personal" accent="teal">
+              <div className="muted" style={{ fontSize: 11.5, marginBottom: 8 }}>Comenta brevemente tus principales logros, dificultades y aspectos a mejorar.</div>
+              {[0, 1, 2, 3, 4, 5].map(i => <div key={i} style={{ borderBottom: '1px solid var(--border-strong)', height: 26 }} />)}
+            </SectionPdf>
+          </div>
+
+          <div className="pdf-page">
+            <SectionPdf title="Escala de conversión de puntaje a nota (60% exigencia)" accent="teal">
+              <p style={{ fontSize: 11.5, color: 'var(--ink-600)', margin: '0 0 10px' }}>
+                La nota se asigna en escala 1,0 – 7,0 con nota mínima de aprobación 4,0 al obtener el 60% del puntaje máximo.
+              </p>
+              <EscalaTable escala={escala} maxPuntos={maxPts} />
+            </SectionPdf>
+            <div className="firma-bloque" style={{ marginTop: 40, paddingTop: 18, borderTop: '1px solid var(--border)', fontSize: 11, color: 'var(--ink-600)', display: 'flex', justifyContent: 'space-between' }}>
+              <span>Firma del estudiante: ________________________________</span>
+              <span>Fecha: ________________</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-foot">
+          <button className="btn btn-secondary btn-press" onClick={onClose}><I.x /> Cerrar</button>
+          <button className="btn btn-secondary btn-press" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, false)}><I.print /> Imprimir</button>
+          <button className="btn btn-primary btn-press" onClick={() => bodyRef.current && openPrintWindow(bodyRef.current, title, true)}><I.download /> Descargar PDF</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CoverRow({ k, v }) {
   return (
     <tr style={{ borderBottom: '1px dashed var(--border)' }}>
@@ -856,5 +971,5 @@ function EscalaTable({ escala, maxPuntos }) {
 }
 
 Object.assign(window, {
-  EditEvalModal, CalendarModal, InformeAcademicoModal, CoverRow, SectionPdf,
+  EditEvalModal, CalendarModal, InformeAcademicoModal, AutoevalPdfModal, CoverRow, SectionPdf,
 });

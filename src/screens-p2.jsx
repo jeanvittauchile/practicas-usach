@@ -392,6 +392,7 @@ function InstrumentoScreen({ ctx, kind }) {
   const escala = D.ESCALAS[cfg.escalaKey];
   const estudiantes = ctx.state.estudiantes || D.ESTUDIANTES;
   const [commentFor, setCommentFor] = useState(null);
+  const [pdfOpen, setPdfOpen] = useState(false);
   const nIndic = cfg.dimensiones.reduce((a, d) => a + d.indicadores.length, 0);
 
   return (
@@ -404,6 +405,7 @@ function InstrumentoScreen({ ctx, kind }) {
           </div>
         </div>
         <div className="actions">
+          <button className="btn btn-secondary btn-press" onClick={() => setPdfOpen(true)}><I.pdf size={15} /> PDF para estudiantes</button>
           <button className="btn btn-secondary"><I.download /> Exportar respuestas</button>
         </div>
       </div>
@@ -498,6 +500,7 @@ function InstrumentoScreen({ ctx, kind }) {
                                               value={ctx.state[commentsKey]?.[commentFor.id] || ''}
                                               onSave={(text) => { ctx.setSupervisorComment(commentsKey, commentFor.id, text); ctx.toast('Comentario guardado'); }}
                                               onClose={() => setCommentFor(null)} />}
+      {pdfOpen && <AutoevalPdfModal dims={cfg.dimensiones} niveles={niveles} escala={escala} maxPts={cfg.maxPuntos} ctx={ctx} onClose={() => setPdfOpen(false)} />}
     </div>
   );
 }

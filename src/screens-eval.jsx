@@ -810,6 +810,7 @@ function SupervisorScreen({ ctx, kind = 'supervisor' }) {
   const [reportFor, setReportFor] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [editCol, setEditCol] = useState(null); // {ind} editar · {nuevo:true} crear
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   // Columnas vivas y editables (con fallback a las de la práctica)
   const dims = ctx.state.supervisorDims || Dd.SUPERVISOR_DIMENSIONES || [];
@@ -835,6 +836,9 @@ function SupervisorScreen({ ctx, kind = 'supervisor' }) {
             <button className={`btn ${editMode ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setEditMode(m => !m)}>
               <I.edit size={15} /> {editMode ? 'Listo' : 'Editar columnas'}
             </button>
+          )}
+          {isAuto && (
+            <button className="btn btn-secondary btn-press" onClick={() => setPdfOpen(true)}><I.pdf size={15} /> PDF para estudiantes</button>
           )}
           <button className="btn btn-secondary"><I.download /> Exportar respuestas</button>
         </div>
@@ -988,6 +992,7 @@ function SupervisorScreen({ ctx, kind = 'supervisor' }) {
                                               onSave={(text) => { ctx.setSupervisorComment(commentsKey, commentFor.id, text); ctx.toast('Comentario guardado'); }}
                                               onClose={() => setCommentFor(null)} />}
       {reportFor && <StudentReportModal est={reportFor} ctx={ctx} onClose={() => setReportFor(null)} />}
+      {pdfOpen && <AutoevalPdfModal dims={dims} niveles={niveles} escala={escala} maxPts={ideal} ctx={ctx} onClose={() => setPdfOpen(false)} />}
     </div>
   );
 }
